@@ -4,10 +4,12 @@ import { prisma } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit";
 import {
   applyDraftOverlay,
+  assertSectionScope,
   CMS_PUBLIC_REVALIDATE_PATHS,
   countPendingCmsDrafts,
   requireCmsApiAuth,
 } from "@/lib/cms";
+import { userHasAnyPermission } from "@/lib/permissions";
 
 export function revalidatePublicCmsPaths() {
   for (const p of CMS_PUBLIC_REVALIDATE_PATHS) {
@@ -106,7 +108,14 @@ export function createCmsCollectionHandlers<
     try {
       const body = (await request.json()) as Record<string, unknown>;
       const mode: "draft" | "publish" = body.mode === "publish" ? "publish" : "draft";
+      if (mode === "publish" && !userHasAnyPermission(auth.user, ["cms:publish", "cms:manage"])) {
+        return NextResponse.json({ error: "Forbidden: missing permission (cms:publish)." }, { status: 403 });
+      }
       const data = sanitizeCreate(body);
+      if (table === "pageSection") {
+        const denied = assertSectionScope(auth.user, String(data.pageSlug || ""));
+        if (denied) return denied;
+      }
 
       if (hasSortOrder && typeof data.sortOrder !== "number") {
         const count = await model.count();
@@ -145,6 +154,9 @@ export function createCmsCollectionHandlers<
     try {
       const body = (await request.json()) as Record<string, unknown>;
       const mode: "draft" | "publish" = body.mode === "publish" ? "publish" : "draft";
+      if (mode === "publish" && !userHasAnyPermission(auth.user, ["cms:publish", "cms:manage"])) {
+        return NextResponse.json({ error: "Forbidden: missing permission (cms:publish)." }, { status: 403 });
+      }
 
       if (body.action === "reorder" && Array.isArray(body.ids) && hasSortOrder) {
         const ids = body.ids.filter((x): x is string => typeof x === "string");
@@ -170,9 +182,13 @@ export function createCmsCollectionHandlers<
         return NextResponse.json({ error: "Item id is required." }, { status: 400 });
       }
 
-      const existing = (await model.findUnique({ where: { id } })) as T | null;
+      const existing = (await model.findUnique({ where: { id } })) as (T & { pageSlug?: string }) | null;
       if (!existing) {
         return NextResponse.json({ error: `${entityType} not found.` }, { status: 404 });
+      }
+      if (table === "pageSection") {
+        const denied = assertSectionScope(auth.user, existing.pageSlug);
+        if (denied) return denied;
       }
 
       const updates = sanitizeUpdate(body);

@@ -151,19 +151,29 @@ async function main() {
     await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "networkidle" });
     assert.ok(page.url().includes("/admin/login"), "Unauthenticated /admin/cms must redirect to /admin/login");
 
-    await page.fill('input[type="email"]', "superadmin@onetabmedia.in");
-    await page.fill('input[type="password"]', "OneTab@2026!");
+    const adminEmail = process.env.TEST_ADMIN_EMAIL || "";
+    const adminPassword = process.env.TEST_ADMIN_PASSWORD || "";
+    if (!adminEmail || !adminPassword) {
+      throw new Error("TEST_ADMIN_EMAIL and TEST_ADMIN_PASSWORD env vars are required.");
+    }
+    await page.fill('input[type="email"]', adminEmail);
+    await page.fill('input[type="password"]', adminPassword);
     await page.click('button[type="submit"]');
     await page.waitForURL((u) => u.pathname.startsWith("/admin") && !u.pathname.includes("/login"), {
       timeout: 15000,
     });
-    await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(600);
+    await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "load" });
+    await page.waitForTimeout(800);
     await page.screenshot({ path: path.join(OUT_DIR, "admin_cms.png") });
 
     // Edit hero subtitle as DRAFT via UI
     const originalSubtitle =
       "Upload your tracks to Spotify, Apple Music, TikTok, and 150+ digital stores. Keep 100% of your rights and receive monthly payouts.";
+    // Ensure clean baseline first
+    await page.locator("textarea").first().fill(originalSubtitle);
+    await page.click('button:has-text("Save & Publish Live")');
+    await page.waitForTimeout(500);
+
     const draftSubtitle = "DRAFT TEST: Upload your tracks to 150+ stores worldwide with CMS preview active.";
     await page.locator("textarea").first().fill(draftSubtitle);
     await page.click('button:has-text("Save Draft (Preview with ?preview=1)")');
@@ -176,23 +186,23 @@ async function main() {
     assert.ok(!liveHtml.includes("DRAFT TEST:"), "Live site must NOT leak unpublished drafts");
 
     // Authenticated Preview (?preview=1) MUST show draftSubtitle
-    await page.goto(`${BASE_URL}/?preview=1`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/?preview=1`, { waitUntil: "load" });
     const previewBody = await page.textContent("body");
     assert.ok(previewBody?.includes("DRAFT TEST:"), "Preview mode must show saved draft");
 
     // Now return to /admin/cms and Publish Changes Live, verify live reflects edit, then restore original!
-    await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(400);
+    await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "load" });
+    await page.waitForTimeout(600);
     await page.click('[data-testid="cms-publish-all-btn"]');
     await page.waitForTimeout(600);
 
-    await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/`, { waitUntil: "load" });
     const afterPublishBody = await page.textContent("body");
     assert.ok(afterPublishBody?.includes("DRAFT TEST:"), "Published CMS change must appear live on /");
 
     // Restore original subtitle via API and test adding a 4th featured artist -> triggers Carousel!
-    await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(400);
+    await page.goto(`${BASE_URL}/admin/cms`, { waitUntil: "load" });
+    await page.waitForTimeout(600);
     await page.locator("textarea").first().fill(originalSubtitle);
     await page.click('button:has-text("Save & Publish Live")');
     await page.waitForTimeout(500);
@@ -212,7 +222,7 @@ async function main() {
     assert.equal(addRes.status(), 201, "4th artist creation must return 201");
     const added = await addRes.json();
 
-    await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/`, { waitUntil: "load" });
     const carouselCount = await page.locator('[data-testid="featured-artist-carousel"]').count();
     assert.equal(carouselCount, 1, "Adding a 4th featured artist must activate carousel mode on Homepage");
 
@@ -222,7 +232,7 @@ async function main() {
     );
     assert.equal(delRes.status(), 200, "Deleting test artist must succeed");
 
-    await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/`, { waitUntil: "load" });
     const carouselCountAfter = await page.locator('[data-testid="featured-artist-carousel"]').count();
     assert.equal(carouselCountAfter, 0, "Removing 4th artist restores 3-card grid");
 

@@ -6,7 +6,7 @@ import { createNotification, recordAuditLog } from "@/lib/audit";
 import { dispatchReleaseToPartner } from "@/lib/integrations";
 
 export async function GET(request: Request) {
-  const auth = await requirePermission("release:review");
+  const auth = await requirePermission(["release:review", "music:view", "music:edit", "music:manage"]);
   if (auth.error) return auth.error;
 
   const { searchParams } = new URL(request.url);
@@ -58,7 +58,7 @@ const ReviewSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
-  const auth = await requirePermission("release:approve");
+  const auth = await requirePermission(["release:approve", "release:review", "music:edit", "music:publish", "music:manage"]);
   if (auth.error) return auth.error;
 
   try {

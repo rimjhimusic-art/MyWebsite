@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
+import { isAdminRole } from "@/lib/permissions";
 
 export async function GET() {
   const auth = await requirePermission("dashboard:view");
   if (auth.error) return auth.error;
 
-  if (!["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER", "CONTENT_MANAGER"].includes(auth.user.role)) {
+  if (!isAdminRole(auth.user.role)) {
     return NextResponse.json({ error: "Admin role required." }, { status: 403 });
   }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
+import { getCurrentUser, type AuthenticatedUser } from "@/lib/auth";
+import { userHasAnyPermission, type Permission } from "@/lib/permissions";
 
 export const CMS_PUBLIC_REVALIDATE_PATHS = [
   "/",
@@ -67,16 +67,59 @@ export function mapDraftList<T extends DraftCapableRow & { sortOrder?: number }>
 export async function canUserPreviewCms(): Promise<boolean> {
   const user = await getCurrentUser();
   if (!user) return false;
-  return hasPermission(user.role, "cms:manage");
+  return userHasAnyPermission(user, ["cms:view", "cms:edit", "cms:publish", "cms:manage"]);
 }
 
-export async function requireCmsApiAuth(request?: Request) {
+export function assertSectionScope(user: AuthenticatedUser, pageSlug?: string | null): Response | null {
+  if (user.role === "SUPER_ADMIN" || !pageSlug || !user.allowedSections) return null;
+  if (!user.allowedSections.includes(pageSlug.toLowerCase())) {
+    return NextResponse.json(
+      { error: `Forbidden: you only have edit permission for sections [${user.allowedSections.join(", ")}].` },
+      { status: 403 }
+    );
+  }
+  return null;
+}
+
+export async function requireCmsApiAuth(
+  request?: Request,
+  options?: {
+    resource?: "cms" | "media" | "settings";
+    action?: "view" | "add" | "edit" | "delete" | "publish";
+    allowOverviewRoles?: boolean;
+  }
+) {
   const user = await getCurrentUser();
   if (!user) {
     return { ok: false as const, response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
-  if (!hasPermission(user.role, "cms:manage")) {
-    return { ok: false as const, response: NextResponse.json({ error: "Forbidden: CMS permission required" }, { status: 403 }) };
+
+  const resource = options?.resource || "cms";
+  const methodActionMap: Record<string, "view" | "add" | "edit" | "delete"> = {
+    GET: "view",
+    POST: "add",
+    PATCH: "edit",
+    PUT: "edit",
+    DELETE: "delete",
+  };
+  const action = options?.action || (request ? methodActionMap[request.method] || "view" : "edit");
+
+  const required: Permission[] = [`${resource}:${action}` as Permission, `${resource}:manage` as Permission];
+  if (resource === "cms") {
+    required.push("cms:manage");
+  }
+  if (options?.allowOverviewRoles) {
+    required.push("media:view", "settings:view");
+  }
+
+  if (!userHasAnyPermission(user, required)) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: `Forbidden: missing permission (${resource}:${action}).` },
+        { status: 403 }
+      ),
+    };
   }
   if (request && request.method !== "GET") {
     const origin = request.headers.get("origin");

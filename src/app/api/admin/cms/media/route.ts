@@ -16,7 +16,7 @@ function detectCmsKind(filename: string): AssetKind {
 }
 
 export async function GET(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { resource: "media", action: "view" });
   if (!auth.ok) return auth.response;
 
   const { searchParams } = new URL(request.url);
@@ -108,7 +108,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { resource: "media", action: "add" });
   if (!auth.ok) return auth.response;
 
   try {
@@ -205,7 +205,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { resource: "media", action: "edit" });
   if (!auth.ok) return auth.response;
 
   const body = await request.json();
@@ -226,7 +226,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { resource: "media", action: "delete" });
   if (!auth.ok) return auth.response;
 
   const { searchParams } = new URL(request.url);

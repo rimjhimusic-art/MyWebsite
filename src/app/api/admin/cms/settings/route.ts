@@ -27,7 +27,7 @@ const SettingsSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { resource: "settings", action: "view" });
   if (!auth.ok) return auth.response;
 
   const row = await prisma.websiteSettings.findUnique({ where: { id: "default" } });
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { resource: "settings", action: "edit" });
   if (!auth.ok) return auth.response;
 
   const body = await request.json();

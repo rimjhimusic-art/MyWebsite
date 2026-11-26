@@ -1,7 +1,7 @@
 import { describe, it, before } from "node:test";
 import assert from "node:assert/strict";
 import zlib from "zlib";
-import { hasPermission, isAdminRole } from "../src/lib/permissions";
+import { hasPermission, isAdminRole, userHasPermission } from "../src/lib/permissions";
 import { hashPassword, verifyPassword } from "../src/lib/auth";
 import {
   validateUploadFile,
@@ -68,6 +68,21 @@ describe("Unit Tests: RBAC, Hashing, Storage & Integrations", () => {
     assert.equal(hasPermission("ARTIST", "users:manage"), false);
     assert.equal(hasPermission("LABEL_OWNER", "label:manage_own"), true);
     assert.equal(hasPermission("LABEL_MANAGER", "royalties:manage_splits"), false);
+
+    // Granular per-user permission overrides & hierarchy
+    const customContentEditor = {
+      role: "EDITOR" as const,
+      customPermissionsJson: JSON.stringify(["cms:view", "cms:edit"]),
+    };
+    assert.equal(userHasPermission(customContentEditor, "cms:view"), true);
+    assert.equal(userHasPermission(customContentEditor, "cms:edit"), true);
+    assert.equal(userHasPermission(customContentEditor, "cms:publish"), false);
+    assert.equal(userHasPermission(customContentEditor, "users:manage"), false);
+
+    const primarySuperAdmin = { role: "SUPER_ADMIN" as const, customPermissionsJson: null };
+    assert.equal(userHasPermission(primarySuperAdmin, "cms:publish"), true);
+    assert.equal(userHasPermission(primarySuperAdmin, "users:manage"), true);
+    assert.equal(userHasPermission(primarySuperAdmin, "integrations:manage"), true);
   });
 
   it("hashes passwords securely with bcrypt and verifies correctly", async () => {
@@ -463,12 +478,14 @@ describe("Integration Tests: Full Platform Workflows", () => {
     );
     assert.equal(goodSplit.res.status, 200);
 
+    const adminEmail = process.env.TEST_ADMIN_EMAIL || "content@onetabmedia.in";
+    const adminPassword = process.env.TEST_ADMIN_PASSWORD || "OneTab@2026!";
     const adminLogin = await reqWithCookie("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: "superadmin@onetabmedia.in",
-        password: "OneTab@2026!",
+        email: adminEmail,
+        password: adminPassword,
       }),
     });
     assert.equal(adminLogin.res.status, 200);
@@ -620,12 +637,14 @@ describe("Integration Tests: Full Platform Workflows", () => {
     );
     assert.equal(subRes.res.status, 201);
 
+    const adminEmail = process.env.TEST_ADMIN_EMAIL || "content@onetabmedia.in";
+    const adminPassword = process.env.TEST_ADMIN_PASSWORD || "OneTab@2026!";
     const adminLogin = await reqWithCookie("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: "superadmin@onetabmedia.in",
-        password: "OneTab@2026!",
+        email: adminEmail,
+        password: adminPassword,
       }),
     });
     const adminCookie = adminLogin.setCookie!;

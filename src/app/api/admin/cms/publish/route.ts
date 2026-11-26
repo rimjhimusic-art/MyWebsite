@@ -18,11 +18,15 @@ const COLLECTIONS = [
 ] as const;
 
 export async function POST(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const rawBody = await request.clone().json().catch(() => ({}));
+  const action = rawBody?.action === "discard" ? "discard" : "publish";
+  const auth = await requireCmsApiAuth(request, {
+    resource: "cms",
+    action: action === "publish" ? "publish" : "edit",
+  });
   if (!auth.ok) return auth.response;
 
-  const body = await request.json();
-  const action = body?.action === "discard" ? "discard" : "publish";
+  const body = rawBody;
 
   if (action === "publish") {
     await prisma.$transaction(async (tx) => {

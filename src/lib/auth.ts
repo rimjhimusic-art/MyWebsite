@@ -3,7 +3,12 @@ import crypto from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/db";
-import { hasPermission, type Permission } from "@/lib/permissions";
+import {
+  resolveUserPermissions,
+  userHasAnyPermission,
+  parseAllowedSections,
+  type Permission,
+} from "@/lib/permissions";
 import type { User, UserRole } from "@prisma/client";
 
 export const SESSION_COOKIE_NAME = "onetab_session";
@@ -137,6 +142,11 @@ export type AuthenticatedUser = {
   bio: string | null;
   avatarUrl: string | null;
   emailVerifiedAt: Date | null;
+  adminPreset: string | null;
+  customPermissionsJson: string | null;
+  allowedSectionsJson: string | null;
+  permissions: Permission[];
+  allowedSections: string[] | null;
   sessionId: string;
 };
 
@@ -177,6 +187,11 @@ export async function verifySessionJwt(
       bio: session.user.bio,
       avatarUrl: session.user.avatarUrl,
       emailVerifiedAt: session.user.emailVerifiedAt,
+      adminPreset: session.user.adminPreset ?? null,
+      customPermissionsJson: session.user.customPermissionsJson ?? null,
+      allowedSectionsJson: session.user.allowedSectionsJson ?? null,
+      permissions: resolveUserPermissions(session.user),
+      allowedSections: parseAllowedSections(session.user.allowedSectionsJson),
       sessionId: session.id,
     };
   } catch {
@@ -219,16 +234,19 @@ export async function requireAuth(): Promise<
   return { user };
 }
 
-export async function requirePermission(permission: Permission): Promise<
+export async function requirePermission(
+  permission: Permission | Permission[]
+): Promise<
   | { user: AuthenticatedUser; error?: never }
   | { user?: never; error: Response }
 > {
   const auth = await requireAuth();
   if (auth.error) return auth;
-  if (!hasPermission(auth.user.role, permission)) {
+  const required = Array.isArray(permission) ? permission : [permission];
+  if (!userHasAnyPermission(auth.user, required)) {
     return {
       error: Response.json(
-        { error: `Forbidden: missing permission (${permission}).` },
+        { error: `Forbidden: missing permission (${required.join(" | ")}).` },
         { status: 403 }
       ),
     };

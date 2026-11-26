@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plug, ShieldCheck } from "lucide-react";
+import { KeyRound, Mail, Plug, ShieldCheck } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 
 interface SettingsPayload {
@@ -27,16 +27,75 @@ interface SettingsPayload {
 export default function AdminSettingsPage() {
   const { showToast } = useToast();
   const [data, setData] = useState<SettingsPayload | null>(null);
+  const [accountForm, setAccountForm] = useState({
+    name: "",
+    email: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [savingAccount, setSavingAccount] = useState(false);
 
   const load = async () => {
-    const res = await fetch("/api/admin/services");
-    const d = await res.json();
-    setData(d);
+    const [svcRes, meRes] = await Promise.all([
+      fetch("/api/admin/services"),
+      fetch("/api/auth/me"),
+    ]);
+    if (svcRes.ok) setData(await svcRes.json());
+    if (meRes.ok) {
+      const me = await meRes.json();
+      if (me.user) {
+        setAccountForm((prev) => ({
+          ...prev,
+          name: me.user.name || "",
+          email: me.user.email || "",
+        }));
+      }
+    }
   };
 
   useEffect(() => {
     load();
   }, []);
+
+  const handleAccountSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (accountForm.newPassword && accountForm.newPassword !== accountForm.confirmPassword) {
+      showToast("New passwords do not match.", "error");
+      return;
+    }
+    setSavingAccount(true);
+    try {
+      const payload: Record<string, string> = {
+        name: accountForm.name,
+        email: accountForm.email,
+        currentPassword: accountForm.currentPassword,
+      };
+      if (accountForm.newPassword.trim()) {
+        payload.newPassword = accountForm.newPassword;
+      }
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        showToast(d.error || "Failed to update account credentials.", "error");
+        return;
+      }
+      showToast("Admin email / password updated securely!", "success");
+      setAccountForm((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+      load();
+    } finally {
+      setSavingAccount(false);
+    }
+  };
 
   const toggleIntegration = async (id: string, enabled: boolean) => {
     const res = await fetch("/api/admin/services", {
@@ -54,12 +113,92 @@ export default function AdminSettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold">
-          Third-Party Integrations &amp; Security Audit Logs
+          Account Security, Integrations &amp; Audit Logs
         </h1>
         <p className="text-sm text-[#b0b0b8]">
-          Provider adapters remain honestly unconfigured until valid API credentials are set in server environment variables.
+          Update your Super Admin email/password with current password verification, manage integrations, and inspect security logs.
         </p>
       </div>
+
+      {/* Super Admin / Admin Email & Password Security Card */}
+      <form
+        onSubmit={handleAccountSave}
+        className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-6 space-y-4"
+      >
+        <div className="flex items-center gap-2 font-bold text-base text-white">
+          <KeyRound className="w-4 h-4 text-[#3b82f6]" />
+          <span>My Admin Account Security (Email &amp; Password)</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Display Name</label>
+            <input
+              type="text"
+              required
+              value={accountForm.name}
+              onChange={(e) => setAccountForm({ ...accountForm, name: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Login Email</label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-[#71717a] absolute left-3 top-3" />
+              <input
+                type="email"
+                required
+                value={accountForm.email}
+                onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })}
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">
+              Current Password* (Required to change email or password)
+            </label>
+            <input
+              type="password"
+              required
+              value={accountForm.currentPassword}
+              onChange={(e) => setAccountForm({ ...accountForm, currentPassword: e.target.value })}
+              placeholder="Verify current password"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">New Password (optional)</label>
+              <input
+                type="password"
+                minLength={8}
+                value={accountForm.newPassword}
+                onChange={(e) => setAccountForm({ ...accountForm, newPassword: e.target.value })}
+                placeholder="Min 8 chars"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Confirm New Password</label>
+              <input
+                type="password"
+                minLength={8}
+                value={accountForm.confirmPassword}
+                onChange={(e) => setAccountForm({ ...accountForm, confirmPassword: e.target.value })}
+                placeholder="Repeat new password"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+              />
+            </div>
+          </div>
+        </div>
+        <button
+          type="submit"
+          disabled={savingAccount}
+          className="px-5 py-2.5 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-bold cursor-pointer disabled:opacity-60"
+        >
+          {savingAccount ? "Updating Credentials..." : "Update Email / Password"}
+        </button>
+      </form>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data?.integrations.map((cfg) => (

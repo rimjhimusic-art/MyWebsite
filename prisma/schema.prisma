@@ -172,9 +172,12 @@ model User {
   phone             String?
   bio               String?
   avatarUrl         String?
-  payoutMethod      PaymentMethod?
-  payoutDetails     String?
-  lastLoginAt       DateTime?
+  payoutMethod          PaymentMethod?
+  payoutDetails         String?
+  adminPreset           String?
+  customPermissionsJson String?
+  allowedSectionsJson   String?
+  lastLoginAt           DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

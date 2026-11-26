@@ -8,7 +8,7 @@ import {
   sanitizeUser,
   verifyPassword,
 } from "@/lib/auth";
-import { ROLE_PERMISSIONS } from "@/lib/permissions";
+import { resolveUserPermissions } from "@/lib/permissions";
 import { recordAuditLog } from "@/lib/audit";
 
 export async function GET() {
@@ -31,12 +31,13 @@ export async function GET() {
 
   return NextResponse.json({
     user: sanitizeUser(fullUser),
-    permissions: ROLE_PERMISSIONS[fullUser.role],
+    permissions: resolveUserPermissions(fullUser),
   });
 }
 
 const UpdateProfileSchema = z.object({
   name: z.string().trim().min(2).optional(),
+  email: z.string().trim().email("Valid email required").toLowerCase().optional(),
   country: z.string().trim().min(2).optional(),
   phone: z.string().trim().max(30).optional().nullable(),
   bio: z.string().trim().max(1000).optional().nullable(),
@@ -72,6 +73,24 @@ export async function PATCH(request: Request) {
     if (data.bio !== undefined) updatePayload.bio = data.bio;
     if (data.payoutMethod !== undefined) updatePayload.payoutMethod = data.payoutMethod;
     if (data.payoutDetails !== undefined) updatePayload.payoutDetails = data.payoutDetails;
+
+    if (data.email && data.email !== auth.user.email) {
+      if (!data.currentPassword) {
+        return NextResponse.json(
+          { error: "Current password is required to change your login email." },
+          { status: 400 }
+        );
+      }
+      const existing = await prisma.user.findUnique({ where: { id: auth.user.id } });
+      if (!existing || !(await verifyPassword(data.currentPassword, existing.passwordHash))) {
+        return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
+      }
+      const conflict = await prisma.user.findUnique({ where: { email: data.email } });
+      if (conflict && conflict.id !== auth.user.id) {
+        return NextResponse.json({ error: "Email address is already in use." }, { status: 409 });
+      }
+      updatePayload.email = data.email;
+    }
 
     if (data.newPassword) {
       if (!data.currentPassword) {

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { countPendingCmsDrafts, getCmsSiteData, requireCmsApiAuth } from "@/lib/cms";
 
 export async function GET(request: Request) {
-  const auth = await requireCmsApiAuth(request);
+  const auth = await requireCmsApiAuth(request, { action: "view", allowOverviewRoles: true });
   if (!auth.ok) return auth.response;
 
   const [siteData, pendingDrafts, revisions] = await Promise.all([
