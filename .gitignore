@@ -46,12 +46,29 @@ prisma/dev.db.backup
 prisma/dev.db*
 storage/
 
-# Temporary editor files
+# Temporary editor and backup files
 *.swp
 *.swo
+*.tmp
+*.bak
+*.orig
+*~
 
-# Environment secrets
+# Environment secrets & credentials
 .env
 .env.*
 !.env.example
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa*
+id_ed25519*
+*credentials*.json
+*service-account*.json
+
+# Build caches & Auto-push runtime logs/state
+.turbo/
+.cache/
+.autopush/
 

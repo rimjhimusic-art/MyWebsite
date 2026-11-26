@@ -1,8 +1,56 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { KeyRound, Mail, Plug, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  GitBranch,
+  KeyRound,
+  Mail,
+  Plug,
+  RefreshCw,
+  Rocket,
+  ShieldCheck,
+  UploadCloud,
+} from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
+
+interface AutoPushStatusPayload {
+  autoPushEnabled: boolean;
+  debounceSeconds: number;
+  daemonRunning: boolean;
+  daemonPid: number | null;
+  branch: string;
+  remote: string;
+  pendingCount: number;
+  pendingFiles: Array<{ code: string; path: string }>;
+  unpushedCommitsCount: number;
+  lastCommitHash: string | null;
+  lastCommitMessage: string | null;
+  lastCommitAt: string | null;
+  lastSuccessfulPushAt: string | null;
+  lastSuccessfulPushSha: string | null;
+  status: string;
+  lastError: string | null;
+  secretWarning: string | null;
+  retryAttempt: number;
+  nextRetryAt: string | null;
+  github?: {
+    repo: string | null;
+    inSync: boolean;
+    reachable: boolean;
+    remoteHeadSha: string | null;
+    localHeadSha: string | null;
+    error: string | null;
+  };
+  vercel?: {
+    linked: boolean;
+    state: string;
+    summary: string;
+    latestDeploymentUrl: string | null;
+    updatedAt: string | null;
+  };
+}
 
 interface SettingsPayload {
   integrations: Array<{
@@ -27,6 +75,9 @@ interface SettingsPayload {
 export default function AdminSettingsPage() {
   const { showToast } = useToast();
   const [data, setData] = useState<SettingsPayload | null>(null);
+  const [userRole, setUserRole] = useState<string>("");
+  const [autopush, setAutopush] = useState<AutoPushStatusPayload | null>(null);
+  const [autopushBusy, setAutopushBusy] = useState(false);
   const [accountForm, setAccountForm] = useState({
     name: "",
     email: "",
@@ -35,6 +86,13 @@ export default function AdminSettingsPage() {
     confirmPassword: "",
   });
   const [savingAccount, setSavingAccount] = useState(false);
+
+  const loadAutopush = async () => {
+    const res = await fetch("/api/admin/autopush");
+    if (res.ok) {
+      setAutopush(await res.json());
+    }
+  };
 
   const load = async () => {
     const [svcRes, meRes] = await Promise.all([
@@ -45,11 +103,15 @@ export default function AdminSettingsPage() {
     if (meRes.ok) {
       const me = await meRes.json();
       if (me.user) {
+        setUserRole(me.user.role || "");
         setAccountForm((prev) => ({
           ...prev,
           name: me.user.name || "",
           email: me.user.email || "",
         }));
+        if (me.user.role === "SUPER_ADMIN") {
+          loadAutopush();
+        }
       }
     }
   };
@@ -57,6 +119,55 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const handleToggleAutoPush = async () => {
+    if (!autopush) return;
+    setAutopushBusy(true);
+    try {
+      const res = await fetch("/api/admin/autopush", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "toggle", enabled: !autopush.autoPushEnabled }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        showToast(d.error || "Failed to toggle Auto-Push.", "error");
+        return;
+      }
+      if (d.status) setAutopush(d.status);
+      showToast(
+        !autopush.autoPushEnabled ? "GitHub Auto-Push enabled." : "GitHub Auto-Push paused.",
+        "success"
+      );
+    } finally {
+      setAutopushBusy(false);
+    }
+  };
+
+  const handleManualPush = async () => {
+    setAutopushBusy(true);
+    try {
+      const res = await fetch("/api/admin/autopush", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "manual_push" }),
+      });
+      const d = await res.json();
+      if (d.status) setAutopush(d.status);
+      if (!res.ok) {
+        showToast(d.error || "Manual push failed or blocked by security scan.", "error");
+        return;
+      }
+      showToast(
+        d.noChanges
+          ? "Repository already up to date with GitHub."
+          : "Changes verified and pushed to GitHub!",
+        "success"
+      );
+    } finally {
+      setAutopushBusy(false);
+    }
+  };
 
   const handleAccountSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,6 +310,155 @@ export default function AdminSettingsPage() {
           {savingAccount ? "Updating Credentials..." : "Update Email / Password"}
         </button>
       </form>
+
+      {userRole === "SUPER_ADMIN" && (
+        <div className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-base text-white flex items-center gap-2">
+                <GitBranch className="w-4 h-4 text-[#3b82f6]" />
+                <span>GitHub Auto-Push &amp; Vercel Deployment Control</span>
+              </h2>
+              <p className="text-xs text-[#b0b0b8] mt-1">
+                Watches source changes continuously (10s debounce), runs secret scanning, and syncs to{" "}
+                <span className="text-white font-semibold">{autopush?.branch || "main"}</span>.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={autopushBusy || !autopush}
+                onClick={handleToggleAutoPush}
+                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer disabled:opacity-60 ${
+                  autopush?.autoPushEnabled
+                    ? "bg-emerald-500 text-black"
+                    : "bg-[#0f0f0f] border border-[#2a2a2a] text-[#b0b0b8]"
+                }`}
+              >
+                Auto Push: {autopush?.autoPushEnabled ? "ON" : "OFF"}
+              </button>
+              <button
+                type="button"
+                disabled={autopushBusy}
+                onClick={handleManualPush}
+                className="px-4 py-2 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span>{autopushBusy ? "Syncing..." : "Manual Push"}</span>
+              </button>
+              <button
+                type="button"
+                disabled={autopushBusy}
+                onClick={loadAutopush}
+                className="p-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-[#b0b0b8] hover:text-white cursor-pointer"
+                title="Refresh Auto-Push & Vercel status"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {autopush && (
+            <>
+              {(autopush.secretWarning || autopush.lastError) && (
+                <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3.5 text-xs text-red-200 flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-bold text-red-300">
+                      {autopush.secretWarning ? "Secret Scan Security Alert" : "Push Error Status"}
+                    </div>
+                    <div className="mt-0.5 break-all">
+                      {autopush.secretWarning || autopush.lastError}
+                    </div>
+                    {autopush.nextRetryAt && (
+                      <div className="text-[11px] text-red-300/80 mt-1">
+                        Automatic Retry #{autopush.retryAttempt} scheduled at{" "}
+                        {new Date(autopush.nextRetryAt).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5">
+                  <div className="text-[#71717a]">Background Watcher</div>
+                  <div className="font-bold text-white mt-1 flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        autopush.daemonRunning ? "bg-emerald-400" : "bg-amber-400"
+                      }`}
+                    />
+                    {autopush.daemonRunning ? `Running (PID ${autopush.daemonPid})` : "Stopped"}
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5">
+                  <div className="text-[#71717a]">Pending Changes</div>
+                  <div className="font-bold text-white mt-1">
+                    {autopush.pendingCount} file(s) &bull; {autopush.unpushedCommitsCount} unpushed commit(s)
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5">
+                  <div className="text-[#71717a]">Last Successful Push</div>
+                  <div className="font-bold text-white mt-1">
+                    {autopush.lastSuccessfulPushAt
+                      ? new Date(autopush.lastSuccessfulPushAt).toLocaleString()
+                      : "Pending first auto-sync"}
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5">
+                  <div className="text-[#71717a]">Last Commit Message</div>
+                  <div className="font-bold text-white mt-1 truncate" title={autopush.lastCommitMessage || ""}>
+                    {autopush.lastCommitMessage || "—"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5 flex items-start gap-2.5">
+                  <CheckCircle2
+                    className={`w-4 h-4 shrink-0 mt-0.5 ${
+                      autopush.github?.inSync ? "text-emerald-400" : "text-amber-400"
+                    }`}
+                  />
+                  <div>
+                    <div className="font-bold text-white">
+                      GitHub Push Status: {autopush.github?.inSync ? "Synced on Remote" : "Pending / Out of Sync"}
+                    </div>
+                    <div className="text-[#b0b0b8] mt-0.5">
+                      {autopush.github?.repo || "origin"} ({autopush.branch}) &bull; Remote SHA:{" "}
+                      {autopush.github?.remoteHeadSha?.slice(0, 7) || "unknown"}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5 flex items-start gap-2.5">
+                  <Rocket
+                    className={`w-4 h-4 shrink-0 mt-0.5 ${
+                      autopush.vercel?.linked ? "text-emerald-400" : "text-[#3b82f6]"
+                    }`}
+                  />
+                  <div>
+                    <div className="font-bold text-white">
+                      Vercel Deployment Status: {autopush.vercel?.state?.toUpperCase() || "UNKNOWN"}
+                    </div>
+                    <div className="text-[#b0b0b8] mt-0.5">{autopush.vercel?.summary}</div>
+                    {autopush.vercel?.latestDeploymentUrl && (
+                      <a
+                        href={autopush.vercel.latestDeploymentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block text-[#3b82f6] underline mt-1"
+                      >
+                        Open Vercel Deployment
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {data?.integrations.map((cfg) => (

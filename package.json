@@ -12,7 +12,8 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-cms": "tsx prisma/seed-cms.ts",
-    "test": "tsx --test tests/platform.test.ts"
+    "test": "tsx --test tests/platform.test.ts",
+    "autopush": "node scripts/autopush/ctl.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1178.0",
