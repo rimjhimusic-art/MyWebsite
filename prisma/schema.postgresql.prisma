@@ -1197,3 +1197,157 @@ model CmsRevision {
   snapshotJson String
   createdAt    DateTime @default(now())
 }
+
+// =========================
+// AI Customer Support Chatbot & Two-Way Email Handover
+// =========================
+
+model ChatbotSettings {
+  id                           String    @id @default("default")
+  aiEnabled                    Boolean   @default(true)
+  aiProvider                   String    @default("OPENAI")
+  aiModel                      String    @default("gpt-4o-mini")
+  aiBaseUrl                    String?
+  aiApiKeyEncrypted            String?
+  assistantName                String    @default("OneTab Support Assistant")
+  welcomeMessage               String    @default("Hi! I'm OneTab Assistant. How can I help you with music distribution, plans, DSP stores, royalties, or VEVO today?")
+  systemInstructions           String    @default("You are the official AI Customer Support Assistant for OneTab Media Network. Answer visitor questions accurately using only verified website knowledge and knowledge base entries. Reply naturally in the visitor's language (English, Hindi, or Bengali). Never invent prices, promises, or policies. If unsure, missing data, or when human support is requested or needed, escalate cleanly.")
+  defaultLanguage              String    @default("auto")
+  escalationThreshold          Float     @default(0.65)
+  humanHandoverEnabled         Boolean   @default(true)
+  emailEnabled                 Boolean   @default(true)
+  emailProvider                String    @default("POSTMARK")
+  supportEmail                 String    @default("support@onetabmedia.in")
+  senderEmail                  String    @default("support@onetabmedia.in")
+  senderName                   String    @default("OneTab Media Support")
+  replyRoutingDomain           String    @default("reply.onetabmedia.in")
+  emailApiKeyEncrypted         String?
+  inboundWebhookSecretEncrypted String?
+  smtpHost                     String?
+  smtpPort                     Int?
+  smtpUser                     String?
+  lastWebhookVerifiedAt        DateTime?
+  lastTestEmailAt              DateTime?
+  lastTestEmailStatus          String?
+  updatedAt                    DateTime  @updatedAt
+}
+
+model KnowledgeBaseEntry {
+  id                 String   @id @default(cuid())
+  title              String
+  category           String   @default("FAQ")
+  question           String?
+  content            String
+  tags               String   @default("")
+  documentFileName   String?
+  documentStorageKey String?
+  enabled            Boolean  @default(true)
+  sortOrder          Int      @default(0)
+  createdById        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([enabled, category, sortOrder])
+}
+
+model ChatVisitor {
+  id                String             @id @default(cuid())
+  visitorTokenHash  String             @unique
+  name              String?
+  email             String?
+  preferredLanguage String?
+  userAgent         String?
+  ipHash            String?
+  lastSeenAt        DateTime           @default(now())
+  createdAt         DateTime           @default(now())
+  conversations     ChatConversation[]
+
+  @@index([lastSeenAt])
+}
+
+model ChatConversation {
+  id                   String            @id @default(cuid())
+  visitorId            String
+  replyToken           String            @unique
+  subject              String            @default("Website Support Conversation")
+  status               String            @default("AI_ACTIVE")
+  escalatedToHuman     Boolean           @default(false)
+  escalationReason     String?
+  escalatedAt          DateTime?
+  firstHumanReplyAt    DateTime?
+  lastMessageAt        DateTime          @default(now())
+  lastEmailThreadMsgId String?
+  emailThreadRefsJson  String            @default("[]")
+  pendingHumanReply    Boolean           @default(false)
+  resolvedAt           DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  visitor         ChatVisitor       @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  messages        ChatMessage[]
+  emailDeliveries ChatEmailRecord[]
+
+  @@index([visitorId, updatedAt])
+  @@index([status, pendingHumanReply, updatedAt])
+  @@index([lastMessageAt])
+}
+
+model ChatMessage {
+  id                  String           @id @default(cuid())
+  conversationId      String
+  senderType          String
+  senderName          String?
+  content             String
+  language            String?
+  aiModel             String?
+  aiConfidence        Float?
+  requiresHumanReview Boolean          @default(false)
+  externalMessageId   String?          @unique
+  clientMessageId     String?
+  emailForwarded      Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, clientMessageId])
+  @@index([conversationId, createdAt])
+}
+
+model ChatEmailRecord {
+  id              String            @id @default(cuid())
+  conversationId  String?
+  direction       String
+  provider        String
+  fromEmail       String
+  toEmail         String
+  replyToEmail    String?
+  subject         String
+  messageIdHeader String?
+  inReplyToHeader String?
+  status          String
+  attemptCount    Int               @default(1)
+  nextRetryAt     DateTime?
+  providerEventId String?           @unique
+  errorMessage    String?
+  createdAt       DateTime          @default(now())
+
+  conversation ChatConversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([status, nextRetryAt])
+  @@index([messageIdHeader])
+}
+
+model ChatWebhookLog {
+  id             String   @id @default(cuid())
+  provider       String
+  eventType      String
+  eventHash      String   @unique
+  signatureValid Boolean  @default(false)
+  conversationId String?
+  status         String
+  summary        String?
+  createdAt      DateTime @default(now())
+
+  @@index([provider, createdAt])
+}
