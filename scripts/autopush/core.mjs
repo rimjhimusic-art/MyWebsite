@@ -74,7 +74,7 @@ const PK_PREFIX = ["-----BEGIN ", "(?:RSA |EC |DSA |OPENSSH |PGP )?", "PRIVATE K
 const DB_PROTO = ["(?:postgres|postgresql|mysql|mongodb(?:\\+srv)?|redis)", "://"].join("");
 
 const SAFE_PLACEHOLDER_RE =
-  /(\$\{|process\.env\.|YOUR_|CHANGE_ME|CHANGEME|placeholder|dummy|localhost:5432\/postgres@|user:pass@|postgresql:\/\/user:password@|\*\*\*)/i;
+  /(\$\{|process\.env\.|YOUR_|CHANGE_ME|CHANGEME|replace-with|file:\.\/dev\.db|postgres:password@localhost|placeholder|dummy|localhost:5432\/postgres@|user:pass@|postgresql:\/\/user:password@|\*\*\*)/i;
 
 const SECRET_LINE_RULES = [
   { name: "Private Key Block", regex: new RegExp(PK_PREFIX), allowPlaceholderBypass: false },

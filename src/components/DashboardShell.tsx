@@ -29,6 +29,7 @@ import {
   X,
   ShieldAlert,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 
@@ -46,6 +47,7 @@ const ADMIN_DEFAULT_NAV: NavItem[] = [
   { href: "/admin/royalties", label: "Royalties & Payments", icon: BadgeDollarSign },
   { href: "/admin/services", label: "YouTube, VEVO, Rights & DSPs", icon: Tv },
   { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
+  { href: "/admin/chatbot", label: "AI Chatbot & Live Support", icon: MessageSquare },
   { href: "/admin/cms", label: "Website CMS Studio", icon: FileText },
   { href: "/admin/settings", label: "Integrations & Audit Logs", icon: Settings },
 ];
