@@ -12,6 +12,8 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-cms": "tsx prisma/seed-cms.ts",
+    "postinstall": "node scripts/vercel-prepare.mjs",
+    "vercel-build": "node scripts/vercel-prepare.mjs --push && npm run build",
     "test": "tsx --test tests/platform.test.ts",
     "autopush": "node scripts/autopush/ctl.mjs"
   },
