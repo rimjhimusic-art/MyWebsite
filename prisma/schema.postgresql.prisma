@@ -1,0 +1,1196 @@
+// Production PostgreSQL Schema Mirror (swap DATABASE_URL & copy over schema.prisma for Postgres)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  LABEL_OWNER
+  LABEL_MANAGER
+  ARTIST
+  FINANCE_MANAGER
+  CONTENT_MANAGER
+}
+
+enum AccountStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+enum VerificationType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+enum ReleaseType {
+  SINGLE
+  EP
+  ALBUM
+  COMPILATION
+}
+
+enum ReleaseStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PROCESSING
+  DELIVERED
+  LIVE
+  TAKEDOWN_REQUESTED
+  TAKEN_DOWN
+}
+
+enum AssetKind {
+  AUDIO
+  ARTWORK
+  VIDEO
+  DOCUMENT
+  CMS_IMAGE
+  CMS_VIDEO
+  CMS_SVG
+}
+
+enum StoreDeliveryStatus {
+  NOT_SUBMITTED
+  PENDING_PARTNER
+  QUEUED
+  DELIVERED
+  LIVE
+  FAILED
+  TAKEN_DOWN
+}
+
+enum PartnerSubmissionStatus {
+  INTERNAL_REVIEW
+  PENDING_PARTNER_CREDENTIALS
+  QUEUED
+  DELIVERED
+  REJECTED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+enum SplitBeneficiaryRole {
+  LABEL
+  ARTIST
+  PRODUCER
+  CONTRIBUTOR
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  UPI
+  PAYPAL
+  WIRE
+}
+
+enum PaymentStatus {
+  REQUESTED
+  PROCESSING
+  COMPLETED
+  FAILED
+  REJECTED
+}
+
+enum StatementStatus {
+  DRAFT
+  FINALIZED
+  PAID
+}
+
+enum YoutubeRequestType {
+  OAC
+  CONTENT_ID
+  MONETIZATION
+  CLAIM_DISPUTE
+}
+
+enum ServiceRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  PENDING_PARTNER_AUTH
+  APPROVED
+  REJECTED
+  LIVE
+}
+
+enum RightsClaimType {
+  COPYRIGHT_CLAIM
+  DUPLICATE_ASSET
+  TAKEDOWN_REQUEST
+  TERRITORY_BLOCK
+}
+
+enum RightsClaimStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  REJECTED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id                String        @id @default(cuid())
+  name              String
+  email             String        @unique
+  passwordHash      String
+  role              UserRole      @default(ARTIST)
+  status            AccountStatus @default(PENDING)
+  emailVerifiedAt   DateTime?
+  country           String        @default("India")
+  phone             String?
+  bio               String?
+  avatarUrl         String?
+  payoutMethod      PaymentMethod?
+  payoutDetails     String?
+  lastLoginAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  sessions          Session[]
+  tokens            VerificationToken[]
+  ownedLabels       Label[]       @relation("LabelOwner")
+  labelMemberships  LabelMember[]
+  artists           Artist[]
+  sentInvitations   LabelInvitation[] @relation("InvitedBy")
+  mediaAssets       MediaAsset[]
+  releases          Release[]     @relation("ReleaseOwner")
+  submissionsMade   Submission[]  @relation("SubmittedBy")
+  submissionsRev    Submission[]  @relation("ReviewedBy")
+  activities        ReleaseActivity[]
+  revenueSplits     RevenueSplit[]
+  statements        Statement[]
+  payments          Payment[]     @relation("PaymentUser")
+  processedPayments Payment[]     @relation("PaymentProcessor")
+  youtubeChannels   YoutubeChannel[]
+  youtubeRequests   YoutubeRequest[] @relation("YoutubeReqOwner")
+  youtubeReviews    YoutubeRequest[] @relation("YoutubeReqReviewer")
+  vevoSubmissions   VevoSubmission[] @relation("VevoOwner")
+  vevoReviews       VevoSubmission[] @relation("VevoReviewer")
+  rightsAssets      RightsAsset[]
+  rightsClaims      RightsClaim[] @relation("Claimant")
+  resolvedClaims    RightsClaim[] @relation("ClaimResolver")
+  notifications     Notification[]
+  tickets           SupportTicket[] @relation("TicketUser")
+  assignedTickets   SupportTicket[] @relation("TicketAssignee")
+  ticketReplies     TicketReply[]
+  royaltyBatches    RoyaltyImportBatch[]
+  auditLogs         AuditLog[]
+  updatedPages      SitePage[]
+
+  @@index([role, status])
+  @@index([createdAt])
+}
+
+model RolePermission {
+  id          String   @id @default(cuid())
+  role        UserRole
+  permission  String
+  description String
+
+  @@unique([role, permission])
+  @@index([role])
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  rememberMe Boolean   @default(false)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model VerificationToken {
+  id        String           @id @default(cuid())
+  userId    String?
+  email     String
+  tokenHash String           @unique
+  type      VerificationType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, type])
+}
+
+model Label {
+  id                         String   @id @default(cuid())
+  name                       String
+  slug                       String   @unique
+  ownerId                    String
+  parentLabelId              String?
+  description                String?
+  website                    String?
+  country                    String   @default("India")
+  defaultRevenueSharePercent Float    @default(20)
+  status                     AccountStatus @default(APPROVED)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  owner        User              @relation("LabelOwner", fields: [ownerId], references: [id])
+  parentLabel  Label?            @relation("SubLabels", fields: [parentLabelId], references: [id])
+  subLabels    Label[]           @relation("SubLabels")
+  members      LabelMember[]
+  artists      Artist[]
+  invitations  LabelInvitation[]
+  releases     Release[]
+  splits       RevenueSplit[]
+  royalties    RoyaltyEntry[]
+  statements   Statement[]
+
+  @@index([ownerId])
+  @@index([parentLabelId])
+}
+
+model LabelMember {
+  id              String   @id @default(cuid())
+  labelId         String
+  userId          String
+  role            UserRole @default(LABEL_MANAGER)
+  permissionsJson String   @default("[]")
+  createdAt       DateTime @default(now())
+
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([labelId, userId])
+  @@index([userId])
+}
+
+model Artist {
+  id                String   @id @default(cuid())
+  userId            String?
+  labelId           String?
+  stageName         String
+  legalName         String?
+  bio               String?
+  genre             String?
+  country           String   @default("India")
+  spotifyUrl        String?
+  appleMusicUrl     String?
+  youtubeChannelUrl String?
+  instagramUrl      String?
+  facebookUrl       String?
+  avatarUrl         String?
+  verified          Boolean  @default(false)
+  featuredOnHome    Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user            User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  label           Label?            @relation(fields: [labelId], references: [id], onDelete: SetNull)
+  invitations     LabelInvitation[]
+  releases        Release[]
+  royalties       RoyaltyEntry[]
+  statements      Statement[]
+  youtubeChannels YoutubeChannel[]
+  vevoSubmissions VevoSubmission[]
+
+  @@index([userId])
+  @@index([labelId])
+  @@index([featuredOnHome])
+}
+
+model LabelInvitation {
+  id                  String           @id @default(cuid())
+  labelId             String
+  artistId            String?
+  invitedEmail        String
+  invitedByUserId     String
+  status              InvitationStatus @default(PENDING)
+  revenueSharePercent Float            @default(80)
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  label     Label   @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  artist    Artist? @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  invitedBy User    @relation("InvitedBy", fields: [invitedByUserId], references: [id])
+
+  @@index([labelId, status])
+  @@index([invitedEmail])
+}
+
+model DspStore {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  category         String   @default("Streaming")
+  deliveryProtocol String   @default("DDEX ERN 4.3")
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  releaseStores    ReleaseStore[]
+  royaltyEntries   RoyaltyEntry[]
+
+  @@index([active, sortOrder])
+}
+
+model MediaAsset {
+  id               String    @id @default(cuid())
+  ownerUserId      String
+  kind             AssetKind
+  originalName     String
+  storageKey       String    @unique
+  mimeType         String
+  sizeBytes        Int
+  sha256           String
+  width            Int?
+  height           Int?
+  durationSeconds  Int?
+  sampleRate       Int?
+  validationStatus String    @default("VALID")
+  validationNotes  String?
+  isPublicCms      Boolean   @default(false)
+  folder           String    @default("general")
+  title            String?
+  altText          String?
+  createdAt        DateTime  @default(now())
+
+  owner          User             @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  artworkFor     Release[]        @relation("ReleaseArtwork")
+  audioForTracks Track[]          @relation("TrackAudio")
+  vevoVideos     VevoSubmission[] @relation("VevoVideoAsset")
+  vevoArtworks   VevoSubmission[] @relation("VevoArtworkAsset")
+
+  @@index([ownerUserId, kind])
+  @@index([sha256])
+}
+
+model Release {
+  id                    String        @id @default(cuid())
+  ownerUserId           String
+  artistId              String
+  labelId               String?
+  releaseType           ReleaseType   @default(SINGLE)
+  title                 String
+  version               String?
+  primaryArtist         String
+  featuringArtists      String?
+  remixer               String?
+  composer              String?
+  lyricist              String?
+  producer              String?
+  arranger              String?
+  musicDirector         String?
+  recordLabelName       String
+  genre                 String
+  subgenre              String?
+  language              String        @default("English")
+  releaseDate           DateTime?
+  originalReleaseDate   DateTime?
+  copyrightYear         Int?
+  copyrightOwner        String?
+  phonographicCopyright String?
+  explicitContent       Boolean       @default(false)
+  upc                   String?
+  cLine                 String?
+  pLine                 String?
+  artworkAssetId        String?
+  status                ReleaseStatus @default(DRAFT)
+  rejectionReason       String?
+  correctionNotes       String?
+  internalNotes         String?
+  smartLinkSlug         String?       @unique
+  worldwide             Boolean       @default(true)
+  territoriesJson       String        @default("[\"WORLDWIDE\"]")
+  currentWizardStep     Int           @default(1)
+  submittedAt           DateTime?
+  approvedAt            DateTime?
+  scheduledAt           DateTime?
+  publishedAt           DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  owner           User              @relation("ReleaseOwner", fields: [ownerUserId], references: [id])
+  artist          Artist            @relation(fields: [artistId], references: [id])
+  label           Label?            @relation(fields: [labelId], references: [id])
+  artworkAsset    MediaAsset?       @relation("ReleaseArtwork", fields: [artworkAssetId], references: [id])
+  tracks          Track[]
+  contributors    Contributor[]
+  stores          ReleaseStore[]
+  submissions     Submission[]
+  activities      ReleaseActivity[]
+  revenueSplits   RevenueSplit[]
+  royaltyEntries  RoyaltyEntry[]
+  youtubeRequests YoutubeRequest[]
+  vevoSubmissions VevoSubmission[]
+  rightsAssets    RightsAsset[]
+
+  @@index([ownerUserId, status])
+  @@index([artistId, status])
+  @@index([labelId, status])
+  @@index([status, releaseDate])
+  @@index([upc])
+}
+
+model Track {
+  id               String   @id @default(cuid())
+  releaseId        String
+  trackNumber      Int      @default(1)
+  title            String
+  version          String?
+  primaryArtist    String
+  featuringArtists String?
+  isrc             String?
+  durationSeconds  Int?
+  explicitContent  Boolean  @default(false)
+  language         String   @default("English")
+  lyrics           String?
+  previewStartSec  Int      @default(0)
+  audioAssetId     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  release         Release          @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  audioAsset      MediaAsset?      @relation("TrackAudio", fields: [audioAssetId], references: [id])
+  contributors    Contributor[]
+  revenueSplits   RevenueSplit[]
+  royaltyEntries  RoyaltyEntry[]
+  youtubeRequests YoutubeRequest[]
+  rightsAssets    RightsAsset[]
+
+  @@index([releaseId, trackNumber])
+  @@index([isrc])
+}
+
+model Contributor {
+  id           String  @id @default(cuid())
+  releaseId    String
+  trackId      String?
+  name         String
+  role         String
+  sharePercent Float   @default(0)
+  email        String?
+  ipiNumber    String?
+
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  track   Track?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([releaseId])
+  @@index([trackId])
+}
+
+model ReleaseStore {
+  id                 String              @id @default(cuid())
+  releaseId          String
+  storeId            String
+  selected           Boolean             @default(true)
+  deliveryStatus     StoreDeliveryStatus @default(NOT_SUBMITTED)
+  externalReleaseUrl String?
+  updatedAt          DateTime            @updatedAt
+
+  release Release  @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  store   DspStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([releaseId, storeId])
+  @@index([deliveryStatus])
+}
+
+model Submission {
+  id                 String                  @id @default(cuid())
+  releaseId          String
+  submittedById      String
+  reviewedById       String?
+  partnerAdapter     String                  @default("internal")
+  partnerStatus      PartnerSubmissionStatus @default(INTERNAL_REVIEW)
+  partnerReferenceId String?
+  notes              String?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  release     Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  submittedBy User    @relation("SubmittedBy", fields: [submittedById], references: [id])
+  reviewedBy  User?   @relation("ReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([releaseId, createdAt])
+  @@index([partnerStatus])
+}
+
+model ReleaseActivity {
+  id          String         @id @default(cuid())
+  releaseId   String
+  actorUserId String
+  action      String
+  fromStatus  ReleaseStatus?
+  toStatus    ReleaseStatus?
+  details     String?
+  createdAt   DateTime       @default(now())
+
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  actor   User    @relation(fields: [actorUserId], references: [id])
+
+  @@index([releaseId, createdAt])
+}
+
+model RevenueSplit {
+  id               String               @id @default(cuid())
+  releaseId        String
+  trackId          String?
+  labelId          String?
+  userId           String?
+  beneficiaryName  String
+  beneficiaryEmail String?
+  beneficiaryRole  SplitBeneficiaryRole
+  percentage       Float
+  isActive         Boolean              @default(true)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  release Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  track   Track?  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  label   Label?  @relation(fields: [labelId], references: [id], onDelete: SetNull)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([releaseId, isActive])
+  @@index([userId])
+}
+
+model RoyaltyImportBatch {
+  id                String   @id @default(cuid())
+  importedById      String
+  periodMonth       String
+  sourcePartner     String
+  fileName          String
+  totalRows         Int      @default(0)
+  totalGrossRevenue Float    @default(0)
+  totalNetRevenue   Float    @default(0)
+  status            String   @default("VERIFIED")
+  createdAt         DateTime @default(now())
+
+  importedBy User           @relation(fields: [importedById], references: [id])
+  entries    RoyaltyEntry[]
+
+  @@index([periodMonth])
+}
+
+model RoyaltyEntry {
+  id           String   @id @default(cuid())
+  batchId      String
+  releaseId    String
+  trackId      String?
+  artistId     String?
+  labelId      String?
+  storeId      String?
+  periodMonth  String
+  reportDate   DateTime
+  countryCode  String   @default("IN")
+  countryName  String   @default("India")
+  streams      Int      @default(0)
+  grossRevenue Float    @default(0)
+  platformFee  Float    @default(0)
+  netRevenue   Float    @default(0)
+  currency     String   @default("USD")
+  createdAt    DateTime @default(now())
+
+  batch   RoyaltyImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  release Release            @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  track   Track?             @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  artist  Artist?            @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  label   Label?             @relation(fields: [labelId], references: [id], onDelete: SetNull)
+  store   DspStore?          @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@index([releaseId, periodMonth])
+  @@index([artistId, periodMonth])
+  @@index([labelId, periodMonth])
+  @@index([reportDate])
+}
+
+model Statement {
+  id            String          @id @default(cuid())
+  userId        String
+  artistId      String?
+  labelId       String?
+  periodMonth   String
+  totalStreams  Int             @default(0)
+  grossAmount   Float           @default(0)
+  netAmount     Float           @default(0)
+  payableAmount Float           @default(0)
+  currency      String          @default("USD")
+  status        StatementStatus @default(DRAFT)
+  generatedAt   DateTime        @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+  artist   Artist?   @relation(fields: [artistId], references: [id])
+  label    Label?    @relation(fields: [labelId], references: [id])
+  payments Payment[]
+
+  @@unique([userId, periodMonth])
+  @@index([periodMonth, status])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  statementId     String?
+  amount          Float
+  currency        String        @default("USD")
+  method          PaymentMethod
+  accountSummary  String
+  referenceNumber String?
+  status          PaymentStatus @default(REQUESTED)
+  processedById   String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user        User       @relation("PaymentUser", fields: [userId], references: [id])
+  statement   Statement? @relation(fields: [statementId], references: [id])
+  processedBy User?      @relation("PaymentProcessor", fields: [processedById], references: [id])
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model YoutubeChannel {
+  id                 String               @id @default(cuid())
+  ownerUserId        String
+  artistId           String?
+  channelId          String               @unique
+  channelName        String
+  channelUrl         String
+  subscribersCount   Int                  @default(0)
+  oacStatus          ServiceRequestStatus @default(SUBMITTED)
+  monetizationStatus ServiceRequestStatus @default(PENDING_PARTNER_AUTH)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  owner    User             @relation(fields: [ownerUserId], references: [id])
+  artist   Artist?          @relation(fields: [artistId], references: [id])
+  requests YoutubeRequest[]
+
+  @@index([ownerUserId])
+}
+
+model YoutubeRequest {
+  id              String               @id @default(cuid())
+  ownerUserId     String
+  channelId       String?
+  releaseId       String?
+  trackId         String?
+  requestType     YoutubeRequestType
+  status          ServiceRequestStatus @default(SUBMITTED)
+  partnerAdapter  String               @default("youtube-rights")
+  externalClaimId String?
+  notes           String?
+  adminNotes      String?
+  reviewedById    String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  owner      User            @relation("YoutubeReqOwner", fields: [ownerUserId], references: [id])
+  channel    YoutubeChannel? @relation(fields: [channelId], references: [id])
+  release    Release?        @relation(fields: [releaseId], references: [id])
+  track      Track?          @relation(fields: [trackId], references: [id])
+  reviewedBy User?           @relation("YoutubeReqReviewer", fields: [reviewedById], references: [id])
+
+  @@index([ownerUserId, status])
+  @@index([requestType, status])
+}
+
+model VevoSubmission {
+  id              String               @id @default(cuid())
+  ownerUserId     String
+  artistId        String
+  releaseId       String?
+  videoTitle      String
+  videoDescription String?
+  director        String?
+  genre           String
+  language        String               @default("English")
+  explicitContent Boolean              @default(false)
+  videoAssetId    String?
+  artworkAssetId  String?
+  vevoChannelName String?
+  status          ServiceRequestStatus @default(SUBMITTED)
+  rejectionReason String?
+  internalNotes   String?
+  reviewedById    String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  owner        User        @relation("VevoOwner", fields: [ownerUserId], references: [id])
+  artist       Artist      @relation(fields: [artistId], references: [id])
+  release      Release?    @relation(fields: [releaseId], references: [id])
+  videoAsset   MediaAsset? @relation("VevoVideoAsset", fields: [videoAssetId], references: [id])
+  artworkAsset MediaAsset? @relation("VevoArtworkAsset", fields: [artworkAssetId], references: [id])
+  reviewedBy   User?       @relation("VevoReviewer", fields: [reviewedById], references: [id])
+
+  @@index([ownerUserId, status])
+  @@index([status])
+}
+
+model RightsAsset {
+  id                      String   @id @default(cuid())
+  ownerUserId             String
+  releaseId               String
+  trackId                 String?
+  isrc                    String?
+  upc                     String?
+  audioSha256             String?
+  copyrightOwner          String
+  publishingOwner         String?
+  territoryRestrictionsJson String @default("[]")
+  status                  String   @default("ACTIVE")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  owner   User          @relation(fields: [ownerUserId], references: [id])
+  release Release       @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  track   Track?        @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  claims  RightsClaim[]
+
+  @@index([ownerUserId])
+  @@index([isrc])
+  @@index([audioSha256])
+}
+
+model RightsClaim {
+  id               String            @id @default(cuid())
+  rightsAssetId    String
+  claimantUserId   String
+  claimType        RightsClaimType
+  status           RightsClaimStatus @default(OPEN)
+  duplicateMatchId String?
+  details          String
+  resolutionNotes  String?
+  resolvedById     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  rightsAsset RightsAsset @relation(fields: [rightsAssetId], references: [id], onDelete: Cascade)
+  claimant    User        @relation("Claimant", fields: [claimantUserId], references: [id])
+  resolvedBy  User?       @relation("ClaimResolver", fields: [resolvedById], references: [id])
+
+  @@index([status, claimType])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+}
+
+model SupportTicket {
+  id           String         @id @default(cuid())
+  userId       String
+  subject      String
+  category     String
+  priority     TicketPriority @default(MEDIUM)
+  status       TicketStatus   @default(OPEN)
+  assignedToId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user       User          @relation("TicketUser", fields: [userId], references: [id])
+  assignedTo User?         @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  replies    TicketReply[]
+
+  @@index([userId, status])
+  @@index([status, priority])
+}
+
+model TicketReply {
+  id         String   @id @default(cuid())
+  ticketId   String
+  userId     String
+  message    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id])
+
+  @@index([ticketId, createdAt])
+}
+
+model FaqItem {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String   @default("General")
+  keywords  String   @default("")
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model SitePage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  subtitle    String?
+  contentJson String
+  published   Boolean  @default(true)
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+
+  updatedBy User? @relation(fields: [updatedById], references: [id])
+}
+
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model BrandInquiry {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  phone        String
+  email        String
+  businessName String
+  message      String?
+  status       String   @default("NEW")
+  createdAt    DateTime @default(now())
+}
+
+model CareerApplication {
+  id           String   @id @default(cuid())
+  roleTitle    String
+  fullName     String
+  email        String
+  phone        String?
+  portfolioUrl String?
+  coverNote    String
+  status       String   @default("RECEIVED")
+  createdAt    DateTime @default(now())
+}
+
+model IntegrationConfig {
+  id            String    @id @default(cuid())
+  provider      String    @unique
+  displayName   String
+  enabled       Boolean   @default(false)
+  mode          String    @default("UNCONFIGURED")
+  configJson    String    @default("{}")
+  statusMessage String    @default("Partner API credentials not configured. Running in internal review mode.")
+  lastCheckedAt DateTime?
+  updatedAt     DateTime  @updatedAt
+}
+
+model EmailLog {
+  id           String   @id @default(cuid())
+  toEmail      String
+  subject      String
+  bodyPreview  String
+  template     String
+  status       String   @default("LOGGED_LOCAL")
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([toEmail, createdAt])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  action       String
+  entityType   String
+  entityId     String?
+  ipAddress    String?
+  userAgent    String?
+  metadataJson String   @default("{}")
+  createdAt    DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// =========================
+// Dynamic Website CMS Models
+// =========================
+
+model WebsiteSettings {
+  id                  String    @id @default("default")
+  siteName            String    @default("OneTab Media Network")
+  tagline             String    @default("India's leading digital music distribution partner empowering independent artists and labels globally with enterprise-grade technology.")
+  headerLogoUrl       String    @default("/ref/logo.png")
+  headerLogoWidth     Int       @default(118)
+  headerLogoHeight    Int       @default(40)
+  footerLogoUrl       String    @default("/ref/logo.png")
+  footerLogoWidth     Int       @default(118)
+  footerLogoHeight    Int       @default(40)
+  faviconUrl          String    @default("/ref/logo.png")
+  contactEmail        String    @default("support@onetabmedia.in")
+  contactPhone        String    @default("+91 70470 13399")
+  contactAddress      String    @default("West Bengal, India")
+  instagramUrl        String    @default("https://www.instagram.com/onetab.media/")
+  facebookUrl         String    @default("https://www.facebook.com/onetabmedia/")
+  whatsappUrl         String    @default("https://wa.me/917047013399")
+  youtubeUrl          String    @default("")
+  copyrightText       String    @default("© 2026 OneTab Media Network Pvt. Ltd. All Rights Reserved.")
+  draftStatus         String    @default("PUBLISHED")
+  draftJson           String?
+  lastPublishedAt     DateTime?
+  lastPublishedById   String?
+  updatedAt           DateTime  @updatedAt
+}
+
+model NavigationItem {
+  id          String   @id @default(cuid())
+  location    String   @default("HEADER")
+  label       String
+  href        String
+  isButton    Boolean  @default(false)
+  openNewTab  Boolean  @default(false)
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  draftStatus String   @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([location, sortOrder])
+}
+
+model PageSection {
+  id          String   @id @default(cuid())
+  pageSlug    String
+  sectionKey  String
+  title       String?
+  subtitle    String?
+  badgeText   String?
+  bodyHtml    String?
+  ctaLabel    String?
+  ctaHref     String?
+  cta2Label   String?
+  cta2Href    String?
+  mediaUrl    String?
+  mediaType   String?
+  bgColor     String?
+  textColor   String?
+  fontSize    String?
+  extraJson   String   @default("{}")
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  draftStatus String   @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([pageSlug, sectionKey])
+  @@index([pageSlug, sortOrder])
+}
+
+model FeaturedArtist {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  roleBadge    String
+  bio          String
+  imageUrl     String
+  verified     Boolean  @default(true)
+  facebookUrl  String?
+  instagramUrl String?
+  youtubeUrl   String?
+  spotifyUrl   String?
+  websiteUrl   String?
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  draftStatus  String   @default("PUBLISHED")
+  draftJson    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model DigitalStore {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  logoUrl       String
+  altText       String?
+  websiteUrl    String?
+  showInMarquee Boolean  @default(true)
+  showOnSignup  Boolean  @default(false)
+  enabled       Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  draftStatus   String   @default("PUBLISHED")
+  draftJson     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+}
+
+model CmsService {
+  id          String   @id @default(cuid())
+  title       String
+  shortDesc   String
+  detailsJson String   @default("[]")
+  iconKey     String   @default("music")
+  accentTheme String   @default("blue")
+  imageUrl    String?
+  ctaLabel    String?
+  ctaHref     String?
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  draftStatus String   @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model TeamMember {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  bio         String?
+  imageUrl    String
+  linkedinUrl String?
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  draftStatus String   @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model BrandCreator {
+  id          String   @id @default(cuid())
+  name        String
+  handle      String?
+  category    String?
+  imageUrl    String
+  videoUrl    String?
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  draftStatus String   @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model DistributionPlan {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  priceLabel   String
+  billingCycle String
+  badgeText    String?
+  description  String
+  featuresJson String   @default("[]")
+  ctaLabel     String   @default("Get Started")
+  ctaHref      String   @default("/signup")
+  highlighted  Boolean  @default(false)
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  draftStatus  String   @default("PUBLISHED")
+  draftJson    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model ControlFeature {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  iconKey     String   @default("shield")
+  ctaLabel    String?
+  ctaHref     String?
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  draftStatus String   @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model SeoSetting {
+  id              String   @id @default(cuid())
+  pageSlug        String   @unique
+  metaTitle       String
+  metaDescription String
+  ogTitle         String?
+  ogDescription   String?
+  ogImageUrl      String?
+  canonicalUrl    String?
+  noIndex         Boolean  @default(false)
+  draftStatus     String   @default("PUBLISHED")
+  draftJson       String?
+  updatedAt       DateTime @updatedAt
+}
+
+model CmsRevision {
+  id           String   @id @default(cuid())
+  summary      String
+  actorUserId  String?
+  snapshotJson String
+  createdAt    DateTime @default(now())
+}

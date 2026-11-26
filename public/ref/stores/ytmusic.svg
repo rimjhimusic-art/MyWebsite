@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <circle cx="24" cy="24" r="20" fill="#FF0000"/>
+  <circle cx="24" cy="24" r="12" stroke="#FFFFFF" stroke-width="2"/>
+  <polygon points="21,18 31,24 21,30" fill="#FFFFFF"/>
+  <text x="54" y="31" fill="#FFFFFF" font-family="Outfit, Arial, sans-serif" font-weight="700" font-size="20">YouTube Music</text>
+</svg>

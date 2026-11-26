@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 560" fill="none">
+  <defs>
+    <linearGradient id="mapFill" x1="100" y1="40" x2="400" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E3A8A" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#0F172A" stop-opacity="0.75"/>
+    </linearGradient>
+  </defs>
+  <path d="M210 38L248 52L278 46L294 74L276 105L310 128L348 134L365 168L415 154L448 166L458 196L425 224L430 258L395 266L382 232L346 244L334 282L305 322L282 365L254 415L232 478L212 522L192 482L174 424L152 364L126 306L84 280L64 240L96 210L116 172L148 142L168 96L188 64Z" fill="url(#mapFill)" stroke="#3B82F6" stroke-width="2" stroke-opacity="0.6"/>
+  <path d="M202 150L310 218M202 150L156 320M202 150L352 246M352 246L215 410M156 320L215 410M310 218L396 196" stroke="#60A5FA" stroke-width="1.2" stroke-dasharray="4 4" stroke-opacity="0.5"/>
+</svg>

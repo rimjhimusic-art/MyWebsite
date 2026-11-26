@@ -1,26 +1,292 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --dark-bg: #0f0f0f;
+  --card-bg: #18181b;
+  --text-main: #ffffff;
+  --text-body: #b0b0b8;
+  --text-muted: #71717a;
+  --vevo-red: #E3001B;
+  --border-color: #2a2a2a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--dark-bg);
+  color: var(--text-main);
+  font-family: var(--font-outfit), 'Outfit', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+@keyframes slideLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+  width: max-content;
+  animation: slideLeft 40s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.artist-marquee-track {
+  animation: slideLeft 34s linear infinite;
+}
+.artist-marquee-paused {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .artist-marquee-track,
+  .marquee-track {
+    animation: none;
+  }
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- INDIA MAP & STATS --- */
+.map-visual-wrapper {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  max-width: 550px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.india-map-base {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.8;
+  filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+  position: relative;
+  z-index: 1;
+}
+
+.city-marker {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+}
+
+.cm-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--primary);
+  position: relative;
+}
+
+.cm-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid var(--primary);
+  animation: ripple 2s infinite;
+}
+
+@keyframes ripple {
+  0% { width: 8px; height: 8px; opacity: 1; }
+  100% { width: 25px; height: 25px; opacity: 0; }
+}
+
+.cm-label {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+#city-delhi { top: 29%; left: 41%; flex-direction: row-reverse; }
+#city-patna { top: 40%; left: 59%; }
+#city-assam { top: 36%; left: 83%; }
+#city-kolkata { top: 51%; left: 70%; }
+#city-mumbai { top: 60%; left: 30%; flex-direction: row-reverse; }
+#city-bengaluru { top: 80%; left: 43%; flex-direction: row-reverse; }
+
+.stat-bubble {
+  position: absolute;
+  text-align: center;
+  z-index: 3;
+  width: auto;
+  min-width: 100px;
+  transition: 0.4s ease;
+}
+.stat-bubble:hover { transform: scale(1.1); }
+.sb-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+.sb-label {
+  font-size: 0.8rem;
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sb-1 { top: 10%; left: -5%; }
+.sb-2 { top: 10%; right: -5%; }
+.sb-3 { bottom: 15%; left: -5%; }
+.sb-4 { bottom: 10%; right: -5%; }
+
+@media (max-width: 900px) {
+  .marquee-track { gap: 3rem; }
+  .map-visual-wrapper {
+    max-width: 100%;
+    margin: 0 auto;
+    aspect-ratio: auto;
+    height: 350px;
+    display: block;
+  }
+  .india-map-base {
+    height: 100%;
+    margin: 0 auto;
+    display: block;
+  }
+  .sb-1 { top: 0; left: 5%; }
+  .sb-2 { top: 0; right: 5%; }
+  .sb-3 { bottom: 0; left: 5%; }
+  .sb-4 { bottom: 0; right: 5%; }
+}
+
+/* --- ABOUT PAGE RIBBON & DUAL SLIDER --- */
+.clean-slider {
+  width: 100%;
+  max-width: 1600px;
+  height: 400px;
+  overflow: hidden;
+  position: relative;
+  margin: 50px auto 80px;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.slider-track {
+  display: flex;
+  width: max-content;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-top: 40px;
+  animation: smoothScroll 45s linear infinite;
+  pointer-events: none;
+}
+.track-back { z-index: 1; }
+.track-front { z-index: 10; }
+.clean-slider:hover .slider-track { animation-play-state: paused; }
+@keyframes smoothScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+.ribbon-container {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  transform: translateY(-50%);
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ribbon-wave {
+  position: absolute;
+  width: 200%;
+  height: 100%;
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  animation: waveFlow 8s linear infinite;
+}
+@keyframes waveFlow { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.line-top { stroke: #FF9933; stroke-width: 3px; top: 30px; filter: drop-shadow(0 0 2px #FF9933); }
+.line-mid { stroke: #FFFFFF; stroke-width: 3px; top: 45px; filter: drop-shadow(0 0 3px #FFFFFF); }
+.line-bottom { stroke: #138808; stroke-width: 3px; top: 60px; filter: drop-shadow(0 0 2px #138808); }
+
+.gallery-card {
+  width: 280px;
+  height: 300px;
+  margin-right: 25px;
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.6) 100%);
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  flex-shrink: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.gallery-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  filter: grayscale(100%) contrast(1.1);
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  transition: all 0.4s ease;
+}
+.track-front .gallery-card:nth-child(even) { visibility: hidden; }
+.track-back .gallery-card:nth-child(odd) { visibility: hidden; }
+.track-back .gallery-card { filter: brightness(0.5) blur(3px); transform: scale(0.9); }
+.gallery-card:hover {
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-15px) scale(1.05) !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  filter: brightness(1) blur(0px) !important;
+  z-index: 100;
+}
+.gallery-card:hover img { filter: grayscale(0%); }
+
+@media (max-width: 600px) {
+  .clean-slider { height: 300px; margin: 30px auto 50px; }
+  .gallery-card { width: 200px; height: 220px; margin-right: 15px; }
 }

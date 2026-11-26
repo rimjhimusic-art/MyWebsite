@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local database and private storage
+prisma/dev.db
+prisma/dev.db.backup
+prisma/dev.db*
+storage/
+
+# Temporary editor files
+*.swp
+*.swo
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 48" fill="none">
+  <g transform="translate(8,10)">
+    <rect x="0" y="18" width="6" height="8" rx="1.5" fill="#A238FF"/>
+    <rect x="8" y="12" width="6" height="14" rx="1.5" fill="#A238FF"/>
+    <rect x="16" y="4" width="6" height="22" rx="1.5" fill="#A238FF"/>
+    <rect x="24" y="9" width="6" height="17" rx="1.5" fill="#A238FF"/>
+    <rect x="32" y="15" width="6" height="11" rx="1.5" fill="#A238FF"/>
+  </g>
+  <text x="54" y="32" fill="#FFFFFF" font-family="Outfit, Arial, sans-serif" font-weight="800" font-size="24" letter-spacing="-0.5">deezer</text>
+</svg>
