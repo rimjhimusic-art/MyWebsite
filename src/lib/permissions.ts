@@ -51,6 +51,8 @@ export type Permission =
   | "settings:view"
   | "settings:edit"
   | "settings:manage"
+  | "chatbot:view"
+  | "chatbot:manage"
   | "integrations:manage"
   | "audit:view";
 
@@ -105,6 +107,8 @@ export const ALL_PERMISSIONS: Permission[] = [
   "settings:view",
   "settings:edit",
   "settings:manage",
+  "chatbot:view",
+  "chatbot:manage",
   "integrations:manage",
   "audit:view",
 ];
@@ -148,6 +152,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "music:delete",
     "music:publish",
     "music:manage",
+    "chatbot:view",
+    "chatbot:manage",
     "audit:view",
   ],
   LABEL_OWNER: [
@@ -377,6 +383,8 @@ export const PERMISSION_MATRIX_GROUPS: Array<{
         { key: "royalties:view_all", label: "View Royalties" },
         { key: "payments:process", label: "Process Payouts" },
         { key: "tickets:manage_all", label: "Manage Tickets" },
+        { key: "chatbot:view", label: "View AI Chat" },
+        { key: "chatbot:manage", label: "Manage AI Chat" },
         { key: "audit:view", label: "View Audit Logs" },
       ],
     },
