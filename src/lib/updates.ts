@@ -6,6 +6,26 @@ export interface UpdateOtherLink {
   url: string;
 }
 
+export interface PublicUpcomingRelease {
+  id: string;
+  slug: string;
+  title: string;
+  artistName: string | null;
+  releaseType: string;
+  releaseDate: string | null;
+  statusBadge: string;
+  description: string | null;
+  thumbnailUrl: string;
+  heroBgUrl: string | null;
+  useAsHeroBg: boolean;
+  ctaLabel: string | null;
+  ctaHref: string | null;
+  preSaveUrl: string | null;
+  published: boolean;
+  sortOrder: number;
+  movedReleaseId: string | null;
+}
+
 export interface PublicUpdateRelease {
   id: string;
   slug: string;
@@ -83,10 +103,14 @@ export async function getUpdatesFeed(options?: { includeUnpublished?: boolean })
         OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
       };
 
-  const [releaseRows, spotifyRows, youtubeRows] = await Promise.all([
+  const [releaseRows, upcomingRows, spotifyRows, youtubeRows] = await Promise.all([
     prisma.updateRelease.findMany({
       where: wherePublished,
       orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
+    }),
+    prisma.upcomingRelease.findMany({
+      where: options?.includeUnpublished ? {} : { published: true },
+      orderBy: [{ useAsHeroBg: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     }),
     prisma.updateSpotifyTrack.findMany({
       where: wherePublished,
@@ -97,6 +121,26 @@ export async function getUpdatesFeed(options?: { includeUnpublished?: boolean })
       orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     }),
   ]);
+
+  const upcomingReleases: PublicUpcomingRelease[] = upcomingRows.map((u) => ({
+    id: u.id,
+    slug: u.slug,
+    title: u.title,
+    artistName: u.artistName,
+    releaseType: u.releaseType,
+    releaseDate: u.releaseDate,
+    statusBadge: u.statusBadge,
+    description: u.description,
+    thumbnailUrl: u.thumbnailUrl,
+    heroBgUrl: u.heroBgUrl,
+    useAsHeroBg: u.useAsHeroBg,
+    ctaLabel: u.ctaLabel,
+    ctaHref: u.ctaHref,
+    preSaveUrl: u.preSaveUrl,
+    published: u.published,
+    sortOrder: u.sortOrder,
+    movedReleaseId: u.movedReleaseId,
+  }));
 
   const releases: PublicUpdateRelease[] = releaseRows.map((r) => ({
     id: r.id,
@@ -164,6 +208,7 @@ export async function getUpdatesFeed(options?: { includeUnpublished?: boolean })
 
   return {
     releases,
+    upcomingReleases,
     spotifyMusic,
     trendingSpotify,
     youtubeVideos,

@@ -131,6 +131,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ item: created });
     }
 
+    if (type === "upcoming") {
+      const title = String(body.title || "").trim();
+      const thumbnailUrl = String(body.thumbnailUrl || "/ref/abir.jpg").trim();
+      if (!title) {
+        return NextResponse.json({ error: "Upcoming release title is required." }, { status: 400 });
+      }
+
+      const useAsHeroBg = Boolean(body.useAsHeroBg);
+      if (useAsHeroBg) {
+        await prisma.upcomingRelease.updateMany({ data: { useAsHeroBg: false } });
+      }
+
+      const maxRow = await prisma.upcomingRelease.aggregate({ _max: { sortOrder: true } });
+      const created = await prisma.upcomingRelease.create({
+        data: {
+          slug: makeSlug(`upcoming-${title}`),
+          title,
+          artistName: cleanStr(body.artistName),
+          releaseType: String(body.releaseType || "SINGLE").toUpperCase(),
+          releaseDate: cleanStr(body.releaseDate),
+          statusBadge: cleanStr(body.statusBadge) || "Coming Soon",
+          description: cleanStr(body.description),
+          thumbnailUrl,
+          heroBgUrl: cleanStr(body.heroBgUrl),
+          useAsHeroBg,
+          ctaLabel: cleanStr(body.ctaLabel),
+          ctaHref: cleanStr(body.ctaHref),
+          preSaveUrl: cleanStr(body.preSaveUrl),
+          published: body.published !== false,
+          sortOrder: (maxRow._max.sortOrder ?? 0) + 1,
+        },
+      });
+
+      await recordAuditLog({
+        actorUserId: auth.user.id,
+        action: "UPDATES_UPCOMING_CREATE",
+        entityType: "UpcomingRelease",
+        entityId: created.id,
+        metadata: { title: created.title },
+      });
+
+      revalidateUpdatesRoutes();
+      return NextResponse.json({ item: created });
+    }
+
     if (type === "spotify") {
       const spotifyUrl = String(body.spotifyUrl || "").trim();
       const parsed = parseSpotifyUrl(spotifyUrl);
@@ -195,6 +240,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ item: created });
     }
 
+    if (type === "upcoming") {
+      const title = String(body.title || "").trim();
+      const thumbnailUrl = String(body.thumbnailUrl || "/ref/abir.jpg").trim();
+      if (!title) {
+        return NextResponse.json({ error: "Upcoming release title is required." }, { status: 400 });
+      }
+
+      const useAsHeroBg = Boolean(body.useAsHeroBg);
+      if (useAsHeroBg) {
+        await prisma.upcomingRelease.updateMany({ data: { useAsHeroBg: false } });
+      }
+
+      const maxRow = await prisma.upcomingRelease.aggregate({ _max: { sortOrder: true } });
+      const created = await prisma.upcomingRelease.create({
+        data: {
+          slug: makeSlug(`upcoming-${title}`),
+          title,
+          artistName: cleanStr(body.artistName),
+          releaseType: String(body.releaseType || "SINGLE").toUpperCase(),
+          releaseDate: cleanStr(body.releaseDate),
+          statusBadge: cleanStr(body.statusBadge) || "Coming Soon",
+          description: cleanStr(body.description),
+          thumbnailUrl,
+          heroBgUrl: cleanStr(body.heroBgUrl),
+          useAsHeroBg,
+          ctaLabel: cleanStr(body.ctaLabel),
+          ctaHref: cleanStr(body.ctaHref),
+          preSaveUrl: cleanStr(body.preSaveUrl),
+          published: body.published !== false,
+          sortOrder: (maxRow._max.sortOrder ?? 0) + 1,
+        },
+      });
+
+      await recordAuditLog({
+        actorUserId: auth.user.id,
+        action: "UPDATES_UPCOMING_CREATE",
+        entityType: "UpcomingRelease",
+        entityId: created.id,
+        metadata: { title: created.title },
+      });
+
+      revalidateUpdatesRoutes();
+      return NextResponse.json({ item: created });
+    }
+
     if (type === "youtube") {
       const youtubeUrl = String(body.youtubeUrl || "").trim();
       const parsed = parseYoutubeUrl(youtubeUrl);
@@ -247,6 +337,51 @@ export async function POST(request: Request) {
         entityType: "UpdateYoutubeVideo",
         entityId: created.id,
         metadata: { videoId: created.videoId, title: created.title },
+      });
+
+      revalidateUpdatesRoutes();
+      return NextResponse.json({ item: created });
+    }
+
+    if (type === "upcoming") {
+      const title = String(body.title || "").trim();
+      const thumbnailUrl = String(body.thumbnailUrl || "/ref/abir.jpg").trim();
+      if (!title) {
+        return NextResponse.json({ error: "Upcoming release title is required." }, { status: 400 });
+      }
+
+      const useAsHeroBg = Boolean(body.useAsHeroBg);
+      if (useAsHeroBg) {
+        await prisma.upcomingRelease.updateMany({ data: { useAsHeroBg: false } });
+      }
+
+      const maxRow = await prisma.upcomingRelease.aggregate({ _max: { sortOrder: true } });
+      const created = await prisma.upcomingRelease.create({
+        data: {
+          slug: makeSlug(`upcoming-${title}`),
+          title,
+          artistName: cleanStr(body.artistName),
+          releaseType: String(body.releaseType || "SINGLE").toUpperCase(),
+          releaseDate: cleanStr(body.releaseDate),
+          statusBadge: cleanStr(body.statusBadge) || "Coming Soon",
+          description: cleanStr(body.description),
+          thumbnailUrl,
+          heroBgUrl: cleanStr(body.heroBgUrl),
+          useAsHeroBg,
+          ctaLabel: cleanStr(body.ctaLabel),
+          ctaHref: cleanStr(body.ctaHref),
+          preSaveUrl: cleanStr(body.preSaveUrl),
+          published: body.published !== false,
+          sortOrder: (maxRow._max.sortOrder ?? 0) + 1,
+        },
+      });
+
+      await recordAuditLog({
+        actorUserId: auth.user.id,
+        action: "UPDATES_UPCOMING_CREATE",
+        entityType: "UpcomingRelease",
+        entityId: created.id,
+        metadata: { title: created.title },
       });
 
       revalidateUpdatesRoutes();
@@ -323,6 +458,7 @@ export async function PATCH(request: Request) {
       if ("title" in body) data.title = typeof body.title === "string" ? body.title : null;
       if ("subtitle" in body) data.subtitle = typeof body.subtitle === "string" ? body.subtitle : null;
       if ("badgeText" in body) data.badgeText = typeof body.badgeText === "string" ? body.badgeText : null;
+      if ("ctaHref" in body) data.ctaHref = cleanStr(body.ctaHref);
       if ("bodyHtml" in body) data.bodyHtml = typeof body.bodyHtml === "string" ? body.bodyHtml : null;
       if ("mediaUrl" in body) data.mediaUrl = cleanStr(body.mediaUrl);
       if ("bgColor" in body) data.bgColor = cleanStr(body.bgColor);
@@ -372,10 +508,55 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: true, section });
     }
 
+    if (body.action === "move_to_latest") {
+      const id = String(body.id || "").trim();
+      if (!id) {
+        return NextResponse.json({ error: "Upcoming release id is required." }, { status: 400 });
+      }
+      const up = await prisma.upcomingRelease.findUnique({ where: { id } });
+      if (!up) {
+        return NextResponse.json({ error: "Upcoming release not found." }, { status: 404 });
+      }
+
+      const moved = await prisma.$transaction(async (tx) => {
+        const maxRel = await tx.updateRelease.aggregate({ _max: { sortOrder: true } });
+        const release = await tx.updateRelease.create({
+          data: {
+            slug: makeSlug(`${up.artistName || "artist"}-${up.title}`),
+            title: up.title,
+            artistName: up.artistName || "Featured Artist",
+            releaseType: up.releaseType,
+            releaseDate: up.releaseDate || new Date().toISOString().slice(0, 10),
+            coverUrl: up.thumbnailUrl,
+            description: up.description,
+            spotifyUrl: up.preSaveUrl,
+            featured: true,
+            trending: false,
+            published: true,
+            sortOrder: (maxRel._max.sortOrder ?? 0) + 1,
+          },
+        });
+        await tx.upcomingRelease.delete({ where: { id: up.id } });
+        return release;
+      });
+
+      await recordAuditLog({
+        actorUserId: auth.user.id,
+        action: "UPDATES_UPCOMING_MOVED_TO_LATEST",
+        entityType: "UpdateRelease",
+        entityId: moved.id,
+        metadata: { title: moved.title, sourceUpcomingId: id },
+      });
+
+      revalidateUpdatesRoutes();
+      return NextResponse.json({ ok: true, release: moved });
+    }
+
     if (body.action === "reorder" && Array.isArray(body.ids)) {
       const ids = body.ids.map(String);
       const modelMap = {
         release: prisma.updateRelease,
+        upcoming: prisma.upcomingRelease,
         spotify: prisma.updateSpotifyTrack,
         youtube: prisma.updateYoutubeVideo,
       } as const;
@@ -491,6 +672,34 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ item: updated });
     }
 
+    if (type === "upcoming") {
+      const data: Record<string, unknown> = {};
+      if (typeof body.title === "string" && body.title.trim()) data.title = body.title.trim();
+      if ("artistName" in body) data.artistName = cleanStr(body.artistName);
+      if (typeof body.releaseType === "string") data.releaseType = body.releaseType.toUpperCase();
+      if ("releaseDate" in body) data.releaseDate = cleanStr(body.releaseDate);
+      if ("statusBadge" in body) data.statusBadge = cleanStr(body.statusBadge) || "Coming Soon";
+      if ("description" in body) data.description = cleanStr(body.description);
+      if (typeof body.thumbnailUrl === "string" && body.thumbnailUrl.trim()) {
+        data.thumbnailUrl = body.thumbnailUrl.trim();
+      }
+      if ("heroBgUrl" in body) data.heroBgUrl = cleanStr(body.heroBgUrl);
+      if (typeof body.useAsHeroBg === "boolean") {
+        if (body.useAsHeroBg) {
+          await prisma.upcomingRelease.updateMany({ where: { id: { not: id } }, data: { useAsHeroBg: false } });
+        }
+        data.useAsHeroBg = body.useAsHeroBg;
+      }
+      if ("ctaLabel" in body) data.ctaLabel = cleanStr(body.ctaLabel);
+      if ("ctaHref" in body) data.ctaHref = cleanStr(body.ctaHref);
+      if ("preSaveUrl" in body) data.preSaveUrl = cleanStr(body.preSaveUrl);
+      if (typeof body.published === "boolean") data.published = body.published;
+
+      const updated = await prisma.upcomingRelease.update({ where: { id }, data });
+      revalidateUpdatesRoutes();
+      return NextResponse.json({ item: updated });
+    }
+
     return NextResponse.json({ error: "Invalid update item type." }, { status: 400 });
   } catch (err) {
     return NextResponse.json(
@@ -514,6 +723,8 @@ export async function DELETE(request: Request) {
 
   if (type === "release") {
     await prisma.updateRelease.delete({ where: { id } });
+  } else if (type === "upcoming") {
+    await prisma.upcomingRelease.delete({ where: { id } });
   } else if (type === "spotify") {
     await prisma.updateSpotifyTrack.delete({ where: { id } });
   } else if (type === "youtube") {

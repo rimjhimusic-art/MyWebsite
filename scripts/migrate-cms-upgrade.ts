@@ -38,6 +38,60 @@ const DEFAULT_STORY_EXTRA = {
 async function main() {
   console.log("Running non-destructive CMS upgrade migration...");
 
+  // 8b. Update existing updates.releases eyebrow "Catalog Drop" -> "UPCOMING RELEASES" & ensure updates.upcoming section
+  const existingUpdatesRelSec = await prisma.pageSection.findUnique({
+    where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey: "releases" } },
+  });
+  if (existingUpdatesRelSec && existingUpdatesRelSec.badgeText === "Catalog Drop") {
+    await prisma.pageSection.update({
+      where: { id: existingUpdatesRelSec.id },
+      data: {
+        badgeText: "UPCOMING RELEASES",
+        ctaHref: existingUpdatesRelSec.ctaHref || "#upcoming-releases",
+      },
+    });
+  }
+
+  await prisma.pageSection.upsert({
+    where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey: "upcoming" } },
+    update: {},
+    create: {
+      pageSlug: "updates",
+      sectionKey: "upcoming",
+      title: "UPCOMING RELEASES",
+      subtitle: "Exclusive upcoming releases, singles, and music videos coming soon.",
+      badgeText: "Coming Soon",
+      enabled: true,
+      sortOrder: 3,
+      draftStatus: "PUBLISHED",
+    },
+  });
+
+  // Seed one initial UpcomingRelease ONLY if table is empty (non-destructive)
+  const existingUpcomingCount = await prisma.upcomingRelease.count();
+  if (existingUpcomingCount === 0) {
+    await prisma.upcomingRelease.create({
+      data: {
+        slug: "upcoming-featured-premiere",
+        title: "Next Wave Independent Premiere",
+        artistName: "Goldex Roster",
+        releaseType: "SINGLE",
+        releaseDate: "2026-12-15",
+        statusBadge: "Coming Soon",
+        description:
+          "Upcoming official single and visual release distributed worldwide on Spotify, Apple Music, and YouTube.",
+        thumbnailUrl: "/ref/abir.jpg",
+        heroBgUrl: "/ref/abir.jpg",
+        useAsHeroBg: true,
+        ctaLabel: "View Upcoming Drops",
+        ctaHref: "#upcoming-releases",
+        published: true,
+        sortOrder: 1,
+      },
+    });
+    console.log("Seeded starter UpcomingRelease item for futuristic Hero showcase.");
+  }
+
   // 1. Ensure WebsiteSettings badge defaults exist without altering customized branding
   const settings = await prisma.websiteSettings.findUnique({ where: { id: "default" } });
   if (settings) {

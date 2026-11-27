@@ -1288,6 +1288,31 @@ model UpdateRelease {
   @@index([scheduledAt])
 }
 
+model UpcomingRelease {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  artistName     String?
+  releaseType    String   @default("SINGLE")
+  releaseDate    String?
+  statusBadge    String   @default("Coming Soon")
+  description    String?
+  thumbnailUrl   String
+  heroBgUrl      String?
+  useAsHeroBg    Boolean  @default(false)
+  ctaLabel       String?
+  ctaHref        String?
+  preSaveUrl     String?
+  published      Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  movedReleaseId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([published, sortOrder])
+  @@index([useAsHeroBg, published])
+}
+
 model UpdateSpotifyTrack {
   id          String    @id @default(cuid())
   spotifyUrl  String

@@ -4,14 +4,20 @@ import crypto from "crypto";
 import fs from "fs/promises";
 import type { AssetKind } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { putObject, validateUploadFile } from "@/lib/storage";
-import { findMediaReferences, requireCmsApiAuth } from "@/lib/cms";
+import { deleteObject, putObject, validateUploadFile } from "@/lib/storage";
+import {
+  findMediaReferences,
+  replaceMediaUrlAcrossCms,
+  requireCmsApiAuth,
+} from "@/lib/cms";
+import { revalidatePublicCmsPaths } from "@/lib/cms-crud";
 import { recordAuditLog } from "@/lib/audit";
 
 function detectCmsKind(filename: string): AssetKind {
   const ext = path.extname(filename).toLowerCase();
   if (ext === ".svg") return "CMS_SVG";
   if ([".mp4", ".webm", ".mov"].includes(ext)) return "CMS_VIDEO";
+  if ([".pdf", ".csv", ".txt", ".json"].includes(ext)) return "DOCUMENT";
   return "CMS_IMAGE";
 }
 
@@ -21,7 +27,10 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const folder = searchParams.get("folder");
+  const kindFilter = searchParams.get("kind")?.toUpperCase();
+  const sort = searchParams.get("sort") || "newest";
   const q = searchParams.get("q")?.trim().toLowerCase();
+  const includeUsage = searchParams.get("usage") === "1";
 
   const assets = await prisma.mediaAsset.findMany({
     where: {
@@ -29,19 +38,22 @@ export async function GET(request: Request) {
       ...(folder && folder !== "ALL" ? { folder } : {}),
     },
     orderBy: { createdAt: "desc" },
-    take: 250,
+    take: 400,
   });
 
-  // Also include curated static assets from public/ref
+  // Also include curated static assets across public/ref
   const staticAssets: Array<{
     id: string;
     url: string;
     title: string;
+    originalName: string;
     altText: string;
     folder: string;
     kind: string;
     mimeType: string;
     sizeBytes: number;
+    width?: number | null;
+    height?: number | null;
     isStatic: boolean;
     createdAt: string;
   }> = [];
@@ -52,6 +64,8 @@ export async function GET(request: Request) {
       { dir: path.join(process.cwd(), "public", "ref", "stores"), urlPrefix: "/ref/stores", folder: "stores" },
       { dir: path.join(process.cwd(), "public", "ref", "team"), urlPrefix: "/ref/team", folder: "team" },
       { dir: path.join(process.cwd(), "public", "ref", "brand"), urlPrefix: "/ref/brand", folder: "brand" },
+      { dir: path.join(process.cwd(), "public", "ref", "flag"), urlPrefix: "/ref/flag", folder: "about" },
+      { dir: path.join(process.cwd(), "public", "ref", "influencers"), urlPrefix: "/ref/influencers", folder: "brand" },
       { dir: path.join(process.cwd(), "public", "ref", "video"), urlPrefix: "/ref/video", folder: "videos" },
     ];
     for (const s of scanDirs) {
@@ -60,19 +74,37 @@ export async function GET(request: Request) {
       for (const entry of entries) {
         if (!entry.isFile()) continue;
         const ext = path.extname(entry.name).toLowerCase();
-        if (![".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp4", ".webm"].includes(ext)) continue;
+        if (![".png", ".jpg", ".jpeg", ".webp", ".svg", ".mp4", ".webm", ".pdf"].includes(ext)) continue;
         const fullUrl = `${s.urlPrefix}/${entry.name}`;
+        const st = await fs.stat(path.join(s.dir, entry.name)).catch(() => null);
         staticAssets.push({
           id: `static:${fullUrl}`,
           url: fullUrl,
           title: entry.name,
+          originalName: entry.name,
           altText: entry.name,
           folder: s.folder,
-          kind: ext === ".svg" ? "CMS_SVG" : ext === ".mp4" || ext === ".webm" ? "CMS_VIDEO" : "CMS_IMAGE",
-          mimeType: ext === ".svg" ? "image/svg+xml" : ext === ".mp4" ? "video/mp4" : `image/${ext.slice(1)}`,
-          sizeBytes: 0,
+          kind:
+            ext === ".svg"
+              ? "CMS_SVG"
+              : ext === ".mp4" || ext === ".webm"
+              ? "CMS_VIDEO"
+              : ext === ".pdf"
+              ? "DOCUMENT"
+              : "CMS_IMAGE",
+          mimeType:
+            ext === ".svg"
+              ? "image/svg+xml"
+              : ext === ".mp4"
+              ? "video/mp4"
+              : ext === ".pdf"
+              ? "application/pdf"
+              : `image/${ext.slice(1)}`,
+          sizeBytes: st ? st.size : 0,
+          width: null,
+          height: null,
           isStatic: true,
-          createdAt: "2026-01-01T00:00:00.000Z",
+          createdAt: st ? st.mtime.toISOString() : "2026-01-01T00:00:00.000Z",
         });
       }
     }
@@ -84,6 +116,7 @@ export async function GET(request: Request) {
     id: a.id,
     url: `/api/files/${a.id}`,
     title: a.title || a.originalName,
+    originalName: a.originalName,
     altText: a.altText || a.originalName,
     folder: a.folder,
     kind: a.kind,
@@ -96,13 +129,39 @@ export async function GET(request: Request) {
   }));
 
   const combined = [...uploadedFormatted, ...staticAssets].filter((item) => {
+    if (kindFilter && kindFilter !== "ALL") {
+      if (kindFilter === "IMAGE" && item.kind !== "CMS_IMAGE" && item.kind !== "CMS_SVG") {
+        return false;
+      } else if (kindFilter !== "IMAGE" && item.kind !== kindFilter) {
+        return false;
+      }
+    }
     if (!q) return true;
     return (
       item.title.toLowerCase().includes(q) ||
+      item.originalName.toLowerCase().includes(q) ||
       item.folder.toLowerCase().includes(q) ||
       item.url.toLowerCase().includes(q)
     );
   });
+
+  if (sort === "oldest") {
+    combined.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  } else if (sort === "name") {
+    combined.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (sort === "size") {
+    combined.sort((a, b) => b.sizeBytes - a.sizeBytes);
+  } else {
+    combined.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  if (includeUsage) {
+    const checkId = searchParams.get("checkUsageUrl");
+    if (checkId) {
+      const references = await findMediaReferences(checkId);
+      return NextResponse.json({ references });
+    }
+  }
 
   return NextResponse.json({ assets: combined });
 }
@@ -141,6 +200,7 @@ export async function POST(request: Request) {
       if (!existing) {
         return NextResponse.json({ error: "Target asset to replace not found." }, { status: 404 });
       }
+      const oldStorageKey = existing.storageKey;
       const updated = await prisma.mediaAsset.update({
         where: { id: replaceAssetId },
         data: {
@@ -173,6 +233,7 @@ export async function POST(request: Request) {
           createdAt: true,
         },
       });
+      await deleteObject(oldStorageKey).catch(() => {});
       await recordAuditLog({
         actorUserId: auth.user.id,
         action: "CMS_MEDIA_REPLACED",
@@ -180,6 +241,7 @@ export async function POST(request: Request) {
         entityId: updated.id,
         metadata: { originalName: updated.originalName, folder: updated.folder },
       });
+      revalidatePublicCmsPaths();
       return NextResponse.json({
         asset: { ...updated, url: `/api/files/${updated.id}`, isStatic: false },
       });
@@ -242,20 +304,36 @@ export async function PATCH(request: Request) {
   if (!auth.ok) return auth.response;
 
   const body = await request.json();
-  const { id, title, altText, folder } = body || {};
+  const { id, title, originalName, altText, folder } = body || {};
   if (!id || typeof id !== "string") {
     return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
+  }
+  if (id.startsWith("static:")) {
+    return NextResponse.json(
+      { error: "Built-in seed filenames cannot be renamed on disk." },
+      { status: 400 }
+    );
   }
 
   const updated = await prisma.mediaAsset.update({
     where: { id },
     data: {
-      ...(typeof title === "string" ? { title: title.trim() } : {}),
+      ...(typeof title === "string" && title.trim() ? { title: title.trim() } : {}),
+      ...(typeof originalName === "string" && originalName.trim()
+        ? { originalName: originalName.trim() }
+        : {}),
       ...(typeof altText === "string" ? { altText: altText.trim() } : {}),
-      ...(typeof folder === "string" ? { folder: folder.trim() } : {}),
+      ...(typeof folder === "string" && folder.trim() ? { folder: folder.trim() } : {}),
     },
   });
-  return NextResponse.json({ asset: { ...updated, url: `/api/files/${updated.id}` } });
+  await recordAuditLog({
+    actorUserId: auth.user.id,
+    action: "CMS_MEDIA_RENAMED",
+    entityType: "MediaAsset",
+    entityId: updated.id,
+    metadata: { title: updated.title, folder: updated.folder },
+  });
+  return NextResponse.json({ asset: { ...updated, url: `/api/files/${updated.id}`, isStatic: false } });
 }
 
 export async function DELETE(request: Request) {
@@ -265,37 +343,68 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const force = searchParams.get("force") === "true";
+  const clearRefs = searchParams.get("clearRefs") === "true";
+  const replaceWith = searchParams.get("replaceWith")?.trim() || "";
 
   if (!id) {
     return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
   }
-  if (id.startsWith("static:")) {
-    return NextResponse.json(
-      { error: "Built-in seed assets cannot be deleted from disk." },
-      { status: 400 }
-    );
-  }
 
-  const fileUrl = `/api/files/${id}`;
+  const isStatic = id.startsWith("static:");
+  const fileUrl = isStatic ? id.slice("static:".length) : `/api/files/${id}`;
   const refs = await findMediaReferences(fileUrl);
-  if (refs.length > 0 && !force) {
+
+  if (refs.length > 0 && !replaceWith && !clearRefs && !force) {
     return NextResponse.json(
       {
-        error: `Asset is currently referenced by: ${refs.join(", ")}. Replace it in those sections or confirm force delete.`,
+        error: `Asset is currently used by ${refs.length} location(s). Reassign a replacement or confirm removal before deleting.`,
         references: refs,
       },
       { status: 409 }
     );
   }
 
-  await prisma.mediaAsset.delete({ where: { id } });
+  let replacedCount = 0;
+  if (refs.length > 0 && (replaceWith || clearRefs || force)) {
+    replacedCount = await replaceMediaUrlAcrossCms(fileUrl, replaceWith);
+  }
+
+  if (isStatic) {
+    const safeRel = fileUrl.replace(/^\/+/, "");
+    const targetPath = path.join(process.cwd(), "public", safeRel);
+    const refRoot = path.join(process.cwd(), "public", "ref");
+    if (!targetPath.startsWith(refRoot)) {
+      return NextResponse.json({ error: "Invalid static asset path." }, { status: 400 });
+    }
+    try {
+      await fs.unlink(targetPath);
+    } catch {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot unlink read-only static asset in this runtime environment, though references were updated.",
+          replacedCount,
+        },
+        { status: 400 }
+      );
+    }
+  } else {
+    const asset = await prisma.mediaAsset.findUnique({ where: { id } });
+    if (!asset) {
+      return NextResponse.json({ error: "Asset not found." }, { status: 404 });
+    }
+    await prisma.mediaAsset.delete({ where: { id } });
+    await deleteObject(asset.storageKey).catch(() => {});
+  }
+
   await recordAuditLog({
     actorUserId: auth.user.id,
     action: "CMS_MEDIA_DELETED",
     entityType: "MediaAsset",
     entityId: id,
-    metadata: { force, refs },
+    metadata: { force, clearRefs, replaceWith, replacedCount, refs },
   });
 
-  return NextResponse.json({ ok: true });
+  revalidatePublicCmsPaths();
+  return NextResponse.json({ ok: true, replacedCount });
 }

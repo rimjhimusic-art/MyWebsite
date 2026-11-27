@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowDown,
+  ArrowRight,
   ArrowUp,
+  Calendar,
   Disc3,
   ExternalLink,
   Eye,
@@ -26,6 +28,7 @@ import { useToast } from "@/components/ToastProvider";
 import { CmsConfirmModal } from "@/components/admin/CmsConfirmModal";
 import { CmsMediaPickerModal } from "@/components/admin/CmsMediaPickerModal";
 import type {
+  PublicUpcomingRelease,
   PublicUpdateRelease,
   PublicUpdateSpotifyTrack,
   PublicUpdateYoutubeVideo,
@@ -37,6 +40,7 @@ interface UpdatesSectionRow {
   title?: string | null;
   subtitle?: string | null;
   badgeText?: string | null;
+  ctaHref?: string | null;
   bodyHtml?: string | null;
   mediaUrl?: string | null;
   bgColor?: string | null;
@@ -47,6 +51,7 @@ interface UpdatesSectionRow {
 
 interface UpdatesAdminPayload {
   releases: PublicUpdateRelease[];
+  upcomingReleases: PublicUpcomingRelease[];
   spotifyMusic: PublicUpdateSpotifyTrack[];
   trendingSpotify: PublicUpdateSpotifyTrack[];
   youtubeVideos: PublicUpdateYoutubeVideo[];
@@ -60,6 +65,7 @@ interface UpdatesAdminPayload {
 
 type AdminUpdatesTab =
   | "hero"
+  | "upcoming"
   | "releases"
   | "spotify"
   | "trending"
@@ -98,16 +104,18 @@ export default function AdminUpdatesManagementPage() {
   // Hero CMS state
   const [heroForm, setHeroForm] = useState({
     title: "NEW UPDATES",
-    subtitle: "Latest Releases, Curated Spotify Picks & Official Music Videos",
-    description:
-      "Explore fresh drops, streaming releases, trending highlights, and official visuals across the network.",
-    badgeText: "",
+    subtitle: "",
+    description: "",
+    statusBadge: "Coming Soon",
+    releaseDate: "",
+    ctaLabel: "Explore Upcoming",
+    ctaHref: "#upcoming-releases",
     additionalText: "",
     mediaUrl: "",
-    bgColor: "rgba(255,255,255,0.04)",
+    bgColor: "#050505",
     textColor: "#ef4444",
     glowColor: "#ef4444",
-    subtitleColor: "#e2e8f0",
+    subtitleColor: "#ffffff",
     animationEnabled: true,
     spacing: "normal" as "compact" | "normal" | "spacious",
     showFilterPills: true,
@@ -118,8 +126,14 @@ export default function AdminUpdatesManagementPage() {
   const [secConfig, setSecConfig] = useState({
     releasesTitle: "LATEST RELEASES",
     releasesSubtitle: "",
-    releasesEyebrow: "Catalog Drop",
+    releasesEyebrow: "UPCOMING RELEASES",
+    releasesAttentionHref: "#upcoming-releases",
     releasesEnabled: true,
+
+    upcomingTitle: "UPCOMING RELEASES",
+    upcomingSubtitle: "Exclusive upcoming releases, singles, and visual premieres coming soon.",
+    upcomingEyebrow: "Coming Soon",
+    upcomingEnabled: true,
 
     spotifyTitle: "SPOTIFY MUSIC",
     spotifySubtitle: "",
@@ -143,6 +157,24 @@ export default function AdminUpdatesManagementPage() {
     featuredSubtitle: "",
     featuredEyebrow: "Spotlight",
     featuredEnabled: true,
+  });
+
+  // Upcoming Release Form
+  const [editingUpcomingId, setEditingUpcomingId] = useState<string | null>(null);
+  const [upcomingForm, setUpcomingForm] = useState({
+    title: "",
+    artistName: "",
+    releaseType: "SINGLE",
+    releaseDate: "",
+    statusBadge: "Coming Soon",
+    description: "",
+    thumbnailUrl: "/ref/abir.jpg",
+    heroBgUrl: "",
+    useAsHeroBg: false,
+    ctaLabel: "Pre-Save / Explore",
+    ctaHref: "#upcoming-releases",
+    preSaveUrl: "",
+    published: true,
   });
 
   // Latest Release Form
@@ -204,15 +236,18 @@ export default function AdminUpdatesManagementPage() {
       const ext = parseExtra(h.extraJson);
       setHeroForm({
         title: h.title || "NEW UPDATES",
-        subtitle: h.subtitle || "",
+        subtitle: typeof ext.upcomingTitle === "string" ? ext.upcomingTitle : h.subtitle || "",
         description: h.bodyHtml || "",
-        badgeText: h.badgeText || "",
+        statusBadge: typeof ext.statusBadge === "string" ? ext.statusBadge : "Coming Soon",
+        releaseDate: typeof ext.releaseDate === "string" ? ext.releaseDate : "",
+        ctaLabel: typeof ext.ctaLabel === "string" ? ext.ctaLabel : "Explore Upcoming",
+        ctaHref: typeof ext.ctaHref === "string" ? ext.ctaHref : "#upcoming-releases",
         additionalText: typeof ext.additionalText === "string" ? ext.additionalText : "",
         mediaUrl: h.mediaUrl || "",
-        bgColor: h.bgColor || "rgba(255,255,255,0.04)",
+        bgColor: h.bgColor || "#050505",
         textColor: h.textColor || "#ef4444",
         glowColor: typeof ext.glowColor === "string" ? ext.glowColor : "#ef4444",
-        subtitleColor: typeof ext.subtitleColor === "string" ? ext.subtitleColor : "#e2e8f0",
+        subtitleColor: typeof ext.subtitleColor === "string" ? ext.subtitleColor : "#ffffff",
         animationEnabled: ext.animationEnabled !== false,
         spacing:
           ext.spacing === "compact" || ext.spacing === "spacious" ? ext.spacing : "normal",
@@ -222,6 +257,7 @@ export default function AdminUpdatesManagementPage() {
     }
 
     const r = sections["releases"];
+    const up = sections["upcoming"];
     const sp = sections["spotify"];
     const tr = sections["trending"];
     const vid = sections["videos"];
@@ -231,8 +267,15 @@ export default function AdminUpdatesManagementPage() {
     setSecConfig({
       releasesTitle: r?.title || "LATEST RELEASES",
       releasesSubtitle: r?.subtitle || "",
-      releasesEyebrow: r?.badgeText || "Catalog Drop",
+      releasesEyebrow:
+        r?.badgeText && r.badgeText !== "Catalog Drop" ? r.badgeText : "UPCOMING RELEASES",
+      releasesAttentionHref: r?.ctaHref || "#upcoming-releases",
       releasesEnabled: r ? r.enabled !== false : true,
+
+      upcomingTitle: up?.title || "UPCOMING RELEASES",
+      upcomingSubtitle: up?.subtitle || "",
+      upcomingEyebrow: up?.badgeText || "Coming Soon",
+      upcomingEnabled: up ? up.enabled !== false : true,
 
       spotifyTitle: sp?.title || "SPOTIFY MUSIC",
       spotifySubtitle: sp?.subtitle || "",
@@ -342,6 +385,7 @@ export default function AdminUpdatesManagementPage() {
       title?: string;
       subtitle?: string;
       badgeText?: string;
+      ctaHref?: string;
       bodyHtml?: string;
       mediaUrl?: string;
       bgColor?: string;
@@ -359,7 +403,7 @@ export default function AdminUpdatesManagementPage() {
   };
 
   const reorder = async (
-    type: "release" | "spotify" | "youtube",
+    type: "release" | "upcoming" | "spotify" | "youtube",
     ids: string[],
     idx: number,
     dir: -1 | 1
@@ -406,6 +450,7 @@ export default function AdminUpdatesManagementPage() {
         {(
           [
             { key: "hero", label: "Hero Section CMS", icon: Layout },
+            { key: "upcoming", label: `Upcoming Releases (${data.upcomingReleases?.length || 0})`, icon: Calendar },
             { key: "releases", label: `Latest Releases (${data.releases.length})`, icon: Disc3 },
             { key: "spotify", label: `Spotify Music (${data.spotifyMusic.length})`, icon: Music2 },
             { key: "trending", label: `Trending Songs (${data.trendingSpotify.length})`, icon: Flame },
@@ -460,36 +505,69 @@ export default function AdminUpdatesManagementPage() {
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                  Optional Tag / Eyebrow (Blank = Clean Heading)
+                  Hero Status Badge Override (e.g. Coming Soon)
                 </label>
                 <input
                   type="text"
-                  placeholder="Optional small tag above heading"
-                  value={heroForm.badgeText}
-                  onChange={(e) => setHeroForm({ ...heroForm, badgeText: e.target.value })}
+                  placeholder="Coming Soon (leave blank to pull from Hero Upcoming Release)"
+                  value={heroForm.statusBadge}
+                  onChange={(e) => setHeroForm({ ...heroForm, statusBadge: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                Hero Subtitle
-              </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
+                  Upcoming / Hero Title (Leave blank to pull active Hero Upcoming Release)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Upcoming release title override"
+                  value={heroForm.subtitle}
+                  onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
+                  Release Date Override (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="YYYY-MM-DD or Coming Soon"
+                  value={heroForm.releaseDate}
+                  onChange={(e) => setHeroForm({ ...heroForm, releaseDate: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
-                value={heroForm.subtitle}
-                onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+                placeholder="CTA Button Label (e.g. Explore Upcoming)"
+                value={heroForm.ctaLabel}
+                onChange={(e) => setHeroForm({ ...heroForm, ctaLabel: e.target.value })}
+                className="px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+              />
+              <input
+                type="text"
+                placeholder="CTA Destination URL (e.g. #upcoming-releases)"
+                value={heroForm.ctaHref}
+                onChange={(e) => setHeroForm({ ...heroForm, ctaHref: e.target.value })}
+                className="px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
               />
             </div>
 
             <div>
               <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                Hero Description
+                Hero Description Override
               </label>
               <textarea
                 rows={2}
+                placeholder="Leave blank to inherit description from active Hero Upcoming Release"
                 value={heroForm.description}
                 onChange={(e) => setHeroForm({ ...heroForm, description: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs resize-none"
@@ -498,11 +576,11 @@ export default function AdminUpdatesManagementPage() {
 
             <div>
               <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                Additional Note / Announcement (Optional)
+                Additional Line (Optional)
               </label>
               <input
                 type="text"
-                placeholder="Optional highlighted line below description"
+                placeholder="Optional highlighted line"
                 value={heroForm.additionalText}
                 onChange={(e) => setHeroForm({ ...heroForm, additionalText: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
@@ -512,7 +590,7 @@ export default function AdminUpdatesManagementPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Optional Background Image URL"
+                placeholder="Hero Full 16:9 Background Image / YouTube Thumbnail (Gallery or URL)"
                 value={heroForm.mediaUrl}
                 onChange={(e) => setHeroForm({ ...heroForm, mediaUrl: e.target.value })}
                 className="flex-1 px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
@@ -525,9 +603,9 @@ export default function AdminUpdatesManagementPage() {
                     callback: (u) => setHeroForm((p) => ({ ...p, mediaUrl: u })),
                   })
                 }
-                className="px-3 rounded-xl bg-white/10 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                className="px-3 rounded-xl bg-[#3b82f6]/20 border border-[#3b82f6]/40 text-blue-200 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
               >
-                <ImageIcon className="w-3.5 h-3.5" /> Pick BG
+                <ImageIcon className="w-3.5 h-3.5" /> Select from Gallery
               </button>
               {heroForm.mediaUrl && (
                 <button
@@ -626,12 +704,16 @@ export default function AdminUpdatesManagementPage() {
                   title: heroForm.title,
                   subtitle: heroForm.subtitle,
                   bodyHtml: heroForm.description,
-                  badgeText: heroForm.badgeText,
                   mediaUrl: heroForm.mediaUrl,
                   bgColor: heroForm.bgColor,
                   textColor: heroForm.textColor,
                   enabled: heroForm.enabled,
                   extra: {
+                    upcomingTitle: heroForm.subtitle,
+                    statusBadge: heroForm.statusBadge,
+                    releaseDate: heroForm.releaseDate,
+                    ctaLabel: heroForm.ctaLabel,
+                    ctaHref: heroForm.ctaHref,
                     glowColor: heroForm.glowColor,
                     subtitleColor: heroForm.subtitleColor,
                     animationEnabled: heroForm.animationEnabled,
@@ -647,30 +729,410 @@ export default function AdminUpdatesManagementPage() {
             </button>
           </div>
 
-          {/* Live Hero Preview Card */}
-          <div className="lg:col-span-5 rounded-2xl bg-[#050505] border border-white/10 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <div className="text-[10px] uppercase tracking-widest text-[#71717a] mb-4">
-              Live Hero Preview
-            </div>
-            <div className="relative inline-flex items-center justify-center px-5 py-2 mb-2">
-              {heroForm.animationEnabled && (
-                <span
-                  aria-hidden="true"
-                  className="goldex-red-hero-glow pointer-events-none absolute left-1/2 top-1/2 w-[130%] h-[155%] rounded-full blur-2xl"
-                  style={{
-                    background: `radial-gradient(circle, ${heroForm.glowColor || "#ef4444"}66 0%, ${heroForm.glowColor || "#ef4444"}22 50%, transparent 75%)`,
-                  }}
+          {/* Live 16:9 Dissolve Hero Preview */}
+          <div className="lg:col-span-5 rounded-2xl bg-[#050505] border border-white/10 p-5 flex flex-col items-center justify-between text-center relative overflow-hidden aspect-video min-h-[260px]">
+            {(heroForm.mediaUrl ||
+              data.upcomingReleases?.find((u) => u.useAsHeroBg)?.heroBgUrl ||
+              data.upcomingReleases?.[0]?.thumbnailUrl) && (
+              <div className="goldex-hero-dissolve-mask absolute inset-0 w-full h-full pointer-events-none">
+                <img
+                  src={
+                    heroForm.mediaUrl ||
+                    data.upcomingReleases?.find((u) => u.useAsHeroBg)?.heroBgUrl ||
+                    data.upcomingReleases?.[0]?.thumbnailUrl
+                  }
+                  alt="Hero preview"
+                  className="w-full h-full object-contain blur-[2px] opacity-85"
                 />
-              )}
-              <span
-                style={{ color: heroForm.textColor || "#ef4444" }}
-                className="relative z-10 text-3xl font-black uppercase tracking-wider"
-              >
+              </div>
+            )}
+            <div className="relative z-10 text-xs font-black uppercase tracking-wider text-red-400">
+              <span style={{ color: heroForm.textColor || "#ef4444" }}>
                 {heroForm.title || "NEW UPDATES"}
               </span>
             </div>
-            <p className="text-xs text-zinc-200 font-medium">{heroForm.subtitle}</p>
-            <p className="text-[11px] text-zinc-400 mt-1">{heroForm.description}</p>
+            <div className="relative z-10 rounded-xl bg-black/45 backdrop-blur-md border border-white/15 px-4 py-2.5 max-w-sm">
+              {heroForm.statusBadge && (
+                <span className="inline-block px-2 py-0.5 rounded-full bg-red-500/25 text-red-200 text-[10px] font-bold uppercase mb-1">
+                  {heroForm.statusBadge}
+                </span>
+              )}
+              <p className="text-xs text-white font-bold">
+                {heroForm.subtitle ||
+                  data.upcomingReleases?.find((u) => u.useAsHeroBg)?.title ||
+                  "Upcoming Premiere"}
+              </p>
+              <p className="text-[11px] text-zinc-300 line-clamp-2 mt-0.5">
+                {heroForm.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 0b. UPCOMING RELEASES MANAGEMENT */}
+      {tab === "upcoming" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-4 flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-[10px] uppercase text-[#9ca3af] mb-1">
+                Upcoming Section Heading
+              </label>
+              <input
+                type="text"
+                value={secConfig.upcomingTitle}
+                onChange={(e) => setSecConfig({ ...secConfig, upcomingTitle: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs font-bold"
+              />
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-[10px] uppercase text-[#9ca3af] mb-1">
+                Upcoming Section Description
+              </label>
+              <input
+                type="text"
+                value={secConfig.upcomingSubtitle}
+                onChange={(e) => setSecConfig({ ...secConfig, upcomingSubtitle: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+              />
+            </div>
+            <label className="flex items-center gap-1.5 text-xs pb-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={secConfig.upcomingEnabled}
+                onChange={(e) => setSecConfig({ ...secConfig, upcomingEnabled: e.target.checked })}
+              />
+              Enable Section
+            </label>
+            <button
+              type="button"
+              onClick={() =>
+                saveSectionSettings("upcoming", {
+                  title: secConfig.upcomingTitle,
+                  subtitle: secConfig.upcomingSubtitle,
+                  badgeText: secConfig.upcomingEyebrow,
+                  enabled: secConfig.upcomingEnabled,
+                })
+              }
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold cursor-pointer"
+            >
+              Save Section Header
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-5 rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-5 space-y-3 h-fit">
+              <h2 className="font-bold text-sm text-white">
+                {editingUpcomingId ? "Edit Upcoming Release" : "Add Upcoming Release"}
+              </h2>
+              <input
+                type="text"
+                placeholder="Upcoming Title*"
+                value={upcomingForm.title}
+                onChange={(e) => setUpcomingForm({ ...upcomingForm, title: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+              />
+              <div className="grid grid-cols-2 gap-2.5">
+                <input
+                  type="text"
+                  placeholder="Artist Name"
+                  value={upcomingForm.artistName}
+                  onChange={(e) => setUpcomingForm({ ...upcomingForm, artistName: e.target.value })}
+                  className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                />
+                <select
+                  value={upcomingForm.releaseType}
+                  onChange={(e) => setUpcomingForm({ ...upcomingForm, releaseType: e.target.value })}
+                  className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                >
+                  <option value="SINGLE">Single</option>
+                  <option value="EP">EP</option>
+                  <option value="ALBUM">Album</option>
+                  <option value="VIDEO">Music Video</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <input
+                  type="text"
+                  placeholder="Status Badge (e.g. Coming Soon)"
+                  value={upcomingForm.statusBadge}
+                  onChange={(e) => setUpcomingForm({ ...upcomingForm, statusBadge: e.target.value })}
+                  className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                />
+                <input
+                  type="date"
+                  value={upcomingForm.releaseDate}
+                  onChange={(e) => setUpcomingForm({ ...upcomingForm, releaseDate: e.target.value })}
+                  className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Thumbnail / 16:9 Artwork URL*"
+                  value={upcomingForm.thumbnailUrl}
+                  onChange={(e) => setUpcomingForm({ ...upcomingForm, thumbnailUrl: e.target.value })}
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMediaPicker({
+                      open: true,
+                      callback: (u) => setUpcomingForm((p) => ({ ...p, thumbnailUrl: u })),
+                    })
+                  }
+                  className="px-3 rounded-xl bg-white/10 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" /> Gallery
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Optional Custom Hero BG URL (else uses Thumbnail)"
+                  value={upcomingForm.heroBgUrl}
+                  onChange={(e) => setUpcomingForm({ ...upcomingForm, heroBgUrl: e.target.value })}
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMediaPicker({
+                      open: true,
+                      callback: (u) => setUpcomingForm((p) => ({ ...p, heroBgUrl: u })),
+                    })
+                  }
+                  className="px-3 rounded-xl bg-white/10 text-xs font-semibold cursor-pointer"
+                >
+                  Pick BG
+                </button>
+              </div>
+
+              <textarea
+                rows={2}
+                placeholder="Upcoming description / teaser notes"
+                value={upcomingForm.description}
+                onChange={(e) => setUpcomingForm({ ...upcomingForm, description: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs resize-none"
+              />
+
+              <input
+                type="url"
+                placeholder="Optional Pre-Save / Teaser URL"
+                value={upcomingForm.preSaveUrl}
+                onChange={(e) => setUpcomingForm({ ...upcomingForm, preSaveUrl: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+              />
+
+              <div className="flex flex-wrap gap-4 text-xs pt-1">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={upcomingForm.useAsHeroBg}
+                    onChange={(e) => setUpcomingForm({ ...upcomingForm, useAsHeroBg: e.target.checked })}
+                  />
+                  Showcase in Hero Background
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={upcomingForm.published}
+                    onChange={(e) => setUpcomingForm({ ...upcomingForm, published: e.target.checked })}
+                  />
+                  Published
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={async () => {
+                    const ok = await apiMutate(editingUpcomingId ? "PATCH" : "POST", {
+                      type: "upcoming",
+                      ...(editingUpcomingId ? { id: editingUpcomingId } : {}),
+                      ...upcomingForm,
+                    });
+                    if (ok) {
+                      showToast(
+                        editingUpcomingId ? "Upcoming release updated!" : "Upcoming release saved!",
+                        "success"
+                      );
+                      setEditingUpcomingId(null);
+                      setUpcomingForm({
+                        title: "",
+                        artistName: "",
+                        releaseType: "SINGLE",
+                        releaseDate: "",
+                        statusBadge: "Coming Soon",
+                        description: "",
+                        thumbnailUrl: "/ref/abir.jpg",
+                        heroBgUrl: "",
+                        useAsHeroBg: false,
+                        ctaLabel: "Pre-Save / Explore",
+                        ctaHref: "#upcoming-releases",
+                        preSaveUrl: "",
+                        published: true,
+                      });
+                    }
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-[#3b82f6] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {editingUpcomingId ? "Update Upcoming Release" : "Add Upcoming Release"}
+                </button>
+                {editingUpcomingId && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingUpcomingId(null)}
+                    className="px-4 py-2.5 rounded-xl bg-white/10 text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 space-y-3">
+              {(data.upcomingReleases || []).map((up, idx) => (
+                <div
+                  key={up.id}
+                  className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-4 flex flex-wrap sm:flex-nowrap items-center gap-3.5"
+                >
+                  <img
+                    src={up.thumbnailUrl}
+                    alt={up.title}
+                    className="w-24 aspect-video rounded-xl object-contain bg-black shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-bold text-sm text-white truncate">{up.title}</span>
+                      <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 text-[10px] font-bold">
+                        {up.statusBadge}
+                      </span>
+                      {up.useAsHeroBg && (
+                        <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[10px] font-bold">
+                          Active Hero
+                        </span>
+                      )}
+                      {!up.published && (
+                        <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px]">
+                          Draft
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[#60a5fa]">
+                      {up.artistName || "Artist"} {up.releaseDate ? `• ${up.releaseDate}` : ""}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        apiMutate("PATCH", {
+                          type: "upcoming",
+                          id: up.id,
+                          useAsHeroBg: !up.useAsHeroBg,
+                        })
+                      }
+                      className={`px-2 py-1 rounded-lg text-[11px] font-bold cursor-pointer ${
+                        up.useAsHeroBg
+                          ? "bg-blue-600 text-white"
+                          : "bg-white/10 text-zinc-300"
+                      }`}
+                    >
+                      {up.useAsHeroBg ? "Hero On" : "Use Hero"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ok = await apiMutate("PATCH", {
+                          action: "move_to_latest",
+                          id: up.id,
+                        });
+                        if (ok) {
+                          showToast(`Moved "${up.title}" into Latest Releases!`, "success");
+                        }
+                      }}
+                      className="px-2 py-1 rounded-lg bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-300 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                      title="Move to Latest Releases"
+                    >
+                      <span>Move to Latest</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        reorder(
+                          "upcoming",
+                          (data.upcomingReleases || []).map((x) => x.id),
+                          idx,
+                          -1
+                        )
+                      }
+                      className="p-1.5 rounded-lg bg-white/5 cursor-pointer"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        reorder(
+                          "upcoming",
+                          (data.upcomingReleases || []).map((x) => x.id),
+                          idx,
+                          1
+                        )
+                      }
+                      className="p-1.5 rounded-lg bg-white/5 cursor-pointer"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingUpcomingId(up.id);
+                        setUpcomingForm({
+                          title: up.title,
+                          artistName: up.artistName || "",
+                          releaseType: up.releaseType,
+                          releaseDate: up.releaseDate || "",
+                          statusBadge: up.statusBadge || "Coming Soon",
+                          description: up.description || "",
+                          thumbnailUrl: up.thumbnailUrl,
+                          heroBgUrl: up.heroBgUrl || "",
+                          useAsHeroBg: up.useAsHeroBg,
+                          ctaLabel: up.ctaLabel || "",
+                          ctaHref: up.ctaHref || "",
+                          preSaveUrl: up.preSaveUrl || "",
+                          published: up.published,
+                        });
+                      }}
+                      className="px-2 py-1 rounded-lg bg-blue-500/15 text-blue-400 text-xs font-bold cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmDelete({
+                          open: true,
+                          type: "upcoming",
+                          id: up.id,
+                          label: up.title,
+                        })
+                      }
+                      className="p-1.5 rounded-lg bg-red-500/15 text-red-400 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -701,6 +1163,30 @@ export default function AdminUpdatesManagementPage() {
                 className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
               />
             </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-[10px] uppercase text-[#9ca3af] mb-1">
+                Red Attention Button Label
+              </label>
+              <input
+                type="text"
+                value={secConfig.releasesEyebrow}
+                onChange={(e) => setSecConfig({ ...secConfig, releasesEyebrow: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs font-bold"
+              />
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-[10px] uppercase text-[#9ca3af] mb-1">
+                Attention Button Destination
+              </label>
+              <input
+                type="text"
+                value={secConfig.releasesAttentionHref}
+                onChange={(e) =>
+                  setSecConfig({ ...secConfig, releasesAttentionHref: e.target.value })
+                }
+                className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+              />
+            </div>
             <label className="flex items-center gap-1.5 text-xs pb-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -716,6 +1202,7 @@ export default function AdminUpdatesManagementPage() {
                   title: secConfig.releasesTitle,
                   subtitle: secConfig.releasesSubtitle,
                   badgeText: secConfig.releasesEyebrow,
+                  ctaHref: secConfig.releasesAttentionHref,
                   enabled: secConfig.releasesEnabled,
                 })
               }

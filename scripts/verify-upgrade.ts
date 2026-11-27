@@ -1,6 +1,7 @@
 import { chromium } from "playwright-core";
 import { PrismaClient } from "@prisma/client";
 import { parseSpotifyUrl, parseYoutubeUrl } from "../src/lib/media-metadata";
+import { findMediaReferences, replaceMediaUrlAcrossCms } from "../src/lib/cms";
 
 const prisma = new PrismaClient();
 const BASE_URL = "http://127.0.0.1:3000";
@@ -25,7 +26,7 @@ async function waitForServer(url: string) {
 async function main() {
   await waitForServer(`${BASE_URL}/api/health`);
   console.log("=== 1. DB Preservation & Schema Parity Checks ===");
-  const [adminUser, artistCount, teamCount, brandCount, brandVideoCount, aboutSlideCount, navUpdates, aboutHero, aboutStory] =
+  const [adminUser, artistCount, teamCount, brandCount, brandVideoCount, aboutSlideCount, upcomingCount, navUpdates, aboutHero, aboutStory, updatesReleasesSec, updatesUpcomingSec] =
     await Promise.all([
       prisma.user.findUnique({ where: { email: "godaramixing@gmail.com" } }),
       prisma.featuredArtist.count(),
@@ -33,12 +34,19 @@ async function main() {
       prisma.brandCreator.count(),
       prisma.brandVideo.count(),
       prisma.aboutSliderImage.count(),
+      prisma.upcomingRelease.count(),
       prisma.navigationItem.findFirst({ where: { location: "HEADER", href: "/updates" } }),
       prisma.pageSection.findUnique({
         where: { pageSlug_sectionKey: { pageSlug: "about", sectionKey: "hero" } },
       }),
       prisma.pageSection.findUnique({
         where: { pageSlug_sectionKey: { pageSlug: "about", sectionKey: "story" } },
+      }),
+      prisma.pageSection.findUnique({
+        where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey: "releases" } },
+      }),
+      prisma.pageSection.findUnique({
+        where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey: "upcoming" } },
       }),
     ]);
 
@@ -48,10 +56,13 @@ async function main() {
   assert(brandCount >= 7, `Expected >= 7 BrandCreators, got ${brandCount}`);
   assert(brandVideoCount >= 7, `Expected >= 7 migrated BrandVideos, got ${brandVideoCount}`);
   assert(aboutSlideCount >= 8, `Expected >= 8 migrated AboutSliderImages, got ${aboutSlideCount}`);
+  assert(upcomingCount >= 1, `Expected >= 1 UpcomingReleases, got ${upcomingCount}`);
   assert(navUpdates && navUpdates.enabled, "HEADER nav item /updates missing");
   assert(aboutHero && aboutStory, "About CMS PageSections missing");
+  assert(updatesReleasesSec && !/\bcatalog drop\b/i.test(updatesReleasesSec.badgeText || ""), "updates.releases badgeText still references Catalog Drop");
+  assert(updatesUpcomingSec, "updates.upcoming CMS PageSection missing");
   console.log(
-    `[OK] DB preserved & migrated: artists=${artistCount}, team=${teamCount}, brandCreators=${brandCount}, brandVideos=${brandVideoCount}, aboutSlides=${aboutSlideCount}, nav=/updates`
+    `[OK] DB preserved & migrated: artists=${artistCount}, team=${teamCount}, brandCreators=${brandCount}, brandVideos=${brandVideoCount}, aboutSlides=${aboutSlideCount}, upcoming=${upcomingCount}, nav=/updates`
   );
 
   // CRUD persistence test on AboutSliderImage + BrandVideo (reverted right after)
@@ -74,7 +85,57 @@ async function main() {
   });
   await prisma.brandVideo.update({ where: { id: testBVideo.id }, data: { published: false } });
   await prisma.brandVideo.delete({ where: { id: testBVideo.id } });
-  console.log("[OK] AboutSliderImage & BrandVideo CRUD persistence verified.");
+
+  // UpcomingRelease CRUD + move_to_latest + findMediaReferences / replaceMediaUrlAcrossCms check
+  const qaTempUrl = "/api/files/qa-temp-gallery-check";
+  const qaUpcoming = await prisma.upcomingRelease.create({
+    data: {
+      title: "QA Upcoming Single",
+      slug: `qa-upcoming-single-${Date.now()}`,
+      artistName: "QA Artist",
+      releaseType: "SINGLE",
+      releaseDate: "2026-12-31",
+      description: "Temporary upcoming verification item",
+      thumbnailUrl: qaTempUrl,
+      heroBgUrl: qaTempUrl,
+      statusBadge: "Coming Soon",
+      published: false,
+      sortOrder: 999,
+    },
+  });
+  const [qaMovedRelease] = await prisma.$transaction([
+    prisma.updateRelease.create({
+      data: {
+        title: qaUpcoming.title,
+        slug: `qa-moved-release-${Date.now()}`,
+        artistName: qaUpcoming.artistName || "Goldex Artist",
+        releaseType: qaUpcoming.releaseType,
+        releaseDate: qaUpcoming.releaseDate,
+        description: qaUpcoming.description,
+        coverUrl: qaUpcoming.thumbnailUrl,
+        featured: false,
+        trending: false,
+        published: false,
+        sortOrder: 999,
+      },
+    }),
+  ]);
+  await prisma.upcomingRelease.update({
+    where: { id: qaUpcoming.id },
+    data: { movedReleaseId: qaMovedRelease.id, published: false },
+  });
+  const refsBefore = await findMediaReferences(qaTempUrl);
+  assert(
+    refsBefore.some((r) => r.startsWith("UpcomingRelease:")) && refsBefore.some((r) => r.startsWith("LatestRelease:")),
+    `Expected findMediaReferences to catch UpcomingRelease & LatestRelease, got: ${JSON.stringify(refsBefore)}`
+  );
+  const replacedCount = await replaceMediaUrlAcrossCms(qaTempUrl, "/ref/abir.jpg");
+  assert(replacedCount >= 2, `Expected replaceMediaUrlAcrossCms >= 2 updates, got ${replacedCount}`);
+  const refsAfter = await findMediaReferences(qaTempUrl);
+  assert(refsAfter.length === 0, `Expected 0 lingering references after replace, got: ${JSON.stringify(refsAfter)}`);
+  await prisma.upcomingRelease.delete({ where: { id: qaUpcoming.id } });
+  await prisma.updateRelease.delete({ where: { id: qaMovedRelease.id } });
+  console.log("[OK] AboutSliderImage, BrandVideo, UpcomingRelease + move_to_latest + Media Replace/Cleanup verified.");
 
   // URL Parsers Unit Check
   const spParsed = parseSpotifyUrl("https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=test");
@@ -185,18 +246,49 @@ async function main() {
         await page.locator('[aria-label="Toggle navigation menu"]').click();
       }
 
-      // /updates page + Red Hero + Spotify 4-card Carousel + inline YouTube Modal
+      // /updates page + Integrated 16:9 Hero + Glass Subnav + Attention Button + Upcoming + Spotify 4-card Carousel + YouTube Modal
       await page.goto(`${BASE_URL}/updates`, { waitUntil: "networkidle" });
-      await page.locator('[data-testid="updates-hero-section"]').waitFor({ state: "visible" });
-      const heroText = await page.locator('[data-testid="updates-hero-section"]').innerText();
+      const heroSec = page.locator('[data-testid="updates-hero-section"]');
+      await heroSec.waitFor({ state: "visible" });
+      const heroText = await heroSec.innerText();
       assert(!heroText.toLowerCase().includes("goldex media network radar"), "Old Radar pill still present in New Updates hero!");
-      const heroTitleText = await page.locator('[data-testid="updates-hero-heading"]').innerText();
+      const fullPageText = await page.locator("main").innerText();
+      assert(!/\bcatalog drop\b/i.test(fullPageText), `"Catalog Drop" must be completely removed from /updates! Found in: ${fullPageText.slice(0, 300)}`);
+
+      const heroHeading = page.locator('[data-testid="updates-hero-heading"]');
+      const heroTitleText = await heroHeading.innerText();
       assert(heroTitleText.toUpperCase().includes("NEW UPDATES"), `Expected NEW UPDATES heading, got: ${heroTitleText}`);
-      const heroColor = await page.locator('[data-testid="updates-hero-heading"]').evaluate((el) => getComputedStyle(el).color);
+      const heroColor = await heroHeading.evaluate((el) => getComputedStyle(el).color);
       assert(heroColor === "rgb(239, 68, 68)", `Expected red hero color rgb(239, 68, 68), got ${heroColor}`);
       await page.locator('[data-testid="updates-hero-glow"]').waitFor({ state: "attached" });
 
+      const heroBox = await heroSec.boundingBox();
+      const headingBox = await heroHeading.boundingBox();
+      assert(
+        heroBox && headingBox && headingBox.y >= heroBox.y - 2 && headingBox.y + headingBox.height <= heroBox.y + heroBox.height + 2,
+        `Expected NEW UPDATES heading inside Hero container on ${vp.name}`
+      );
+
+      const heroBgImg = page.locator('[data-testid="updates-hero-bg-image"]');
+      await heroBgImg.waitFor({ state: "visible" });
+      const heroImgStats = await heroBgImg.evaluate((img: HTMLImageElement) => ({
+        complete: img.complete,
+        naturalWidth: img.naturalWidth,
+        objectFit: getComputedStyle(img).objectFit,
+      }));
+      assert(heroImgStats.complete && heroImgStats.naturalWidth > 0, `Hero background image failed to load on ${vp.name}`);
+      assert(heroImgStats.objectFit === "contain", `Expected object-fit: contain on hero background artwork to prevent cropping, got ${heroImgStats.objectFit}`);
+
+      const subnav = page.locator('[data-testid="updates-subnav-box"]');
+      await subnav.waitFor({ state: "visible" });
+      const subnavBox = await subnav.boundingBox();
+      assert(heroBox && subnavBox && subnavBox.y >= heroBox.y + heroBox.height - 28, `Expected glass subnav below Hero on ${vp.name}`);
+
       await page.locator('[data-testid="section-latest-releases"]').waitFor({ state: "visible" });
+      const attnBtn = page.locator('[data-testid="upcoming-attention-btn"]');
+      await attnBtn.waitFor({ state: "visible" });
+      assert((await attnBtn.innerText()).toUpperCase().includes("UPCOMING RELEASES"), "Missing UPCOMING RELEASES red attention button");
+      await page.locator('[data-testid="section-upcoming-releases"]').waitFor({ state: "visible" });
       await page.locator('[data-testid="section-spotify-music"]').waitFor({ state: "visible" });
       await page.locator('[data-testid="section-trending-spotify"]').waitFor({ state: "visible" });
       await page.locator('[data-testid="section-latest-videos"]').waitFor({ state: "visible" });
@@ -270,7 +362,11 @@ async function main() {
       assert(guardSlide.status() === 401, `Expected 401 on /api/admin/cms/about-slider, got ${guardSlide.status()}`);
       const guardBVideo = await adminPage.request.get(`${BASE_URL}/api/admin/cms/brand-videos`);
       assert(guardBVideo.status() === 401, `Expected 401 on /api/admin/cms/brand-videos, got ${guardBVideo.status()}`);
-      console.log("[OK] /api/admin/updates, /about-slider, /brand-videos auth guards verified (401 without session).");
+      const guardMedia = await adminPage.request.get(`${BASE_URL}/api/admin/cms/media`);
+      assert(guardMedia.status() === 401, `Expected 401 on /api/admin/cms/media, got ${guardMedia.status()}`);
+      await adminPage.goto(`${BASE_URL}/admin/gallery`, { waitUntil: "networkidle" });
+      assert(adminPage.url().includes("/admin/login"), `Expected unauthenticated /admin/gallery redirect to /admin/login, got ${adminPage.url()}`);
+      console.log("[OK] /api/admin/updates, /about-slider, /brand-videos, /cms/media & /admin/gallery auth guards verified.");
     }
     await adminPage.close();
   } finally {

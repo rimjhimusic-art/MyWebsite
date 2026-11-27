@@ -389,7 +389,21 @@ export async function findMediaReferences(fileUrl: string): Promise<string[]> {
     if (settings.footerLogoUrl === fileUrl) refs.push("WebsiteSettings:footerLogo");
     if (settings.faviconUrl === fileUrl) refs.push("WebsiteSettings:favicon");
   }
-  const [sections, artists, stores, services, team, creators, brandVideos, aboutSlides, seo] = await Promise.all([
+  const [
+    sections,
+    artists,
+    stores,
+    services,
+    team,
+    creators,
+    brandVideos,
+    aboutSlides,
+    updateReleases,
+    upcomingReleases,
+    spotifyTracks,
+    youtubeVideos,
+    seo,
+  ] = await Promise.all([
     prisma.pageSection.findMany({ where: { OR: [{ mediaUrl: fileUrl }, { draftJson: { contains: fileUrl } }, { extraJson: { contains: fileUrl } }] }, select: { pageSlug: true, sectionKey: true } }),
     prisma.featuredArtist.findMany({ where: { OR: [{ imageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
     prisma.digitalStore.findMany({ where: { OR: [{ logoUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
@@ -398,6 +412,10 @@ export async function findMediaReferences(fileUrl: string): Promise<string[]> {
     prisma.brandCreator.findMany({ where: { OR: [{ imageUrl: fileUrl }, { videoUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
     prisma.brandVideo.findMany({ where: { OR: [{ thumbnailUrl: fileUrl }, { videoUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { title: true } }),
     prisma.aboutSliderImage.findMany({ where: { OR: [{ imageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { title: true } }),
+    prisma.updateRelease.findMany({ where: { coverUrl: fileUrl }, select: { title: true } }),
+    prisma.upcomingRelease.findMany({ where: { OR: [{ thumbnailUrl: fileUrl }, { heroBgUrl: fileUrl }] }, select: { title: true } }),
+    prisma.updateSpotifyTrack.findMany({ where: { coverUrl: fileUrl }, select: { title: true } }),
+    prisma.updateYoutubeVideo.findMany({ where: { thumbnailUrl: fileUrl }, select: { title: true } }),
     prisma.seoSetting.findMany({ where: { OR: [{ ogImageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { pageSlug: true } }),
   ]);
   for (const s of sections) refs.push(`PageSection:${s.pageSlug}.${s.sectionKey}`);
@@ -408,6 +426,67 @@ export async function findMediaReferences(fileUrl: string): Promise<string[]> {
   for (const cr of creators) refs.push(`BrandCreator:${cr.name}`);
   for (const bv of brandVideos) refs.push(`BrandVideo:${bv.title}`);
   for (const sl of aboutSlides) refs.push(`AboutSlider:${sl.title || "Slide"}`);
+  for (const ur of updateReleases) refs.push(`LatestRelease:${ur.title}`);
+  for (const up of upcomingReleases) refs.push(`UpcomingRelease:${up.title}`);
+  for (const sp of spotifyTracks) refs.push(`SpotifyTrack:${sp.title}`);
+  for (const yt of youtubeVideos) refs.push(`YouTubeVideo:${yt.title}`);
   for (const se of seo) refs.push(`SEO:${se.pageSlug}`);
   return refs;
+}
+
+export async function replaceMediaUrlAcrossCms(oldUrl: string, newUrl: string): Promise<number> {
+  if (!oldUrl || oldUrl === newUrl) return 0;
+  let updatedCount = 0;
+
+  await prisma.$transaction(async (tx) => {
+    const ws = await tx.websiteSettings.findUnique({ where: { id: "default" } });
+    if (ws) {
+      const wsPatch: Record<string, string> = {};
+      if (ws.headerLogoUrl === oldUrl) wsPatch.headerLogoUrl = newUrl;
+      if (ws.footerLogoUrl === oldUrl) wsPatch.footerLogoUrl = newUrl;
+      if (ws.faviconUrl === oldUrl) wsPatch.faviconUrl = newUrl;
+      if (Object.keys(wsPatch).length > 0) {
+        await tx.websiteSettings.update({ where: { id: "default" }, data: wsPatch });
+        updatedCount += 1;
+      }
+    }
+
+    const secRows = await tx.pageSection.findMany({
+      where: { OR: [{ mediaUrl: oldUrl }, { extraJson: { contains: oldUrl } }, { draftJson: { contains: oldUrl } }] },
+    });
+    for (const row of secRows) {
+      await tx.pageSection.update({
+        where: { id: row.id },
+        data: {
+          ...(row.mediaUrl === oldUrl ? { mediaUrl: newUrl || null } : {}),
+          ...(row.extraJson?.includes(oldUrl) ? { extraJson: row.extraJson.split(oldUrl).join(newUrl) } : {}),
+          ...(row.draftJson?.includes(oldUrl) ? { draftJson: row.draftJson.split(oldUrl).join(newUrl) } : {}),
+        },
+      });
+      updatedCount += 1;
+    }
+
+    const r1 = await tx.featuredArtist.updateMany({ where: { imageUrl: oldUrl }, data: { imageUrl: newUrl || "/ref/abir.jpg" } });
+    const r2 = await tx.digitalStore.updateMany({ where: { logoUrl: oldUrl }, data: { logoUrl: newUrl || "/ref/stores/spotify.png" } });
+    const r3 = await tx.cmsService.updateMany({ where: { imageUrl: oldUrl }, data: { imageUrl: newUrl || null } });
+    const r4 = await tx.teamMember.updateMany({ where: { imageUrl: oldUrl }, data: { imageUrl: newUrl || "/ref/team/sujoy.png" } });
+    const r5 = await tx.brandCreator.updateMany({ where: { imageUrl: oldUrl }, data: { imageUrl: newUrl || "/ref/influencers/1770471884_img.jpg" } });
+    const r6 = await tx.brandCreator.updateMany({ where: { videoUrl: oldUrl }, data: { videoUrl: newUrl || null } });
+    const r7 = await tx.brandVideo.updateMany({ where: { thumbnailUrl: oldUrl }, data: { thumbnailUrl: newUrl || "/ref/influencers/1770471884_img.jpg" } });
+    const r8 = await tx.brandVideo.updateMany({ where: { videoUrl: oldUrl }, data: { videoUrl: newUrl } });
+    const r9 = await tx.aboutSliderImage.updateMany({ where: { imageUrl: oldUrl }, data: { imageUrl: newUrl || "/ref/flag/about-1.png" } });
+    const r10 = await tx.updateRelease.updateMany({ where: { coverUrl: oldUrl }, data: { coverUrl: newUrl || "/ref/abir.jpg" } });
+    const r11 = await tx.upcomingRelease.updateMany({ where: { thumbnailUrl: oldUrl }, data: { thumbnailUrl: newUrl || "/ref/abir.jpg" } });
+    const r12 = await tx.upcomingRelease.updateMany({ where: { heroBgUrl: oldUrl }, data: { heroBgUrl: newUrl || null } });
+    const r13 = await tx.updateSpotifyTrack.updateMany({ where: { coverUrl: oldUrl }, data: { coverUrl: newUrl || null } });
+    const r14 = await tx.updateYoutubeVideo.updateMany({ where: { thumbnailUrl: oldUrl }, data: { thumbnailUrl: newUrl } });
+    const r15 = await tx.seoSetting.updateMany({ where: { ogImageUrl: oldUrl }, data: { ogImageUrl: newUrl || null } });
+
+    updatedCount +=
+      r1.count + r2.count + r3.count + r4.count + r5.count +
+      r6.count + r7.count + r8.count + r9.count + r10.count +
+      r11.count + r12.count + r13.count + r14.count + r15.count;
+  });
+
+  return updatedCount;
 }

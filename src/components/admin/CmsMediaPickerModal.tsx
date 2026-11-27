@@ -16,7 +16,20 @@ export interface MediaLibraryItem {
   isStatic: boolean;
 }
 
-const FOLDERS = ["ALL", "branding", "artists", "stores", "team", "brand", "videos", "general"];
+const FOLDERS = [
+  "ALL",
+  "branding",
+  "artists",
+  "stores",
+  "team",
+  "brand",
+  "about",
+  "updates",
+  "upcoming",
+  "videos",
+  "documents",
+  "general",
+];
 
 export function CmsMediaPickerModal({
   open,

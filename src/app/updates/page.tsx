@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: seo?.metaTitle || `New Updates & Releases - ${cms.settings.siteName}`,
     description:
       seo?.metaDescription ||
-      "Discover latest releases, Spotify embeds, trending music, and official YouTube music videos.",
+      "Discover upcoming releases, latest drops, Spotify embeds, trending music, and official YouTube music videos.",
   };
 }
 
@@ -45,6 +45,7 @@ export default async function UpdatesPage({
   const uMap = cms.sectionMap["updates"] || {};
   const heroSec = uMap["hero"];
   const releasesSec = uMap["releases"];
+  const upcomingSec = uMap["upcoming"];
   const spotifySec = uMap["spotify"];
   const trendingSec = uMap["trending"];
   const videosSec = uMap["videos"];
@@ -53,10 +54,21 @@ export default async function UpdatesPage({
   const heroExtra = safeParseObj(heroSec?.extraJson);
   const spotifyExtra = safeParseObj(spotifySec?.extraJson);
 
+  // Use upcoming release marked `useAsHeroBg` (or first upcoming release) seamlessly in Hero unless Hero explicitly overrides
+  const heroUpcoming =
+    feed.upcomingReleases.find((u) => u.useAsHeroBg) || feed.upcomingReleases[0] || null;
+
+  const effectiveBgUrl =
+    (heroSec?.mediaUrl && heroSec.mediaUrl.trim()) ||
+    heroUpcoming?.heroBgUrl ||
+    heroUpcoming?.thumbnailUrl ||
+    "/ref/abir.jpg";
+
   return (
     <UpdatesClient
       user={user}
       releases={feed.releases}
+      upcomingReleases={feed.upcomingReleases}
       spotifyMusic={feed.spotifyMusic}
       trendingSpotify={feed.trendingSpotify}
       youtubeVideos={feed.youtubeVideos}
@@ -68,36 +80,65 @@ export default async function UpdatesPage({
         enabled: heroSec ? heroSec.enabled !== false : true,
         title: heroSec?.title || "NEW UPDATES",
         subtitle:
+          (typeof heroExtra.upcomingTitle === "string" && heroExtra.upcomingTitle.trim()) ||
+          heroUpcoming?.title ||
           heroSec?.subtitle ||
-          "Latest Releases, Curated Spotify Picks & Official Music Videos",
+          "Next Wave Independent Premiere",
         description:
-          heroSec?.bodyHtml ??
-          "Explore fresh drops, streaming releases, trending highlights, and official visuals across the network.",
-        badgeText: heroSec?.badgeText || "",
+          (heroSec?.bodyHtml && heroSec.bodyHtml.trim()) ||
+          heroUpcoming?.description ||
+          "Stay tuned with upcoming singles, official visuals, and streaming premieres across the network.",
+        statusBadge:
+          (typeof heroExtra.statusBadge === "string" && heroExtra.statusBadge.trim()) ||
+          heroUpcoming?.statusBadge ||
+          "Coming Soon",
+        releaseDate:
+          (typeof heroExtra.releaseDate === "string" && heroExtra.releaseDate.trim()) ||
+          heroUpcoming?.releaseDate ||
+          "",
+        artistLine: heroUpcoming?.artistName || "",
+        ctaLabel:
+          (typeof heroExtra.ctaLabel === "string" && heroExtra.ctaLabel.trim()) ||
+          heroUpcoming?.ctaLabel ||
+          "Explore Upcoming",
+        ctaHref:
+          (typeof heroExtra.ctaHref === "string" && heroExtra.ctaHref.trim()) ||
+          heroUpcoming?.ctaHref ||
+          "#upcoming-releases",
         additionalText:
           typeof heroExtra.additionalText === "string" ? heroExtra.additionalText : "",
-        bgImageUrl: heroSec?.mediaUrl || "",
-        bgColor: heroSec?.bgColor || "rgba(255,255,255,0.04)",
+        bgImageUrl: effectiveBgUrl,
+        bgColor: heroSec?.bgColor || "#050505",
         headingColor: heroSec?.textColor || "#ef4444",
         glowColor:
           typeof heroExtra.glowColor === "string" ? heroExtra.glowColor : "#ef4444",
         subtitleColor:
           typeof heroExtra.subtitleColor === "string"
             ? heroExtra.subtitleColor
-            : "#e2e8f0",
+            : "#ffffff",
         animationEnabled: heroExtra.animationEnabled !== false,
         spacing:
           heroExtra.spacing === "compact" || heroExtra.spacing === "spacious"
             ? heroExtra.spacing
             : "normal",
-        showFilterPills: heroExtra.showFilterPills !== false,
+        showFilterBar: heroExtra.showFilterPills !== false,
       }}
       sectionsConfig={{
         releases: {
           enabled: releasesSec ? releasesSec.enabled !== false : true,
-          eyebrow: releasesSec?.badgeText || "Catalog Drop",
+          eyebrow:
+            releasesSec?.badgeText && releasesSec.badgeText !== "Catalog Drop"
+              ? releasesSec.badgeText
+              : "UPCOMING RELEASES",
+          attentionHref: releasesSec?.ctaHref || "#upcoming-releases",
           title: releasesSec?.title || "LATEST RELEASES",
           subtitle: releasesSec?.subtitle || "",
+        },
+        upcoming: {
+          enabled: upcomingSec ? upcomingSec.enabled !== false : true,
+          eyebrow: upcomingSec?.badgeText || "Coming Soon",
+          title: upcomingSec?.title || "UPCOMING RELEASES",
+          subtitle: upcomingSec?.subtitle || "",
         },
         spotify: {
           enabled: spotifySec ? spotifySec.enabled !== false : true,

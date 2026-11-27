@@ -4,16 +4,16 @@ import React, { useEffect, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
+  CheckCircle2,
   Copy,
   Download,
   Image as ImageIcon,
   Plus,
   Save,
   Trash2,
-  Upload,
-  CheckCircle2,
 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
+import { GalleryManager } from "@/components/admin/GalleryManager";
 
 export interface CmsPageSectionRow {
   id: string;
@@ -651,135 +651,7 @@ export function SettingsBrandingPanel({
 }
 
 export function MediaLibraryPanel() {
-  const { showToast } = useToast();
-  const [assets, setAssets] = useState<Array<{ id: string; url: string; title: string; folder: string; kind: string; isStatic: boolean }>>([]);
-  const [folder, setFolder] = useState("ALL");
-  const [uploadFolder, setUploadFolder] = useState("branding");
-
-  const load = async () => {
-    const res = await fetch(`/api/admin/cms/media${folder !== "ALL" ? `?folder=${folder}` : ""}`);
-    if (res.ok) {
-      const d = await res.json();
-      setAssets(d.assets || []);
-    }
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folder]);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("folder", uploadFolder);
-    fd.append("title", file.name);
-    const res = await fetch("/api/admin/cms/media", { method: "POST", body: fd });
-    const d = await res.json();
-    if (!res.ok) {
-      showToast(d.error || "Upload failed", "error");
-      return;
-    }
-    showToast("Media asset uploaded!", "success");
-    load();
-  };
-
-  const handleDelete = async (id: string) => {
-    const res = await fetch(`/api/admin/cms/media?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    const d = await res.json();
-    if (res.status === 409) {
-      showToast(d.error || "In use by CMS.", "error");
-      return;
-    }
-    if (res.ok) {
-      showToast("Media asset removed.", "success");
-      load();
-    } else {
-      showToast(d.error || "Failed to delete asset.", "error");
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5">
-          {["ALL", "branding", "artists", "stores", "team", "brand", "videos", "general"].map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFolder(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase cursor-pointer ${
-                folder === f ? "bg-[#3b82f6] text-white" : "bg-[#0f0f0f] text-[#b0b0b8]"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={uploadFolder}
-            onChange={(e) => setUploadFolder(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-          >
-            <option value="branding">Folder: branding</option>
-            <option value="artists">Folder: artists</option>
-            <option value="stores">Folder: stores</option>
-            <option value="team">Folder: team</option>
-            <option value="videos">Folder: videos</option>
-            <option value="general">Folder: general</option>
-          </select>
-          <label className="px-4 py-2 rounded-xl bg-[#3b82f6] text-white text-xs font-bold cursor-pointer inline-flex items-center gap-1.5">
-            <Upload className="w-3.5 h-3.5" /> Upload Image / SVG / Video
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.webp,.svg,.mp4,.webm,.mov,.ico"
-              onChange={handleUpload}
-              className="hidden"
-            />
-          </label>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-        {assets.map((a) => (
-          <div key={a.id} className="rounded-xl bg-[#18181b] border border-[#2a2a2a] p-2.5 space-y-2">
-            <div className="h-24 rounded-lg bg-[#0f0f0f] flex items-center justify-center overflow-hidden">
-              {a.kind === "CMS_VIDEO" ? (
-                <video src={a.url} className="w-full h-full object-cover" muted />
-              ) : (
-                <img src={a.url} alt={a.title} className="max-h-full max-w-full object-contain p-1" />
-              )}
-            </div>
-            <div className="text-xs font-semibold text-white truncate">{a.title}</div>
-            <div className="flex items-center justify-between text-[11px]">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard?.writeText(a.url);
-                  showToast(`Copied: ${a.url}`, "success");
-                }}
-                className="inline-flex items-center gap-1 text-[#3b82f6] cursor-pointer"
-              >
-                <Copy className="w-3 h-3" /> URL
-              </button>
-              {!a.isStatic && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(a.id)}
-                  className="text-red-400 hover:underline cursor-pointer"
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <GalleryManager />;
 }
 
 export function SeoBackupPanel({
