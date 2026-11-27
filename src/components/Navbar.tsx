@@ -61,10 +61,10 @@ export function Navbar({
     );
   const dashboardHref = isAdmin ? "/admin" : "/dashboard";
 
-  const logoUrl = settings?.headerLogoUrl || "/ref/logo.png";
+  const logoUrl = settings?.headerLogoUrl || "/ref/goldex-logo.svg";
   const logoHeight = settings?.headerLogoHeight || 40;
-  const logoWidth = settings?.headerLogoWidth || 118;
-  const siteName = settings?.siteName || "OneTab Media Network";
+  const logoWidth = settings?.headerLogoWidth || 210;
+  const siteName = settings?.siteName || "Goldex Media Network";
 
   const items = navItems && navItems.length > 0 ? navItems : DEFAULT_NAV;
   const regularLinks = items.filter((i) => !i.isButton);
@@ -113,10 +113,10 @@ export function Navbar({
               alt={siteName}
               style={{
                 height: `${Math.min(Math.max(logoHeight, 24), 68)}px`,
-                maxWidth: `${Math.min(Math.max(logoWidth, 60), 260)}px`,
+                maxWidth: `${Math.min(Math.max(logoWidth, 60), 280)}px`,
               }}
               className={`w-auto object-contain transition-all ${
-                isLightScrolled ? "brightness-0 opacity-80" : ""
+                isLightScrolled ? "brightness-0 opacity-85" : ""
               }`}
             />
           </Link>

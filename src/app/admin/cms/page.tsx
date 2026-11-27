@@ -325,9 +325,6 @@ export default function AdminCmsStudioPage() {
           onPickMedia={(cb, folder = "team") => setMediaPicker({ open: true, folder, callback: cb })}
         />
       )}
-          onPickMedia={(cb, folder = "team") => setMediaPicker({ open: true, folder, callback: cb })}
-        />
-      )}
 
       {tab === "navigation" && (
         <NavigationManagerPanel

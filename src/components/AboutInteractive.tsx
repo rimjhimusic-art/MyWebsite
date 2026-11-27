@@ -66,7 +66,7 @@ export function AboutDualSlider() {
       >
         {doubled.map((src, i) => (
           <div key={`b-${i}`} className="gallery-card">
-            <img src={src} alt="OneTab Team Flag" />
+            <img src={src} alt="Goldex Team Gallery" />
           </div>
         ))}
       </div>
@@ -86,7 +86,7 @@ export function AboutDualSlider() {
       <div className="slider-track track-front">
         {doubled.map((src, i) => (
           <div key={`f-${i}`} className="gallery-card">
-            <img src={src} alt="OneTab Team Flag" />
+            <img src={src} alt="Goldex Team Gallery" />
           </div>
         ))}
       </div>
@@ -115,12 +115,13 @@ export function TeamCardDeck({
   const list =
     members && members.length > 0
       ? members.map((m) => ({
+          id: m.id,
           name: m.name,
           role: m.role,
           img: m.imageUrl || m.img || "/ref/team/sujoy.png",
           desc: m.bio ?? m.desc ?? "",
         }))
-      : TEAM_MEMBERS;
+      : TEAM_MEMBERS.map((m, idx) => ({ ...m, id: `fallback-${idx}` }));
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -148,7 +149,7 @@ export function TeamCardDeck({
       <div className="flex flex-wrap justify-center gap-[30px] max-w-[1400px] mx-auto">
         {list.map((member, index) => (
           <div
-            key={member.name}
+            key={member.id || `${member.name}-${index}`}
             style={{
               transitionDelay: `${index * 120}ms`,
             }}
