@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { GOLDEX_12_SERVICES } from "@/lib/goldex-services";
+import { DEFAULT_UPDATES_HERO_EXTENDED } from "@/lib/updates-hero-config";
 
 const globalBoot = globalThis as unknown as {
   __goldexCmsBootstrapPromise?: Promise<void>;
@@ -329,8 +330,9 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
               subtitleColor: "#e2e8f0",
               spacing: "normal",
               showFilterPills: true,
-              additionalText: "",
+              additionalText: "EXPLORE FRESH DROPS",
               supportingLabels: ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"],
+              heroStudio: DEFAULT_UPDATES_HERO_EXTENDED,
             }),
             enabled: true,
             sortOrder: 1,

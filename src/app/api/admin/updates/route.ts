@@ -11,6 +11,7 @@ import {
   parseYoutubeUrl,
 } from "@/lib/media-metadata";
 import { getUpdatesFeed } from "@/lib/updates";
+import { normalizeUpdatesHeroExtended } from "@/lib/updates-hero-config";
 
 function makeSlug(title: string): string {
   const base = title
@@ -475,27 +476,34 @@ export async function PATCH(request: Request) {
             prevExtra = {};
           }
         }
-        data.extraJson = JSON.stringify({ ...prevExtra, ...body.extra });
+        const mergedExtra: Record<string, unknown> = {
+          ...prevExtra,
+          ...(body.extra as Record<string, unknown>),
+        };
+        if (sectionKey === "hero" && "heroStudio" in mergedExtra) {
+          mergedExtra.heroStudio = normalizeUpdatesHeroExtended(mergedExtra.heroStudio);
+        }
+        data.extraJson = JSON.stringify(mergedExtra);
       }
 
       const section = existingSec
         ? await prisma.pageSection.update({ where: { id: existingSec.id }, data })
         : await prisma.pageSection.create({
-            data: {
-              pageSlug: "updates",
-              sectionKey,
-              title: (data.title as string | null) ?? null,
-              subtitle: (data.subtitle as string | null) ?? null,
-              badgeText: (data.badgeText as string | null) ?? null,
-              bodyHtml: (data.bodyHtml as string | null) ?? null,
-              mediaUrl: (data.mediaUrl as string | null) ?? null,
-              bgColor: (data.bgColor as string | null) ?? null,
-              textColor: (data.textColor as string | null) ?? null,
-              extraJson: (data.extraJson as string | undefined) ?? "{}",
-              enabled: typeof body.enabled === "boolean" ? body.enabled : true,
-              draftStatus: "PUBLISHED",
-            },
-          });
+          data: {
+            pageSlug: "updates",
+            sectionKey,
+            title: (data.title as string | null) ?? null,
+            subtitle: (data.subtitle as string | null) ?? null,
+            badgeText: (data.badgeText as string | null) ?? null,
+            bodyHtml: (data.bodyHtml as string | null) ?? null,
+            mediaUrl: (data.mediaUrl as string | null) ?? null,
+            bgColor: (data.bgColor as string | null) ?? null,
+            textColor: (data.textColor as string | null) ?? null,
+            extraJson: (data.extraJson as string | undefined) ?? "{}",
+            enabled: typeof body.enabled === "boolean" ? body.enabled : true,
+            draftStatus: "PUBLISHED",
+          },
+        });
 
       await recordAuditLog({
         actorUserId: auth.user.id,

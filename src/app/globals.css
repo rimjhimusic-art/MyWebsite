@@ -90,7 +90,8 @@ body {
     transition: none !important;
     transform: none !important;
   }
-  .goldex-hero-bg-photo {
+  .goldex-hero-bg-photo,
+  .goldex-hero-dark-overlay {
     transition: none !important;
   }
   .spotify-update-card {
@@ -121,109 +122,233 @@ body {
 }
 
 .font-brush {
-  font-family: var(--font-brush), "Kaushan Script", "Brush Script MT", cursive;
+  font-family: var(--font-brush), var(--font-kaushan-script), "Kaushan Script", "Brush Script MT", cursive;
 }
 
 .goldex-hero-bg-photo {
-  filter: brightness(0.76) contrast(0.9);
-  transition: filter 700ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: filter;
+  filter: brightness(var(--hero-bg-brightness, 0.75))
+    contrast(var(--hero-bg-contrast, 0.9))
+    blur(var(--hero-bg-blur, 3px));
+  opacity: var(--hero-bg-opacity, 1);
+  transition:
+    filter var(--hero-bg-ms, 650ms) cubic-bezier(0.22, 1, 0.36, 1),
+    opacity var(--hero-bg-ms, 650ms) cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: filter, opacity;
+}
+
+.goldex-hero-dark-overlay {
+  background-color: #050505;
+  opacity: var(--hero-overlay-opacity, 0.3);
+  transition: opacity var(--hero-bg-ms, 650ms) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (hover: hover) {
   .goldex-hero-photo-stage:hover .goldex-hero-bg-photo {
-    filter: brightness(1) contrast(1);
+    filter: brightness(var(--hero-bg-hover-brightness, 1))
+      contrast(var(--hero-bg-hover-contrast, 1))
+      blur(var(--hero-bg-hover-blur, 0px));
+    opacity: var(--hero-bg-hover-opacity, 1);
+  }
+  .goldex-hero-photo-stage:hover .goldex-hero-dark-overlay {
+    opacity: var(--hero-overlay-hover-opacity, 0);
   }
 }
 
-/* 10-second full brightness -> dim -> fade out -> short pause -> smooth fade in cycle */
+/* Apple macOS-inspired Liquid Glass Navigation Box */
+.goldex-liquid-glass-nav {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(24, 28, 40, var(--nav-glass-alpha, 0.38)) 0%,
+    rgba(10, 12, 18, calc(var(--nav-glass-alpha, 0.38) * 0.84)) 52%,
+    rgba(20, 24, 36, calc(var(--nav-glass-alpha, 0.38) * 0.94)) 100%
+  );
+  backdrop-filter: blur(var(--nav-glass-blur, 18px)) saturate(1.75) contrast(1.06);
+  -webkit-backdrop-filter: blur(var(--nav-glass-blur, 18px)) saturate(1.75) contrast(1.06);
+  border: 1px solid rgba(255, 255, 255, var(--nav-glass-border, 0.24));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, var(--nav-glass-reflect, 0.28)),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 28px rgba(255, 255, 255, 0.05),
+    0 18px 42px rgba(0, 0, 0, 0.45);
+}
+
+.goldex-liquid-glass-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    112deg,
+    rgba(255, 255, 255, calc(var(--nav-glass-reflect, 0.28) * 0.65)) 0%,
+    rgba(255, 255, 255, 0.05) 26%,
+    transparent 52%,
+    rgba(255, 255, 255, calc(var(--nav-glass-reflect, 0.28) * 0.3)) 100%
+  );
+}
+
+/* Responsive percentage-positioned independent Hero elements */
+.goldex-hero-el {
+  position: absolute;
+  left: var(--hx-m, 50%);
+  top: var(--hy-m, 50%);
+  transform: var(--htr-m, translate(-50%, -50%));
+  text-align: var(--hta-m, center);
+  width: var(--hw-m, auto);
+  max-width: 96%;
+  height: var(--hh-m, auto);
+  font-size: var(--hfs-m, inherit);
+}
+@media (min-width: 640px) {
+  .goldex-hero-el {
+    left: var(--hx-t, 50%);
+    top: var(--hy-t, 50%);
+    transform: var(--htr-t, translate(-50%, -50%));
+    text-align: var(--hta-t, center);
+    width: var(--hw-t, auto);
+    height: var(--hh-t, auto);
+    font-size: var(--hfs-t, inherit);
+  }
+}
+@media (min-width: 1024px) {
+  .goldex-hero-el {
+    left: var(--hx-d, 50%);
+    top: var(--hy-d, 50%);
+    transform: var(--htr-d, translate(-50%, -50%));
+    text-align: var(--hta-d, center);
+    width: var(--hw-d, auto);
+    height: var(--hh-d, auto);
+    font-size: var(--hfs-d, inherit);
+  }
+}
+
+/* Drop entrance -> hold -> gradual downward fade-out -> pause -> smooth re-enter */
 @keyframes goldexUpcomingBreathCycle {
   0% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(0.98);
+    filter: brightness(0.85);
+  }
+  7% {
     opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
     filter: brightness(1);
   }
-  72% {
+  73% {
     opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
     filter: brightness(1.03);
   }
-  79% {
+  81% {
     opacity: 0.36;
-    filter: brightness(0.72);
+    transform: translate3d(0, 10px, 0) scale(0.99);
+    filter: brightness(0.75);
   }
-  85% {
-    opacity: 0.03;
-    filter: brightness(0.45);
+  87% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.97);
+    filter: brightness(0.5);
   }
-  90% {
-    opacity: 0.03;
-    filter: brightness(0.45);
-  }
-  96% {
-    opacity: 1;
-    filter: brightness(1.08);
+  93% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(0.98);
+    filter: brightness(0.6);
   }
   100% {
     opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
     filter: brightness(1);
   }
 }
 
 .goldex-upcoming-breath {
-  animation: goldexUpcomingBreathCycle 13.5s ease-in-out infinite;
-  will-change: opacity, filter;
+  animation: goldexUpcomingBreathCycle var(--upcoming-drop-sec, 13.5s) ease-in-out infinite;
+  will-change: opacity, transform, filter;
 }
 
-/* Apple-inspired luminous Golden Metallic -> Champagne Gold -> Warm White -> Subtle Amber -> Premium Silver */
+/* Unified 10-color synchronized palette shared by UPCOMING heading and all 3 dots (~10s per step) */
 @keyframes goldexUpcomingColorCycle {
   0%, 100% {
-    color: #f6d365;
+    color: #f6d365; /* Metallic Gold */
     text-shadow:
-      0 -1.5px 1px rgba(255, 255, 255, 0.58),
-      0 3px 10px rgba(0, 0, 0, 0.88),
-      0 0 22px rgba(246, 211, 101, 0.55),
-      0 0 46px rgba(245, 158, 11, 0.28);
+      0 -1.5px 1px rgba(255, 255, 255, 0.55),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 24px rgba(246, 211, 101, 0.62);
+  }
+  10% {
+    color: #3b82f6; /* Electric Blue */
+    text-shadow:
+      0 -1.5px 1px rgba(255, 255, 255, 0.52),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 26px rgba(59, 130, 246, 0.65);
   }
   20% {
-    color: #f4e3b8;
+    color: #22d3ee; /* Cyan */
     text-shadow:
-      0 -1.5px 1px rgba(255, 255, 255, 0.68),
-      0 3px 10px rgba(0, 0, 0, 0.88),
-      0 0 24px rgba(244, 227, 184, 0.55),
-      0 0 44px rgba(217, 179, 108, 0.25);
+      0 -1.5px 1px rgba(255, 255, 255, 0.56),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 26px rgba(34, 211, 238, 0.65);
+  }
+  30% {
+    color: #a855f7; /* Purple */
+    text-shadow:
+      0 -1.5px 1px rgba(255, 255, 255, 0.52),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 26px rgba(168, 85, 247, 0.65);
   }
   40% {
-    color: #fff9eb;
+    color: #d946ef; /* Magenta */
     text-shadow:
-      0 -1.5px 1.5px rgba(255, 255, 255, 0.82),
-      0 3px 10px rgba(0, 0, 0, 0.88),
-      0 0 24px rgba(255, 249, 235, 0.58),
-      0 0 42px rgba(253, 230, 138, 0.28);
+      0 -1.5px 1px rgba(255, 255, 255, 0.54),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 26px rgba(217, 70, 239, 0.65);
+  }
+  50% {
+    color: #ec4899; /* Pink */
+    text-shadow:
+      0 -1.5px 1px rgba(255, 255, 255, 0.55),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 26px rgba(236, 72, 153, 0.65);
   }
   60% {
-    color: #fbbf24;
+    color: #fb923c; /* Orange */
     text-shadow:
-      0 -1.5px 1px rgba(255, 243, 196, 0.55),
-      0 3px 10px rgba(0, 0, 0, 0.9),
-      0 0 24px rgba(251, 191, 36, 0.58),
-      0 0 46px rgba(217, 119, 6, 0.3);
+      0 -1.5px 1px rgba(255, 255, 255, 0.55),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 26px rgba(251, 146, 60, 0.65);
+  }
+  70% {
+    color: #f3e2b3; /* Champagne Gold */
+    text-shadow:
+      0 -1.5px 1px rgba(255, 255, 255, 0.65),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 24px rgba(243, 226, 179, 0.6);
   }
   80% {
-    color: #e5e9f0;
+    color: #d1d5db; /* Silver */
     text-shadow:
-      0 -1.5px 1.5px rgba(255, 255, 255, 0.78),
-      0 3px 10px rgba(0, 0, 0, 0.9),
-      0 0 22px rgba(226, 232, 240, 0.52),
-      0 0 44px rgba(148, 163, 184, 0.28);
+      0 -1.5px 1.5px rgba(255, 255, 255, 0.72),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 24px rgba(209, 213, 219, 0.58);
+  }
+  90% {
+    color: #fff9eb; /* Warm White */
+    text-shadow:
+      0 -1.5px 1.5px rgba(255, 255, 255, 0.8),
+      0 3px 12px rgba(0, 0, 0, 0.9),
+      0 0 24px rgba(255, 249, 235, 0.6);
   }
 }
 
 .goldex-upcoming-color {
   color: #f6d365;
   text-shadow:
-    0 -1.5px 1px rgba(255, 255, 255, 0.58),
-    0 3px 10px rgba(0, 0, 0, 0.88),
-    0 0 22px rgba(246, 211, 101, 0.55);
-  animation: goldexUpcomingColorCycle 16s ease-in-out infinite;
+    0 -1.5px 1px rgba(255, 255, 255, 0.55),
+    0 3px 12px rgba(0, 0, 0, 0.9),
+    0 0 24px rgba(246, 211, 101, 0.62);
+  animation: goldexUpcomingColorCycle var(--upcoming-color-total-sec, 100s) linear infinite;
 }
 
 /* Sequential 3 dots: 1 -> 2 -> 3 -> 1 -> 2 -> 3 continuous loop */
@@ -246,13 +371,13 @@ body {
 }
 
 .goldex-upcoming-dot-1 {
-  animation: goldexDotOne 2.4s ease-in-out infinite;
+  animation: goldexDotOne var(--upcoming-dots-sec, 2.4s) ease-in-out infinite;
 }
 .goldex-upcoming-dot-2 {
-  animation: goldexDotTwo 2.4s ease-in-out infinite;
+  animation: goldexDotTwo var(--upcoming-dots-sec, 2.4s) ease-in-out infinite;
 }
 .goldex-upcoming-dot-3 {
-  animation: goldexDotThree 2.4s ease-in-out infinite;
+  animation: goldexDotThree var(--upcoming-dots-sec, 2.4s) ease-in-out infinite;
 }
 
 .goldex-upcoming-letter {

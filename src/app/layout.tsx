@@ -21,9 +21,12 @@ const orbitron = Orbitron({
 
 const kaushanBrush = Kaushan_Script({
   subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-brush",
+  weight: "400",
+  variable: "--font-kaushan-script",
 });
+
+const HERO_EXTRA_GOOGLE_FONTS_HREF =
+  "https://fonts.googleapis.com/css2?family=Anton&family=Audiowide&family=Bebas+Neue&family=Black+Ops+One&family=Bungee&family=Caveat+Brush&family=Caveat:wght@400..700&family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400..900&family=Cormorant+Garamond:wght@400..700&family=DM+Sans:wght@400..700&family=Dancing+Script:wght@400..700&family=Inter:wght@400..900&family=Michroma&family=Montserrat:wght@400..900&family=Oswald:wght@400..700&family=Pacifico&family=Permanent+Marker&family=Playfair+Display:wght@400..900&family=Plus+Jakarta+Sans:wght@400..800&family=Poppins:wght@400..900&family=Righteous&family=Rubik+Wet+Paint&family=Sedgwick+Ave+Display&family=Shrikhand&family=Space+Grotesk:wght@400..700&family=Syne:wght@400..800&display=swap";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
@@ -85,7 +88,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${orbitron.variable} ${kaushanBrush.variable}`}>
+    <html
+      lang="en"
+      className={`${outfit.variable} ${orbitron.variable} ${kaushanBrush.variable}`}
+    >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href={HERO_EXTRA_GOOGLE_FONTS_HREF} />
+      </head>
       <body className="antialiased bg-[#0f0f0f] text-white min-h-screen relative">
         <GlobalBubbleBackground />
         <ToastProvider>

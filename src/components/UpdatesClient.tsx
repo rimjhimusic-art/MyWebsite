@@ -16,7 +16,13 @@ import {
 import { Navbar, type CmsBrandHeaderSettings, type CmsNavLink } from "@/components/Navbar";
 import { Footer, type CmsFooterLink, type CmsFooterSettings } from "@/components/Footer";
 import { AppleMusicIcon, SpotifyIcon, YouTubeIcon } from "@/components/BrandIcons";
-import { UpcomingBrushTitle } from "@/components/UpcomingBrushTitle";
+import { UpcomingBrushTitle, UpcomingSynchronizedDots } from "@/components/UpcomingBrushTitle";
+import {
+  DEFAULT_UPDATES_HERO_EXTENDED,
+  type HeroAlign,
+  type HeroBreakpointCoords,
+  type UpdatesHeroExtendedConfig,
+} from "@/lib/updates-hero-config";
 import type {
   PublicUpcomingRelease,
   PublicUpdateRelease,
@@ -44,6 +50,48 @@ export interface UpdatesHeroConfig {
   animationEnabled: boolean;
   spacing: "compact" | "normal" | "spacious";
   showFilterBar: boolean;
+  extended?: UpdatesHeroExtendedConfig;
+}
+
+function alignTransform(align: HeroAlign): string {
+  if (align === "left") return "translate(0%, -50%)";
+  if (align === "right") return "translate(-100%, -50%)";
+  return "translate(-50%, -50%)";
+}
+
+function makeHeroElVars(
+  desktop: HeroBreakpointCoords,
+  tablet: HeroBreakpointCoords,
+  mobile: HeroBreakpointCoords,
+  includeFontSize = true
+): React.CSSProperties {
+  return {
+    "--hx-d": `${desktop.x}%`,
+    "--hy-d": `${desktop.y}%`,
+    "--htr-d": alignTransform(desktop.align),
+    "--hta-d": desktop.align,
+    "--hw-d": desktop.width > 0 ? `${desktop.width}%` : "auto",
+    "--hh-d": desktop.height > 0 ? `${desktop.height}px` : "auto",
+    "--hx-t": `${tablet.x}%`,
+    "--hy-t": `${tablet.y}%`,
+    "--htr-t": alignTransform(tablet.align),
+    "--hta-t": tablet.align,
+    "--hw-t": tablet.width > 0 ? `${tablet.width}%` : "auto",
+    "--hh-t": tablet.height > 0 ? `${tablet.height}px` : "auto",
+    "--hx-m": `${mobile.x}%`,
+    "--hy-m": `${mobile.y}%`,
+    "--htr-m": alignTransform(mobile.align),
+    "--hta-m": mobile.align,
+    "--hw-m": mobile.width > 0 ? `${mobile.width}%` : "auto",
+    "--hh-m": mobile.height > 0 ? `${mobile.height}px` : "auto",
+    ...(includeFontSize
+      ? {
+          "--hfs-d": desktop.fontSize > 0 ? `${desktop.fontSize}px` : "inherit",
+          "--hfs-t": tablet.fontSize > 0 ? `${tablet.fontSize}px` : "inherit",
+          "--hfs-m": mobile.fontSize > 0 ? `${mobile.fontSize}px` : "inherit",
+        }
+      : {}),
+  } as React.CSSProperties;
 }
 
 export interface UpdatesSectionMeta {
@@ -290,15 +338,43 @@ export function UpdatesClient({
 
   const spacingHeight =
     heroConfig.spacing === "compact"
-      ? "min-h-[480px] sm:min-h-[540px] lg:min-h-[580px]"
+      ? "min-h-[500px] sm:min-h-[560px] lg:min-h-[600px]"
       : heroConfig.spacing === "spacious"
-      ? "min-h-[580px] sm:min-h-[640px] lg:min-h-[720px]"
-      : "min-h-[520px] sm:min-h-[580px] lg:min-h-[650px]";
+      ? "min-h-[600px] sm:min-h-[660px] lg:min-h-[740px]"
+      : "min-h-[540px] sm:min-h-[600px] lg:min-h-[670px]";
+
+  const extHero = heroConfig.extended || DEFAULT_UPDATES_HERO_EXTENDED;
+  const bgApp = extHero.bgAppearance;
+  const navGlass = extHero.navGlass;
+  const els = extHero.elements;
+  const typo = extHero.typography;
+  const multi = extHero.multicolor;
+
+  const heroCssVars = {
+    "--hero-bg-brightness": (bgApp.defaultBrightness / 100).toFixed(2),
+    "--hero-bg-contrast": (bgApp.defaultContrast / 100).toFixed(2),
+    "--hero-bg-opacity": (bgApp.defaultOpacity / 100).toFixed(2),
+    "--hero-bg-blur": `${bgApp.defaultBlur}px`,
+    "--hero-overlay-opacity": (bgApp.defaultOverlay / 100).toFixed(2),
+    "--hero-bg-hover-brightness": (bgApp.hoverBrightness / 100).toFixed(2),
+    "--hero-bg-hover-contrast": (bgApp.hoverContrast / 100).toFixed(2),
+    "--hero-bg-hover-opacity": (bgApp.hoverOpacity / 100).toFixed(2),
+    "--hero-bg-hover-blur": `${bgApp.hoverBlur}px`,
+    "--hero-overlay-hover-opacity": (bgApp.hoverOverlay / 100).toFixed(2),
+    "--hero-bg-ms": `${bgApp.transitionMs}ms`,
+    "--nav-glass-alpha": (navGlass.opacity / 100).toFixed(2),
+    "--nav-glass-blur": `${navGlass.blurPx}px`,
+    "--nav-glass-reflect": (navGlass.reflectionOpacity / 100).toFixed(2),
+    "--nav-glass-border": (navGlass.borderOpacity / 100).toFixed(2),
+  } as React.CSSProperties;
 
   const supportingLabels =
     heroConfig.supportingLabels && heroConfig.supportingLabels.length > 0
       ? heroConfig.supportingLabels
       : ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"];
+
+  const dotsInline = els.dots?.inlineWithHeading !== false;
+  const exploreText = (heroConfig.additionalText || "").trim() || "EXPLORE FRESH DROPS";
 
   const handleNavFilter = (key: FilterTab, anchorId?: string) => {
     setFilter(key);
@@ -329,11 +405,12 @@ export function UpdatesClient({
       />
 
       <main className="relative z-10 pt-22 sm:pt-26 pb-20 px-4 sm:px-8 max-w-[1280px] mx-auto space-y-12 sm:space-y-14">
-        {/* FUTURISTIC SEAMLESS HERO WITH CRYSTAL-CLEAR HOVER-BRIGHT PHOTOGRAPH & EMBEDDED NEON NAV */}
+        {/* FUTURISTIC SEAMLESS HERO WITH LIQUID GLASS NAV, ADJUSTABLE BLUR/BRIGHTNESS HOVER & FREE POSITIONING */}
         {heroConfig.enabled && (
           <section
             data-testid="updates-hero-section"
             style={{
+              ...heroCssVars,
               backgroundColor:
                 heroConfig.bgColor &&
                 heroConfig.bgColor !== "#050505" &&
@@ -341,7 +418,7 @@ export function UpdatesClient({
                   ? heroConfig.bgColor
                   : "transparent",
             }}
-            className={`goldex-hero-photo-stage relative w-full ${spacingHeight} overflow-hidden flex flex-col justify-between items-center text-center px-4 sm:px-8 pt-6 sm:pt-10 pb-5 sm:pb-7`}
+            className={`goldex-hero-photo-stage relative w-full ${spacingHeight} overflow-hidden flex flex-col justify-between items-center text-center px-3 sm:px-8 pt-4 sm:pt-6 pb-5 sm:pb-7`}
           >
             {/* Atmospheric glass cinema light behind artwork */}
             <div
@@ -353,7 +430,7 @@ export function UpdatesClient({
               }}
             />
 
-            {/* Unblurred Hero photograph filling the stage background, initially dimmed and smoothly restoring full brightness/contrast on hover */}
+            {/* Single Hero background photograph with CMS-controlled Default/Hover Brightness, Contrast, Opacity & Blur */}
             {heroConfig.bgImageUrl && (
               <div
                 aria-hidden="true"
@@ -370,117 +447,212 @@ export function UpdatesClient({
               </div>
             )}
 
-            {/* Subtle dark readability scrim across Hero so overlaid text & embedded nav remain crisp even at full photo brightness */}
+            {/* CMS-controlled Dark Overlay Intensity transitioning cleanly on hover */}
             <div
+              data-testid="updates-hero-dark-overlay"
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[2]"
-              style={{
-                background:
-                  "linear-gradient(180deg, rgba(5,5,5,0.42) 0%, rgba(5,5,5,0.22) 38%, rgba(5,5,5,0.48) 72%, rgba(5,5,5,0.72) 100%)",
-              }}
+              className="goldex-hero-dark-overlay pointer-events-none absolute inset-0 z-[2]"
             />
-            {/* Delicate frosted glass lighting sheen */}
+
+            {/* Subtle glass edge vignette */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[3] opacity-25"
+              className="pointer-events-none absolute inset-0 z-[3]"
               style={{
                 background:
-                  "radial-gradient(ellipse 68% 58% at 50% 42%, rgba(255,255,255,0.05) 0%, rgba(34,211,238,0.03) 48%, transparent 80%)",
+                  "linear-gradient(180deg, rgba(5,5,5,0.16) 0%, transparent 32%, transparent 68%, rgba(5,5,5,0.45) 100%)",
               }}
             />
 
-            {/* FOREGROUND TYPOGRAPHY COMPOSITION SHIFTED UPWARD ABOVE EMBEDDED NAVIGATION BOX */}
+            {/* RESPONSIVE FREE-POSITIONED HERO TEXT CANVAS ABOVE EMBEDDED LIQUID GLASS NAV */}
             <div
               data-testid="updates-hero-content"
-              className="relative z-10 w-full max-w-[820px] mx-auto my-auto pb-5 sm:pb-8 flex flex-col items-center gap-2 sm:gap-2.5"
+              className="relative z-10 w-full flex-1 min-h-[370px] sm:min-h-[410px] lg:min-h-[450px]"
             >
-              {/* Small, subtle supporting labels around the main UPCOMING heading */}
-              <div
-                data-testid="updates-hero-supporting-labels"
-                className="flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3.5 gap-y-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-zinc-200/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
-              >
-                {supportingLabels.map((lbl, idx) => (
-                  <React.Fragment key={`${lbl}-${idx}`}>
-                    {idx > 0 && (
-                      <span aria-hidden="true" className="text-cyan-400/60 text-[8px]">
-                        /
-                      </span>
-                    )}
-                    <span className="transition-colors hover:text-white">{lbl}</span>
-                  </React.Fragment>
-                ))}
-              </div>
-
-              {/* Stylized artistic Brush UPCOMING centerpiece heading directly over Hero image */}
-              <UpcomingBrushTitle
-                text={heroConfig.title || "UPCOMING"}
-                animationEnabled={heroConfig.animationEnabled}
-                glowColor={heroConfig.glowColor}
-              />
-
-              {/* Compact, restrained glass metadata strip for upcoming release details */}
-              {(heroConfig.subtitle || heroConfig.statusBadge || heroConfig.releaseDate || heroConfig.description || heroConfig.additionalText) && (
-                <div className="w-full max-w-[680px] mx-auto flex flex-col items-center gap-1.5 pt-0.5">
-                  <div className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 px-4 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15">
-                    {heroConfig.statusBadge && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-red-300">
-                        <Sparkles className="w-2.5 h-2.5 text-red-400" />
-                        <span>{heroConfig.statusBadge}</span>
-                      </span>
-                    )}
-                    {heroConfig.subtitle && (
-                      <span
-                        style={{ color: heroConfig.subtitleColor || "#f8fafc" }}
-                        className="text-[11px] sm:text-xs font-semibold tracking-wide"
-                      >
-                        {heroConfig.subtitle}
-                        {heroConfig.artistLine ? (
-                          <span className="text-cyan-300/90 font-medium"> — {heroConfig.artistLine}</span>
-                        ) : null}
-                      </span>
-                    )}
-                    {heroConfig.releaseDate && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-200/90">
-                        <Calendar className="w-2.5 h-2.5 text-blue-300" />
-                        <span>{heroConfig.releaseDate}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {heroConfig.description && (
-                    <p className="text-[11px] sm:text-xs text-zinc-200/90 max-w-xl leading-relaxed line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                      {heroConfig.description}
-                    </p>
+              {/* 1. LATEST RELEASE / Supporting Micro-Labels */}
+              {els.latestRelease.visible && (
+                <div
+                  data-testid="updates-hero-supporting-labels"
+                  style={makeHeroElVars(
+                    els.latestRelease.desktop,
+                    els.latestRelease.tablet,
+                    els.latestRelease.mobile,
+                    true
                   )}
+                  className="goldex-hero-el flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3.5 gap-y-1 font-semibold uppercase tracking-[0.26em] text-zinc-200/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+                >
+                  {supportingLabels.map((lbl, idx) => (
+                    <React.Fragment key={`${lbl}-${idx}`}>
+                      {idx > 0 && (
+                        <span aria-hidden="true" className="text-cyan-400/60 text-[8px]">
+                          /
+                        </span>
+                      )}
+                      <span className="transition-colors hover:text-white">{lbl}</span>
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
 
-                  {heroConfig.additionalText && (
-                    <p className="text-[10px] sm:text-[11px] text-cyan-200/90 tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                      {heroConfig.additionalText}
-                    </p>
+              {/* 2. UPCOMING Heading (+ optional inline synchronized 3 dots) */}
+              {els.upcoming.visible && (
+                <div
+                  data-testid="updates-hero-el-upcoming"
+                  style={makeHeroElVars(
+                    els.upcoming.desktop,
+                    els.upcoming.tablet,
+                    els.upcoming.mobile,
+                    true
                   )}
+                  className="goldex-hero-el z-20"
+                >
+                  <UpcomingBrushTitle
+                    text={heroConfig.title || "UPCOMING"}
+                    animationEnabled={heroConfig.animationEnabled}
+                    glowColor={heroConfig.glowColor}
+                    typography={typo}
+                    multicolor={multi}
+                    showInlineDots={els.dots.visible && dotsInline}
+                    inheritFontSize={true}
+                  />
+                </div>
+              )}
+
+              {/* 3. Independently Positioned Three Animated Dots (only when unlinked from heading) */}
+              {els.dots.visible && !dotsInline && (
+                <div
+                  data-testid="updates-hero-el-dots"
+                  style={makeHeroElVars(
+                    els.dots.desktop,
+                    els.dots.tablet,
+                    els.dots.mobile,
+                    true
+                  )}
+                  className="goldex-hero-el z-20 pointer-events-none"
+                >
+                  <UpcomingSynchronizedDots
+                    multicolor={multi}
+                    typography={typo}
+                    standalone={true}
+                  />
+                </div>
+              )}
+
+              {/* 4. COMING SOON Badge */}
+              {els.comingSoon.visible && heroConfig.statusBadge && (
+                <div
+                  data-testid="updates-hero-el-coming-soon"
+                  style={makeHeroElVars(
+                    els.comingSoon.desktop,
+                    els.comingSoon.tablet,
+                    els.comingSoon.mobile,
+                    true
+                  )}
+                  className="goldex-hero-el flex items-center justify-center"
+                >
+                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/15 font-bold uppercase tracking-[0.18em] text-red-300 shadow-lg">
+                    <Sparkles className="w-3 h-3 text-red-400" />
+                    <span>{heroConfig.statusBadge}</span>
+                  </span>
+                </div>
+              )}
+
+              {/* 5. Upcoming Release Title & Date */}
+              {els.releaseTitle.visible && (heroConfig.subtitle || heroConfig.releaseDate) && (
+                <div
+                  data-testid="updates-hero-el-release-title"
+                  style={makeHeroElVars(
+                    els.releaseTitle.desktop,
+                    els.releaseTitle.tablet,
+                    els.releaseTitle.mobile,
+                    true
+                  )}
+                  className="goldex-hero-el flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
+                >
+                  {heroConfig.subtitle && (
+                    <span
+                      style={{ color: heroConfig.subtitleColor || "#f8fafc" }}
+                      className="font-semibold tracking-wide"
+                    >
+                      {heroConfig.subtitle}
+                      {heroConfig.artistLine ? (
+                        <span className="text-cyan-300/95 font-medium"> — {heroConfig.artistLine}</span>
+                      ) : null}
+                    </span>
+                  )}
+                  {heroConfig.releaseDate && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/40 border border-white/10 text-[10px] font-medium text-blue-200/95">
+                      <Calendar className="w-2.5 h-2.5 text-blue-300" />
+                      <span>{heroConfig.releaseDate}</span>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* 6. Upcoming Release Description */}
+              {els.releaseDescription.visible && heroConfig.description && (
+                <div
+                  data-testid="updates-hero-el-description"
+                  style={makeHeroElVars(
+                    els.releaseDescription.desktop,
+                    els.releaseDescription.tablet,
+                    els.releaseDescription.mobile,
+                    true
+                  )}
+                  className="goldex-hero-el"
+                >
+                  <p className="text-zinc-200/90 leading-relaxed line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                    {heroConfig.description}
+                  </p>
+                </div>
+              )}
+
+              {/* 7. EXPLORE FRESH DROPS Tagline */}
+              {els.exploreDrops.visible && exploreText && (
+                <div
+                  data-testid="updates-hero-el-explore"
+                  style={makeHeroElVars(
+                    els.exploreDrops.desktop,
+                    els.exploreDrops.tablet,
+                    els.exploreDrops.mobile,
+                    true
+                  )}
+                  className="goldex-hero-el"
+                >
+                  <p className="font-semibold uppercase tracking-[0.24em] text-cyan-200/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                    {exploreText}
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* EXISTING NAVIGATION BOX MOVED INSIDE LOWER PORTION OF HERO OVER THE PHOTOGRAPH */}
+            {/* APPLE LIQUID GLASS NAVIGATION BOX INSIDE LOWER PORTION OF HERO OVER PHOTOGRAPH */}
             {heroConfig.showFilterBar && (
               <div
                 data-testid="updates-subnav-neon-border"
-                className="goldex-neon-nav-wrap relative z-10 w-full max-w-[1040px] mx-auto mt-auto shadow-[0_14px_40px_rgba(0,0,0,0.65)]"
+                className="goldex-neon-nav-wrap relative z-10 w-full max-w-[1040px] mx-auto mt-3 shadow-[0_18px_46px_rgba(0,0,0,0.55)]"
               >
-                {/* Outer soft glowing trail hugging the perimeter */}
-                <div aria-hidden="true" className="goldex-neon-nav-halo">
-                  <div className="goldex-neon-nav-rotator" />
-                </div>
-                {/* Crisp animated neon border line along all 4 sides */}
-                <div aria-hidden="true" className="goldex-neon-nav-border">
-                  <div className="goldex-neon-nav-rotator" />
-                </div>
-                {/* Preserved original frosted-glass navigation options & layout */}
+                {navGlass.neonBorderEnabled && (
+                  <>
+                    {/* Outer soft glowing trail hugging the perimeter */}
+                    <div aria-hidden="true" className="goldex-neon-nav-halo">
+                      <div className="goldex-neon-nav-rotator" />
+                    </div>
+                    {/* Crisp animated neon border line along all 4 sides */}
+                    <div aria-hidden="true" className="goldex-neon-nav-border">
+                      <div className="goldex-neon-nav-rotator" />
+                    </div>
+                  </>
+                )}
+                {/* Apple macOS-inspired translucent Liquid Glass nav container */}
                 <nav
                   aria-label="New Updates Categories"
                   data-testid="updates-subnav-box"
-                  className="relative z-[1] rounded-[16px] bg-[#0a0a0d]/85 backdrop-blur-xl px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
+                  style={{
+                    backdropFilter: `blur(${navGlass.blurPx}px) saturate(1.75) contrast(1.06)`,
+                    WebkitBackdropFilter: `blur(${navGlass.blurPx}px) saturate(1.75) contrast(1.06)`,
+                  }}
+                  className="goldex-liquid-glass-nav relative z-[1] rounded-[16px] px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
                 >
                   {(
                     [
@@ -505,10 +677,10 @@ export function UpdatesClient({
                         key={pill.key}
                         type="button"
                         onClick={() => handleNavFilter(pill.key, pill.anchor)}
-                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer border ${
+                        className={`relative z-[1] px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer border ${
                           filter === pill.key
-                            ? "bg-[#ef4444] text-white border-[#ef4444] shadow-[0_6px_22px_rgba(239,68,68,0.42)]"
-                            : "bg-white/[0.04] text-zinc-300 border-white/10 hover:text-white hover:bg-white/[0.09] hover:border-white/25"
+                            ? "bg-[#ef4444]/90 text-white border-[#f87171]/80 shadow-[0_6px_22px_rgba(239,68,68,0.45)]"
+                            : "bg-white/[0.06] text-zinc-100 border-white/15 hover:text-white hover:bg-white/[0.14] hover:border-white/30"
                         }`}
                       >
                         {pill.label}

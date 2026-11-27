@@ -1,4 +1,5 @@
 import { prisma } from "../src/lib/db";
+import { DEFAULT_UPDATES_HERO_EXTENDED } from "../src/lib/updates-hero-config";
 
 const DEFAULT_ABOUT_GALLERY = Array.from(
   { length: 8 },
@@ -63,6 +64,11 @@ async function main() {
         extraJson: JSON.stringify({
           ...heroExt,
           supportingLabels: nextSupporting,
+          additionalText:
+            typeof heroExt.additionalText === "string" && heroExt.additionalText.trim()
+              ? heroExt.additionalText
+              : "EXPLORE FRESH DROPS",
+          heroStudio: heroExt.heroStudio || DEFAULT_UPDATES_HERO_EXTENDED,
         }),
       },
     });

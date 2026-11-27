@@ -27,6 +27,11 @@ import {
 import { useToast } from "@/components/ToastProvider";
 import { CmsConfirmModal } from "@/components/admin/CmsConfirmModal";
 import { CmsMediaPickerModal } from "@/components/admin/CmsMediaPickerModal";
+import { HeroStudioPanel, type HeroFormState } from "@/components/admin/HeroStudioPanel";
+import {
+  DEFAULT_UPDATES_HERO_EXTENDED,
+  normalizeUpdatesHeroExtended,
+} from "@/lib/updates-hero-config";
 import type {
   PublicUpcomingRelease,
   PublicUpdateRelease,
@@ -101,25 +106,28 @@ export default function AdminUpdatesManagementPage() {
     label: string;
   }>({ open: false, type: "", id: "", label: "" });
 
-  // Hero CMS state
-  const [heroForm, setHeroForm] = useState({
+  // Hero CMS state + snapshot for Cancel Changes
+  const defaultHeroState: HeroFormState = {
     title: "UPCOMING",
     subtitle: "",
     description: "",
     statusBadge: "Coming Soon",
     releaseDate: "",
     supportingLabelsText: "UPCOMING, LATEST RELEASE, SPOTIFY, TRENDING, MUSIC",
-    additionalText: "",
+    additionalText: "EXPLORE FRESH DROPS",
     mediaUrl: "",
     bgColor: "#050505",
     textColor: "#ef4444",
     glowColor: "#ef4444",
     subtitleColor: "#ffffff",
     animationEnabled: true,
-    spacing: "normal" as "compact" | "normal" | "spacious",
+    spacing: "normal",
     showFilterPills: true,
     enabled: true,
-  });
+    extended: DEFAULT_UPDATES_HERO_EXTENDED,
+  };
+  const [heroForm, setHeroForm] = useState<HeroFormState>(defaultHeroState);
+  const [savedHeroSnapshot, setSavedHeroSnapshot] = useState<HeroFormState>(defaultHeroState);
 
   // Section header + Spotify carousel config state
   const [secConfig, setSecConfig] = useState({
@@ -236,14 +244,17 @@ export default function AdminUpdatesManagementPage() {
       const rawLabels = Array.isArray(ext.supportingLabels)
         ? ext.supportingLabels.map((s) => String(s).trim()).filter(Boolean)
         : ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"];
-      setHeroForm({
+      const hydratedHero: HeroFormState = {
         title: h.title && h.title !== "NEW UPDATES" ? h.title : "UPCOMING",
         subtitle: typeof ext.upcomingTitle === "string" ? ext.upcomingTitle : h.subtitle || "",
         description: h.bodyHtml || "",
         statusBadge: typeof ext.statusBadge === "string" ? ext.statusBadge : "Coming Soon",
         releaseDate: typeof ext.releaseDate === "string" ? ext.releaseDate : "",
         supportingLabelsText: rawLabels.join(", "),
-        additionalText: typeof ext.additionalText === "string" ? ext.additionalText : "",
+        additionalText:
+          typeof ext.additionalText === "string" && ext.additionalText.trim()
+            ? ext.additionalText
+            : "EXPLORE FRESH DROPS",
         mediaUrl: h.mediaUrl || "",
         bgColor: h.bgColor && h.bgColor !== "rgba(255,255,255,0.04)" ? h.bgColor : "#050505",
         textColor: h.textColor || "#ef4444",
@@ -254,7 +265,10 @@ export default function AdminUpdatesManagementPage() {
           ext.spacing === "compact" || ext.spacing === "spacious" ? ext.spacing : "normal",
         showFilterPills: ext.showFilterPills !== false,
         enabled: h.enabled !== false,
-      });
+        extended: normalizeUpdatesHeroExtended(ext.heroStudio),
+      };
+      setHeroForm(hydratedHero);
+      setSavedHeroSnapshot(JSON.parse(JSON.stringify(hydratedHero)) as HeroFormState);
     }
 
     const r = sections["releases"];
@@ -484,288 +498,64 @@ export default function AdminUpdatesManagementPage() {
         })}
       </div>
 
-      {/* 0. HERO SECTION CMS */}
+      {/* 0. HERO SECTION CMS & CUSTOMIZER STUDIO */}
       {tab === "hero" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-5 space-y-4">
-            <h2 className="font-bold text-base text-white">
-              New Updates Hero Section CMS
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                  Hero Main Heading (Default: UPCOMING)
-                </label>
-                <input
-                  type="text"
-                  value={heroForm.title}
-                  onChange={(e) => setHeroForm({ ...heroForm, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                  Hero Status Badge Override (e.g. Coming Soon)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Coming Soon (leave blank to pull from Hero Upcoming Release)"
-                  value={heroForm.statusBadge}
-                  onChange={(e) => setHeroForm({ ...heroForm, statusBadge: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                  Upcoming / Hero Title (Leave blank to pull active Hero Upcoming Release)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Upcoming release title override"
-                  value={heroForm.subtitle}
-                  onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                  Release Date Override (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="YYYY-MM-DD or Coming Soon"
-                  value={heroForm.releaseDate}
-                  onChange={(e) => setHeroForm({ ...heroForm, releaseDate: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                Supporting Micro-Labels (comma-separated)
-              </label>
-              <input
-                type="text"
-                placeholder="UPCOMING, LATEST RELEASE, SPOTIFY, TRENDING, MUSIC"
-                value={heroForm.supportingLabelsText}
-                onChange={(e) =>
-                  setHeroForm({ ...heroForm, supportingLabelsText: e.target.value })
-                }
-                className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                Hero Description Override
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Leave blank to inherit description from active Hero Upcoming Release"
-                value={heroForm.description}
-                onChange={(e) => setHeroForm({ ...heroForm, description: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                Additional Line (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="Optional highlighted line"
-                value={heroForm.additionalText}
-                onChange={(e) => setHeroForm({ ...heroForm, additionalText: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Hero Full 16:9 Background Image / YouTube Thumbnail (Gallery or URL)"
-                value={heroForm.mediaUrl}
-                onChange={(e) => setHeroForm({ ...heroForm, mediaUrl: e.target.value })}
-                className="flex-1 px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  setMediaPicker({
-                    open: true,
-                    callback: (u) => setHeroForm((p) => ({ ...p, mediaUrl: u })),
-                  })
-                }
-                className="px-3 rounded-xl bg-[#3b82f6]/20 border border-[#3b82f6]/40 text-blue-200 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
-              >
-                <ImageIcon className="w-3.5 h-3.5" /> Select from Gallery
-              </button>
-              {heroForm.mediaUrl && (
-                <button
-                  type="button"
-                  onClick={() => setHeroForm({ ...heroForm, mediaUrl: "" })}
-                  className="px-3 rounded-xl bg-red-500/15 text-red-400 text-xs cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-[11px] text-[#9ca3af] mb-1">Heading Red Color</label>
-                <input
-                  type="text"
-                  value={heroForm.textColor}
-                  onChange={(e) => setHeroForm({ ...heroForm, textColor: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-[#9ca3af] mb-1">Glow Color</label>
-                <input
-                  type="text"
-                  value={heroForm.glowColor}
-                  onChange={(e) => setHeroForm({ ...heroForm, glowColor: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-[#9ca3af] mb-1">Hero Card BG</label>
-                <input
-                  type="text"
-                  value={heroForm.bgColor}
-                  onChange={(e) => setHeroForm({ ...heroForm, bgColor: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-[#9ca3af] mb-1">Hero Spacing</label>
-                <select
-                  value={heroForm.spacing}
-                  onChange={(e) =>
-                    setHeroForm({
-                      ...heroForm,
-                      spacing: e.target.value as "compact" | "normal" | "spacious",
-                    })
-                  }
-                  className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-                >
-                  <option value="compact">Compact</option>
-                  <option value="normal">Normal</option>
-                  <option value="spacious">Spacious</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-5 text-xs pt-1">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={heroForm.enabled}
-                  onChange={(e) => setHeroForm({ ...heroForm, enabled: e.target.checked })}
-                />
-                Visible / Published on /updates
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={heroForm.animationEnabled}
-                  onChange={(e) =>
-                    setHeroForm({ ...heroForm, animationEnabled: e.target.checked })
-                  }
-                />
-                Enable Red Blinking / Glow Animation
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={heroForm.showFilterPills}
-                  onChange={(e) =>
-                    setHeroForm({ ...heroForm, showFilterPills: e.target.checked })
-                  }
-                />
-                Show Quick Filter Pills
-              </label>
-            </div>
-
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                saveSectionSettings("hero", {
-                  title: heroForm.title,
-                  subtitle: heroForm.subtitle,
-                  bodyHtml: heroForm.description,
-                  mediaUrl: heroForm.mediaUrl,
-                  bgColor: heroForm.bgColor,
-                  textColor: heroForm.textColor,
-                  enabled: heroForm.enabled,
-                  extra: {
-                    upcomingTitle: heroForm.subtitle,
-                    statusBadge: heroForm.statusBadge,
-                    releaseDate: heroForm.releaseDate,
-                    supportingLabels: heroForm.supportingLabelsText
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                    glowColor: heroForm.glowColor,
-                    subtitleColor: heroForm.subtitleColor,
-                    animationEnabled: heroForm.animationEnabled,
-                    spacing: heroForm.spacing,
-                    showFilterPills: heroForm.showFilterPills,
-                    additionalText: heroForm.additionalText,
-                  },
-                })
-              }
-              className="px-5 py-2.5 rounded-xl bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5" /> Save &amp; Publish Hero CMS
-            </button>
-          </div>
-
-          {/* Live 16:9 Clear Dissolve Hero Preview */}
-          <div className="lg:col-span-5 rounded-2xl bg-[#050505] border border-white/10 p-5 flex flex-col items-center justify-end text-center relative overflow-hidden aspect-video min-h-[260px]">
-            {(heroForm.mediaUrl ||
-              data.upcomingReleases?.find((u) => u.useAsHeroBg)?.heroBgUrl ||
-              data.upcomingReleases?.[0]?.thumbnailUrl) && (
-              <div className="goldex-hero-dissolve-mask absolute inset-0 w-full h-full pointer-events-none flex items-center justify-center">
-                <img
-                  src={
-                    heroForm.mediaUrl ||
-                    data.upcomingReleases?.find((u) => u.useAsHeroBg)?.heroBgUrl ||
-                    data.upcomingReleases?.[0]?.thumbnailUrl
-                  }
-                  alt="Hero preview"
-                  className="h-full w-auto max-w-full object-contain"
-                />
-              </div>
-            )}
-            <div className="relative z-10 flex flex-col items-center gap-1">
-              <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-zinc-300/80">
-                {heroForm.supportingLabelsText || "UPCOMING / LATEST RELEASE / SPOTIFY"}
-              </div>
-              <div className="font-futuristic text-xl font-black uppercase tracking-[0.18em]">
-                <span style={{ color: heroForm.textColor || "#ef4444" }}>
-                  {heroForm.title || "UPCOMING"}
-                </span>
-              </div>
-              <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 px-3 py-1 max-w-sm">
-                <p className="text-[11px] text-white font-semibold truncate">
-                  {heroForm.subtitle ||
-                    data.upcomingReleases?.find((u) => u.useAsHeroBg)?.title ||
-                    "Upcoming Premiere"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeroStudioPanel
+          heroForm={heroForm}
+          setHeroForm={setHeroForm}
+          fallbackBgUrl={
+            data.upcomingReleases?.find((u) => u.useAsHeroBg)?.heroBgUrl ||
+            data.upcomingReleases?.[0]?.thumbnailUrl ||
+            "/ref/abir.jpg"
+          }
+          previewReleaseSubtitle={
+            data.upcomingReleases?.find((u) => u.useAsHeroBg)?.title ||
+            data.upcomingReleases?.[0]?.title ||
+            "Next Wave Independent Premiere"
+          }
+          busy={busy}
+          onSave={() =>
+            saveSectionSettings("hero", {
+              title: heroForm.title,
+              subtitle: heroForm.subtitle,
+              bodyHtml: heroForm.description,
+              mediaUrl: heroForm.mediaUrl,
+              bgColor: heroForm.bgColor,
+              textColor: heroForm.textColor,
+              enabled: heroForm.enabled,
+              extra: {
+                upcomingTitle: heroForm.subtitle,
+                statusBadge: heroForm.statusBadge,
+                releaseDate: heroForm.releaseDate,
+                supportingLabels: heroForm.supportingLabelsText
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+                glowColor: heroForm.glowColor,
+                subtitleColor: heroForm.subtitleColor,
+                animationEnabled: heroForm.animationEnabled,
+                spacing: heroForm.spacing,
+                showFilterPills: heroForm.showFilterPills,
+                additionalText: heroForm.additionalText,
+                heroStudio: normalizeUpdatesHeroExtended(heroForm.extended),
+              },
+            })
+          }
+          onCancel={() => {
+            setHeroForm(JSON.parse(JSON.stringify(savedHeroSnapshot)) as HeroFormState);
+            showToast("Reverted unsaved Hero changes.", "info");
+          }}
+          onResetDefaults={() => {
+            setHeroForm(JSON.parse(JSON.stringify(defaultHeroState)) as HeroFormState);
+            showToast("Restored suggested default Hero settings. Click Save Changes to publish.", "info");
+          }}
+          onOpenGallery={() =>
+            setMediaPicker({
+              open: true,
+              callback: (u) => setHeroForm((p) => ({ ...p, mediaUrl: u })),
+            })
+          }
+        />
       )}
 
       {/* 0b. UPCOMING RELEASES MANAGEMENT */}

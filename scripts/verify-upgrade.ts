@@ -2,6 +2,11 @@ import { chromium } from "playwright-core";
 import { PrismaClient } from "@prisma/client";
 import { parseSpotifyUrl, parseYoutubeUrl } from "../src/lib/media-metadata";
 import { findMediaReferences, replaceMediaUrlAcrossCms } from "../src/lib/cms";
+import {
+  DEFAULT_UPDATES_HERO_EXTENDED,
+  HERO_FONT_CATALOG,
+  normalizeUpdatesHeroExtended,
+} from "../src/lib/updates-hero-config";
 
 const prisma = new PrismaClient();
 const BASE_URL = "http://127.0.0.1:3000";
@@ -144,6 +149,18 @@ async function main() {
   assert(ytParsed && ytParsed.videoId === "dQw4w9WgXcQ" && ytParsed.embedUrl.includes("youtube-nocookie.com/embed/"), "YouTube URL parser failed");
   console.log("[OK] Spotify & YouTube URL parsers verified.");
 
+  // Hero Studio Validation & Clamping Check
+  assert(HERO_FONT_CATALOG.length >= 30, `Expected 30 fonts across 10 categories, got ${HERO_FONT_CATALOG.length}`);
+  const normClamped = normalizeUpdatesHeroExtended({
+    bgAppearance: { defaultBrightness: 75, defaultContrast: 90, defaultOpacity: 100, defaultOverlay: 30, defaultBlur: 3, hoverBlur: 99 },
+    elements: { upcoming: { desktop: { x: 250, y: -12, align: "invalid", fontSize: 500, width: 999, height: 0 } } },
+    typography: { fontId: "non-existent-font" },
+  });
+  assert(normClamped.bgAppearance.hoverBlur === 20, `Expected hoverBlur clamped to 20, got ${normClamped.bgAppearance.hoverBlur}`);
+  assert(normClamped.elements.upcoming.desktop.x === 100 && normClamped.elements.upcoming.desktop.y === 0, "Expected invalid X/Y clamped to 0..100");
+  assert(normClamped.typography.fontId === DEFAULT_UPDATES_HERO_EXTENDED.typography.fontId, "Expected invalid fontId to fall back to default");
+  console.log("[OK] Hero Studio config validation, initial defaults & 30-font registry verified.");
+
   // Seed temporary Spotify (4 tracks for 4-card carousel test!) & YouTube test records, then clean up in finally
   const sampleIds = [
     "4cOdK2wGLETKBW3PvgPWqT",
@@ -264,18 +281,22 @@ async function main() {
       assert(heroTitleText.toUpperCase().includes("UPCOMING"), `Expected UPCOMING Hero heading, got: ${heroTitleText}`);
       const headingStyles = await heroHeading.evaluate((el) => {
         const st = getComputedStyle(el);
-        const colorEl = el.querySelector(".goldex-upcoming-color");
-        const cSt = colorEl ? getComputedStyle(colorEl) : st;
+        const breathEl = el.parentElement;
+        const bSt = breathEl ? getComputedStyle(breathEl) : st;
         const d1 = el.querySelector('[data-testid="upcoming-dot-1"]');
         const d2 = el.querySelector('[data-testid="upcoming-dot-2"]');
         const d3 = el.querySelector('[data-testid="upcoming-dot-3"]');
+        const d1St = d1 ? getComputedStyle(d1) : st;
         return {
           fontSize: parseFloat(st.fontSize),
           fontFamily: st.fontFamily,
-          breathAnim: st.animationName,
-          breathDur: parseFloat(st.animationDuration || "0"),
-          colorAnim: cSt.animationName,
-          textShadow: cSt.textShadow,
+          headingColor: st.color,
+          d1Color: d1St.color,
+          breathAnim: bSt.animationName,
+          breathDur: parseFloat(bSt.animationDuration || "0"),
+          colorAnim: st.animationName,
+          colorDur: parseFloat(st.animationDuration || "0"),
+          textShadow: st.textShadow,
           d1Anim: d1 ? getComputedStyle(d1).animationName : "",
           d2Anim: d2 ? getComputedStyle(d2).animationName : "",
           d3Anim: d3 ? getComputedStyle(d3).animationName : "",
@@ -283,9 +304,10 @@ async function main() {
       });
       assert(headingStyles.fontFamily.toLowerCase().includes("kaushan"), `Expected brush font Kaushan Script, got ${headingStyles.fontFamily}`);
       assert(headingStyles.fontSize >= 32, `Expected commanding brush UPCOMING heading >= 32px, got ${headingStyles.fontSize}`);
-      assert(headingStyles.textShadow !== "none", "Expected golden luminous textShadow on UPCOMING heading");
-      assert(headingStyles.breathAnim.includes("goldexUpcomingBreathCycle") && headingStyles.breathDur >= 10, `Expected ~10s+ breath/dimming animation cycle, got ${headingStyles.breathAnim} (${headingStyles.breathDur}s)`);
-      assert(headingStyles.colorAnim.includes("goldexUpcomingColorCycle"), `Expected periodic color changing animation, got ${headingStyles.colorAnim}`);
+      assert(headingStyles.textShadow !== "none", "Expected luminous textShadow on UPCOMING heading");
+      assert(headingStyles.breathAnim.includes("goldexUpcomingBreathCycle") && headingStyles.breathDur >= 10, `Expected drop/disappear cycle, got ${headingStyles.breathAnim} (${headingStyles.breathDur}s)`);
+      assert(headingStyles.colorAnim.includes("goldexUpcomingColorCycle") && headingStyles.colorDur >= 20, `Expected synchronized 10-color sequence (~10s/step = 100s loop), got ${headingStyles.colorAnim} (${headingStyles.colorDur}s)`);
+      assert(headingStyles.headingColor === headingStyles.d1Color, `Expected UPCOMING and dots synchronized color, got ${headingStyles.headingColor} vs ${headingStyles.d1Color}`);
       assert(
         headingStyles.d1Anim.includes("goldexDotOne") &&
           headingStyles.d2Anim.includes("goldexDotTwo") &&
@@ -338,24 +360,38 @@ async function main() {
       });
       assert(heroImgStats.complete && heroImgStats.naturalWidth > 0, `Hero background image failed to load on ${vp.name}`);
       assert(heroImgStats.objectFit === "contain", `Expected object-fit: contain on hero background artwork to prevent cropping, got ${heroImgStats.objectFit}`);
-      assert(!heroImgStats.filter.includes("blur"), `Expected crystal-clear Hero photograph with NO blur, got filter=${heroImgStats.filter}`);
       const dimMatch = heroImgStats.filter.match(/brightness\(([\d.]+)\)/);
       const dimBrightness = dimMatch ? parseFloat(dimMatch[1]) : 1;
       assert(dimBrightness < 0.86, `Expected default slightly dimmed Hero photo brightness (<0.86), got filter=${heroImgStats.filter}`);
+      assert(heroImgStats.filter.includes("blur("), `Expected configurable default blur active before hover, got filter=${heroImgStats.filter}`);
       assert(heroImgStats.maskImage !== "none", "Expected 4-side dissolve maskImage on Hero artwork wrapper");
 
       if (vp.name === "desktop" && heroBox) {
         await page.mouse.move(heroBox.x + 24, heroBox.y + 24);
-        await page.waitForTimeout(800);
-        const hoveredFilter = await heroBgImg.evaluate((img: HTMLImageElement) => getComputedStyle(img).filter);
-        const hovMatch = hoveredFilter.match(/brightness\(([\d.]+)\)/);
-        const hovBrightness = hovMatch ? parseFloat(hovMatch[1]) : hoveredFilter === "none" ? 1 : 0;
-        assert(hovBrightness >= 0.98, `Expected Hero photo brightness restored (~1.0) on hover, got ${hoveredFilter}`);
+        await page.waitForTimeout(850);
+        const hoveredStats = await heroSec.evaluate(() => {
+          const img = document.querySelector('[data-testid="updates-hero-bg-image"]');
+          const ov = document.querySelector('[data-testid="updates-hero-dark-overlay"]');
+          return {
+            filter: img ? getComputedStyle(img).filter : "",
+            overlayOpacity: ov ? parseFloat(getComputedStyle(ov).opacity || "1") : 1,
+          };
+        });
+        const hovMatch = hoveredStats.filter.match(/brightness\(([\d.]+)\)/);
+        const hovBrightness = hovMatch ? parseFloat(hovMatch[1]) : hoveredStats.filter === "none" ? 1 : 0;
+        assert(hovBrightness >= 0.98, `Expected Hero photo brightness restored (~1.0) on hover, got ${hoveredStats.filter}`);
+        assert(!hoveredStats.filter.includes("blur(3px)"), `Expected Hero blur transitioned to ~0px on hover, got ${hoveredStats.filter}`);
+        assert(hoveredStats.overlayOpacity <= 0.08, `Expected dark overlay intensity reduced on hover, got ${hoveredStats.overlayOpacity}`);
         await page.mouse.move(5, 5);
-        await page.waitForTimeout(800);
+        await page.waitForTimeout(850);
       }
 
       const heroContentBox = await page.locator('[data-testid="updates-hero-content"]').boundingBox();
+      const comingSoonBox = await page.locator('[data-testid="updates-hero-el-coming-soon"]').boundingBox();
+      assert(
+        headingBox && comingSoonBox && headingBox.y + headingBox.height <= comingSoonBox.y + 8,
+        `Expected zero overlap between UPCOMING heading and COMING SOON on ${vp.name}`
+      );
       const neonNavWrap = heroSec.locator('[data-testid="updates-subnav-neon-border"]');
       await neonNavWrap.waitFor({ state: "visible" });
       const neonAnimName = await neonNavWrap.locator(".goldex-neon-nav-rotator").first().evaluate((el) => getComputedStyle(el).animationName);
@@ -363,9 +399,16 @@ async function main() {
 
       const subnav = heroSec.locator('[data-testid="updates-subnav-box"]');
       await subnav.waitFor({ state: "visible" });
-      const subnavText = (await subnav.innerText()).toUpperCase();
+      const navGlassStyles = await subnav.evaluate((el) => {
+        const st = getComputedStyle(el);
+        return {
+          backdrop: st.backdropFilter || (st as unknown as { webkitBackdropFilter?: string }).webkitBackdropFilter || "none",
+          text: (el.textContent || "").toUpperCase(),
+        };
+      });
+      assert(navGlassStyles.backdrop.includes("blur("), `Expected Apple Liquid Glass backdrop blur on Nav Box, got ${navGlassStyles.backdrop}`);
       for (const navLbl of ["ALL UPDATES", "LATEST RELEASES", "SPOTIFY MUSIC", "TRENDING MUSIC", "MUSIC VIDEOS"]) {
-        assert(subnavText.includes(navLbl), `Missing preserved navigation option "${navLbl}"`);
+        assert(navGlassStyles.text.includes(navLbl), `Missing preserved navigation option "${navLbl}"`);
       }
       const subnavBox = await neonNavWrap.boundingBox();
       assert(

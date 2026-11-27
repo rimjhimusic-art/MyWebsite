@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { getCmsSiteData } from "@/lib/cms";
 import { getUpdatesFeed } from "@/lib/updates";
+import { normalizeUpdatesHeroExtended } from "@/lib/updates-hero-config";
 import { UpdatesClient } from "@/components/UpdatesClient";
 
 export const dynamic = "force-dynamic";
@@ -124,6 +125,7 @@ export default async function UpdatesPage({
             ? heroExtra.spacing
             : "normal",
         showFilterBar: heroExtra.showFilterPills !== false,
+        extended: normalizeUpdatesHeroExtended(heroExtra.heroStudio),
       }}
       sectionsConfig={{
         releases: {
