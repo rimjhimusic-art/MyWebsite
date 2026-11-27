@@ -8,9 +8,15 @@ const brandHandlers = createCmsCollectionHandlers({
     name: String(b.name || "").trim(),
     handle: typeof b.handle === "string" ? b.handle.trim() : null,
     category: typeof b.category === "string" ? b.category.trim() : null,
+    bio: typeof b.bio === "string" ? b.bio.trim() : null,
     description: typeof b.description === "string" ? b.description.trim() : null,
     imageUrl: String(b.imageUrl || "").trim(),
     videoUrl: normalizeUrlInput(b.videoUrl),
+    instagramUrl: normalizeUrlInput(b.instagramUrl),
+    facebookUrl: normalizeUrlInput(b.facebookUrl),
+    youtubeUrl: normalizeUrlInput(b.youtubeUrl),
+    spotifyUrl: normalizeUrlInput(b.spotifyUrl),
+    websiteUrl: normalizeUrlInput(b.websiteUrl),
     published: b.published !== false,
   }),
   sanitizeUpdate: (b) => {
@@ -18,9 +24,13 @@ const brandHandlers = createCmsCollectionHandlers({
     if (typeof b.name === "string") out.name = b.name.trim();
     if (typeof b.handle === "string") out.handle = b.handle.trim();
     if (typeof b.category === "string") out.category = b.category.trim();
+    if ("bio" in b) out.bio = typeof b.bio === "string" && b.bio.trim() ? b.bio.trim() : null;
     if ("description" in b) out.description = typeof b.description === "string" && b.description.trim() ? b.description.trim() : null;
     if (typeof b.imageUrl === "string") out.imageUrl = b.imageUrl.trim();
     if ("videoUrl" in b) out.videoUrl = normalizeUrlInput(b.videoUrl);
+    for (const f of ["instagramUrl", "facebookUrl", "youtubeUrl", "spotifyUrl", "websiteUrl"]) {
+      if (f in b) out[f] = normalizeUrlInput(b[f]);
+    }
     if (typeof b.published === "boolean") out.published = b.published;
     if (typeof b.sortOrder === "number") out.sortOrder = b.sortOrder;
     return out;

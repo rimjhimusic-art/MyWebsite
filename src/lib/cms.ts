@@ -185,6 +185,8 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
     serviceRows,
     teamRows,
     brandCreatorRows,
+    brandVideoRows,
+    aboutSlideRows,
     planRows,
     controlRows,
     seoRows,
@@ -198,6 +200,8 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
     prisma.cmsService.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.teamMember.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.brandCreator.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.brandVideo.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.aboutSliderImage.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.distributionPlan.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.controlFeature.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.seoSetting.findMany(),
@@ -284,6 +288,12 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
   const brandCreators = allowPreview
     ? mapDraftList(brandCreatorRows, true)
     : mapDraftList(brandCreatorRows, false).filter((b) => b.published);
+  const brandVideos = allowPreview
+    ? mapDraftList(brandVideoRows, true)
+    : mapDraftList(brandVideoRows, false).filter((v) => v.published);
+  const aboutSlides = allowPreview
+    ? mapDraftList(aboutSlideRows, true)
+    : mapDraftList(aboutSlideRows, false).filter((s) => s.enabled);
   const plans = allowPreview
     ? mapDraftList(planRows, true)
     : mapDraftList(planRows, false).filter((p) => p.published);
@@ -315,6 +325,8 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
     services,
     team,
     brandCreators,
+    brandVideos,
+    aboutSlides,
     plans,
     controls,
     seoMap,
@@ -332,6 +344,8 @@ export async function countPendingCmsDrafts(): Promise<number> {
     serviceCount,
     teamCount,
     brandCount,
+    brandVidCount,
+    aboutSlideCount,
     planCount,
     ctrlCount,
     seoCount,
@@ -344,6 +358,8 @@ export async function countPendingCmsDrafts(): Promise<number> {
     prisma.cmsService.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
     prisma.teamMember.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
     prisma.brandCreator.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
+    prisma.brandVideo.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
+    prisma.aboutSliderImage.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
     prisma.distributionPlan.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
     prisma.controlFeature.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
     prisma.seoSetting.count({ where: { OR: [{ draftStatus: { not: "PUBLISHED" } }, { draftJson: { not: null } }] } }),
@@ -357,6 +373,8 @@ export async function countPendingCmsDrafts(): Promise<number> {
     serviceCount +
     teamCount +
     brandCount +
+    brandVidCount +
+    aboutSlideCount +
     planCount +
     ctrlCount +
     seoCount

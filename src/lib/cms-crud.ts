@@ -65,6 +65,8 @@ type CmsTableKey =
   | "cmsService"
   | "teamMember"
   | "brandCreator"
+  | "brandVideo"
+  | "aboutSliderImage"
   | "distributionPlan"
   | "controlFeature"
   | "seoSetting";
