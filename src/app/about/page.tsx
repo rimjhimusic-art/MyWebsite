@@ -32,7 +32,14 @@ export default async function AboutPage({
   const heroSec = cms.sectionMap["about"]?.["hero"];
   const storySec = cms.sectionMap["about"]?.["story"];
 
-  let heroExtra: { galleryImages?: string[] } = {};
+  let heroExtra: {
+    galleryImages?: string[];
+    sliderEnabled?: boolean;
+    sliderAutoplay?: boolean;
+    sliderSpeedSeconds?: number;
+    sliderPauseOnHover?: boolean;
+    sliderShowCaptions?: boolean;
+  } = {};
   if (heroSec?.extraJson) {
     try {
       heroExtra = JSON.parse(heroSec.extraJson);
@@ -46,6 +53,7 @@ export default async function AboutPage({
     partnerLogos?: Array<{ name: string; logoUrl: string; websiteUrl?: string }>;
     artistImageUrl?: string;
     artistImagePosition?: string;
+    teamHeading?: string;
     pillars?: Array<{ title: string; description: string }>;
   } = {};
   if (storySec?.extraJson) {
@@ -148,7 +156,17 @@ export default async function AboutPage({
       )}
 
       {/* INDIAN FLAG DUAL-TRACK RIBBON GALLERY SLIDER */}
-      <AboutDualSlider images={galleryImages} />
+      <AboutDualSlider
+        slides={cms.aboutSlides}
+        images={galleryImages}
+        sliderSettings={{
+          enabled: heroExtra.sliderEnabled ?? true,
+          autoplay: heroExtra.sliderAutoplay ?? true,
+          speedSeconds: heroExtra.sliderSpeedSeconds ?? 45,
+          pauseOnHover: heroExtra.sliderPauseOnHover ?? true,
+          showCaptions: heroExtra.sliderShowCaptions ?? true,
+        }}
+      />
 
       {/* EXCLUSIVE LICENSING & JOIN NETWORK PARTNER CANVAS */}
       {(!storySec || storySec.enabled !== false) && (
@@ -256,7 +274,7 @@ export default async function AboutPage({
       )}
 
       {/* LEADERSHIP & TEAM CARD DECK */}
-      <TeamCardDeck members={cms.team} />
+      <TeamCardDeck members={cms.team} heading={storyExtra.teamHeading} />
 
       <Footer settings={cms.settings} footerNav={cms.footerNav} />
     </div>

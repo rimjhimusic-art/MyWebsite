@@ -59,24 +59,96 @@ export const TEAM_MEMBERS = [
   },
 ];
 
-export function AboutDualSlider({ images }: { images?: string[] }) {
+export interface AboutSliderSlideItem {
+  id: string;
+  imageUrl: string;
+  title?: string | null;
+  description?: string | null;
+  enabled?: boolean;
+}
+
+export interface AboutSliderSettings {
+  enabled?: boolean;
+  autoplay?: boolean;
+  speedSeconds?: number;
+  pauseOnHover?: boolean;
+  showCaptions?: boolean;
+}
+
+export function AboutDualSlider({
+  slides,
+  images,
+  sliderSettings,
+}: {
+  slides?: AboutSliderSlideItem[];
+  images?: string[];
+  sliderSettings?: AboutSliderSettings;
+}) {
   const [backZ, setBackZ] = useState(1);
-  const sourceImages = images && images.length > 0 ? images : GALLERY_IMAGES;
-  const doubled = [...sourceImages, ...sourceImages];
+  const [hovered, setHovered] = useState(false);
+
+  if (sliderSettings?.enabled === false) return null;
+
+  const activeSlides: AboutSliderSlideItem[] =
+    slides && slides.length > 0
+      ? slides.filter((s) => s.enabled !== false)
+      : (images && images.length > 0 ? images : GALLERY_IMAGES).map((src, i) => ({
+          id: `legacy-${i}`,
+          imageUrl: src,
+          title: null,
+          description: null,
+          enabled: true,
+        }));
+
+  if (activeSlides.length === 0) return null;
+
+  const doubled = [...activeSlides, ...activeSlides];
+  const autoplay = sliderSettings?.autoplay !== false;
+  const pauseOnHover = sliderSettings?.pauseOnHover !== false;
+  const showCaptions = sliderSettings?.showCaptions !== false;
+  const durationSec = Math.min(180, Math.max(8, Number(sliderSettings?.speedSeconds || 45)));
+
+  const trackStyle: React.CSSProperties = {
+    animationName: autoplay ? "smoothScroll" : "none",
+    animationDuration: `${durationSec}s`,
+    animationTimingFunction: "linear",
+    animationIterationCount: "infinite",
+    animationPlayState:
+      !autoplay || (pauseOnHover && hovered) ? "paused" : "running",
+  };
+
+  const renderCard = (slide: AboutSliderSlideItem, key: string) => (
+    <div key={key} className="gallery-card group">
+      <img src={slide.imageUrl} alt={slide.title || "Goldex Team Gallery"} />
+      {showCaptions && (slide.title || slide.description) && (
+        <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-black/90 via-black/60 to-transparent text-left">
+          {slide.title && (
+            <div className="text-xs font-bold text-white truncate">{slide.title}</div>
+          )}
+          {slide.description && (
+            <div className="text-[11px] text-zinc-300 line-clamp-2 mt-0.5">
+              {slide.description}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="clean-slider">
+    <div
+      className="clean-slider"
+      data-testid="about-top-slider"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div
         className="slider-track track-back"
-        style={{ zIndex: backZ }}
+        style={{ ...trackStyle, zIndex: backZ }}
         onMouseOver={() => setBackZ(30)}
         onMouseOut={() => setBackZ(1)}
       >
-        {doubled.map((src, i) => (
-          <div key={`b-${i}`} className="gallery-card">
-            <img src={src} alt="Goldex Team Gallery" />
-          </div>
-        ))}
+        {doubled.map((slide, i) => renderCard(slide, `b-${slide.id}-${i}`))}
       </div>
 
       <div className="ribbon-container">
@@ -91,12 +163,8 @@ export function AboutDualSlider({ images }: { images?: string[] }) {
         </svg>
       </div>
 
-      <div className="slider-track track-front">
-        {doubled.map((src, i) => (
-          <div key={`f-${i}`} className="gallery-card">
-            <img src={src} alt="Goldex Team Gallery" />
-          </div>
-        ))}
+      <div className="slider-track track-front" style={trackStyle}>
+        {doubled.map((slide, i) => renderCard(slide, `f-${slide.id}-${i}`))}
       </div>
     </div>
   );
@@ -119,8 +187,10 @@ export interface CmsTeamMemberItem {
 
 export function TeamCardDeck({
   members,
+  heading,
 }: {
   members?: CmsTeamMemberItem[];
+  heading?: string;
 }) {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const [dealt, setDealt] = useState(false);
@@ -169,7 +239,11 @@ export function TeamCardDeck({
       className="py-[100px] px-5 sm:px-10 text-center bg-[#080808] border-t border-white/5"
     >
       <h2 className="text-[2.2rem] sm:text-[3rem] font-extrabold mb-[60px] text-white">
-        Our <span className="text-[#3b82f6]">Leadership &amp; Team</span>
+        {heading || (
+          <>
+            Our <span className="text-[#3b82f6]">Leadership &amp; Team</span>
+          </>
+        )}
       </h2>
 
       <div className="flex flex-wrap justify-center gap-[30px] max-w-[1400px] mx-auto">
