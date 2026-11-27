@@ -27,6 +27,7 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
         servicesCount,
         teamCount,
         creatorsCount,
+        aboutSlidesCount,
         plansCount,
         controlsCount,
         sectionsCount,
@@ -39,6 +40,7 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
         prisma.cmsService.count(),
         prisma.teamMember.count(),
         prisma.brandCreator.count(),
+        prisma.aboutSliderImage.count(),
         prisma.distributionPlan.count(),
         prisma.controlFeature.count(),
         prisma.pageSection.count(),
@@ -222,8 +224,7 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
         }
       }
 
-      const aboutSlidesCount = await prisma.aboutSliderImage.count();
-      if (aboutSlidesCount === 0) {
+      if (aboutSlidesCount === 0 && sectionsCount === 0) {
         await prisma.aboutSliderImage.createMany({
           data: Array.from({ length: 8 }, (_, i) => ({
             imageUrl: `/ref/flag/about-${i + 1}.png`,

@@ -25,7 +25,9 @@ import { CmsMediaPickerModal } from "@/components/admin/CmsMediaPickerModal";
 import {
   AboutManagerPanel,
   BrandSolutionsManagerPanel,
+  type CmsAboutSlideRow,
   type CmsBrandCreatorRow,
+  type CmsBrandVideoRow,
 } from "@/components/admin/BrandAboutPanels";
 import {
   ArtistsManagerPanel,
@@ -59,6 +61,8 @@ interface CmsOverviewPayload {
   services: CmsServiceRow[];
   team: CmsTeamRow[];
   brandCreators: CmsBrandCreatorRow[];
+  brandVideos: CmsBrandVideoRow[];
+  aboutSlides: CmsAboutSlideRow[];
   seoMap: Record<string, CmsSeoRow>;
   pendingDrafts: number;
   revisions: Array<{ id: string; summary: string; createdAt: string }>;
@@ -273,10 +277,24 @@ export default function AdminCmsStudioPage() {
       {tab === "about" && (
         <AboutManagerPanel
           sections={cms.sections}
+          slides={cms.aboutSlides || []}
           onSaveSection={async (payload, mode) => {
             const ok = await callCms("/api/admin/cms/pages", "PATCH", { ...payload, mode });
             if (ok) showToast(mode === "publish" ? "About section published live!" : "About section draft saved.", "success");
           }}
+          onCreateSlide={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/about-slider", "POST", { ...payload, mode });
+            if (ok) showToast("About slider image added!", "success");
+          }}
+          onSaveSlide={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/about-slider", "PATCH", { ...payload, mode });
+            if (ok) showToast("About slider image updated!", "success");
+          }}
+          onReorderSlides={async (ids) => {
+            await callCms("/api/admin/cms/about-slider", "PATCH", { action: "reorder", ids, mode: "publish" });
+            showToast("About slider order updated.", "success");
+          }}
+          onDeleteSlide={(id, label) => confirmDelete(`/api/admin/cms/about-slider?id=${id}&mode=publish`, label)}
           onPickMedia={(cb, folder = "about") => setMediaPicker({ open: true, folder, callback: cb })}
           onGoToTeamTab={() => setTab("team")}
         />
@@ -285,23 +303,37 @@ export default function AdminCmsStudioPage() {
       {tab === "brand" && (
         <BrandSolutionsManagerPanel
           creators={cms.brandCreators || []}
+          videos={cms.brandVideos || []}
           sections={cms.sections}
           onCreateCreator={async (payload, mode) => {
             const ok = await callCms("/api/admin/cms/collections?type=brand", "POST", { ...payload, mode });
-            if (ok) showToast("Brand Solutions creator added!", "success");
+            if (ok) showToast("Brand Solutions artist added!", "success");
           }}
           onSaveCreator={async (payload, mode) => {
             const ok = await callCms("/api/admin/cms/collections?type=brand", "PATCH", { ...payload, mode });
-            if (ok) showToast("Brand Solutions creator updated!", "success");
+            if (ok) showToast("Brand Solutions artist updated!", "success");
           }}
           onReorderCreators={async (ids) => {
             await callCms("/api/admin/cms/collections?type=brand", "PATCH", { action: "reorder", ids, mode: "publish" });
             showToast("Creators display order updated.", "success");
           }}
           onDeleteCreator={(id, label) => confirmDelete(`/api/admin/cms/collections?type=brand&id=${id}&mode=publish`, label)}
+          onCreateVideo={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/brand-videos", "POST", { ...payload, mode });
+            if (ok) showToast("Brand Solutions video published!", "success");
+          }}
+          onSaveVideo={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/brand-videos", "PATCH", { ...payload, mode });
+            if (ok) showToast("Brand Solutions video updated!", "success");
+          }}
+          onReorderVideos={async (ids) => {
+            await callCms("/api/admin/cms/brand-videos", "PATCH", { action: "reorder", ids, mode: "publish" });
+            showToast("Brand Videos order updated.", "success");
+          }}
+          onDeleteVideo={(id, label) => confirmDelete(`/api/admin/cms/brand-videos?id=${id}&mode=publish`, label)}
           onSaveSection={async (payload, mode) => {
             const ok = await callCms("/api/admin/cms/pages", "PATCH", { ...payload, mode });
-            if (ok) showToast("Brand Solutions page section saved!", "success");
+            if (ok) showToast("Brand Solutions section saved!", "success");
           }}
           onPickMedia={(cb, folder = "brand") => setMediaPicker({ open: true, folder, callback: cb })}
         />
