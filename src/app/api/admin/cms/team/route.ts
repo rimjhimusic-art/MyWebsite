@@ -14,6 +14,10 @@ const handlers = createCmsCollectionHandlers({
       bio: typeof body.bio === "string" ? body.bio.trim() : "",
       imageUrl,
       linkedinUrl: normalizeUrlInput(body.linkedinUrl),
+      instagramUrl: normalizeUrlInput(body.instagramUrl),
+      facebookUrl: normalizeUrlInput(body.facebookUrl),
+      youtubeUrl: normalizeUrlInput(body.youtubeUrl),
+      websiteUrl: normalizeUrlInput(body.websiteUrl),
       published: body.published !== false,
       sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : undefined,
     };
@@ -25,6 +29,10 @@ const handlers = createCmsCollectionHandlers({
     if (typeof body.bio === "string") out.bio = body.bio.trim();
     if (typeof body.imageUrl === "string") out.imageUrl = body.imageUrl.trim();
     if ("linkedinUrl" in body) out.linkedinUrl = normalizeUrlInput(body.linkedinUrl);
+    if ("instagramUrl" in body) out.instagramUrl = normalizeUrlInput(body.instagramUrl);
+    if ("facebookUrl" in body) out.facebookUrl = normalizeUrlInput(body.facebookUrl);
+    if ("youtubeUrl" in body) out.youtubeUrl = normalizeUrlInput(body.youtubeUrl);
+    if ("websiteUrl" in body) out.websiteUrl = normalizeUrlInput(body.websiteUrl);
     if (typeof body.published === "boolean") out.published = body.published;
     if (typeof body.sortOrder === "number") out.sortOrder = body.sortOrder;
     return out;

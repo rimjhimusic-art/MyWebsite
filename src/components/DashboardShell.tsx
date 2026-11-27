@@ -31,6 +31,7 @@ import {
   FileText,
   MessageSquare,
   Mail,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 
@@ -50,6 +51,7 @@ const ADMIN_DEFAULT_NAV: NavItem[] = [
   { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
   { href: "/admin/chatbot", label: "AI Chatbot & Live Support", icon: MessageSquare },
   { href: "/admin/cms", label: "Website CMS Studio", icon: FileText },
+  { href: "/admin/updates", label: "New Updates Management", icon: Sparkles },
   { href: "/admin/contact-settings", label: "Contact & Social Settings", icon: Mail },
   { href: "/admin/settings", label: "Integrations & Audit Logs", icon: Settings },
 ];

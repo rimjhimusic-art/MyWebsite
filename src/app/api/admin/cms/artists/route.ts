@@ -24,7 +24,14 @@ const handlers = createCmsCollectionHandlers({
       instagramUrl: normalizeUrlInput(body.instagramUrl),
       youtubeUrl: normalizeUrlInput(body.youtubeUrl),
       spotifyUrl: normalizeUrlInput(body.spotifyUrl),
+      appleMusicUrl: normalizeUrlInput(body.appleMusicUrl),
       websiteUrl: normalizeUrlInput(body.websiteUrl),
+      otherSocialsJson:
+        typeof body.otherSocialsJson === "string"
+          ? body.otherSocialsJson
+          : Array.isArray(body.otherSocials)
+          ? JSON.stringify(body.otherSocials)
+          : null,
       published: body.published !== false,
       sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : undefined,
     };
@@ -38,8 +45,13 @@ const handlers = createCmsCollectionHandlers({
     if (typeof body.verified === "boolean") out.verified = body.verified;
     if (typeof body.published === "boolean") out.published = body.published;
     if (typeof body.sortOrder === "number") out.sortOrder = body.sortOrder;
-    for (const f of ["facebookUrl", "instagramUrl", "youtubeUrl", "spotifyUrl", "websiteUrl"]) {
+    for (const f of ["facebookUrl", "instagramUrl", "youtubeUrl", "spotifyUrl", "appleMusicUrl", "websiteUrl"]) {
       if (f in body) out[f] = normalizeUrlInput(body[f]);
+    }
+    if ("otherSocialsJson" in body) {
+      out.otherSocialsJson = typeof body.otherSocialsJson === "string" ? body.otherSocialsJson : null;
+    } else if (Array.isArray(body.otherSocials)) {
+      out.otherSocialsJson = JSON.stringify(body.otherSocials);
     }
     return out;
   },

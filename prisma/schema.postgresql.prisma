@@ -996,6 +996,9 @@ model WebsiteSettings {
   copyrightCompanyName String    @default("Goldex Media Network Private Limited")
   copyrightYear        Int       @default(2026)
   copyrightText        String    @default("© 2026 Goldex Media Network Private Limited All Right Reserved")
+  showNewUpdatesBadge  Boolean   @default(true)
+  newUpdatesBadgeText  String    @default("NEW")
+  newUpdatesBadgePulse Boolean   @default(true)
   draftStatus          String    @default("PUBLISHED")
   draftJson            String?
   lastPublishedAt      DateTime?
@@ -1059,10 +1062,12 @@ model FeaturedArtist {
   verified     Boolean  @default(true)
   facebookUrl  String?
   instagramUrl String?
-  youtubeUrl   String?
-  spotifyUrl   String?
-  websiteUrl   String?
-  published    Boolean  @default(true)
+  youtubeUrl       String?
+  spotifyUrl       String?
+  appleMusicUrl    String?
+  websiteUrl       String?
+  otherSocialsJson String?
+  published        Boolean  @default(true)
   sortOrder    Int      @default(0)
   draftStatus  String   @default("PUBLISHED")
   draftJson    String?
@@ -1112,18 +1117,22 @@ model CmsService {
 }
 
 model TeamMember {
-  id          String   @id @default(cuid())
-  name        String
-  role        String
-  bio         String?
-  imageUrl    String
-  linkedinUrl String?
-  published   Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  draftStatus String   @default("PUBLISHED")
-  draftJson   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  role         String
+  bio          String?
+  imageUrl     String
+  linkedinUrl  String?
+  instagramUrl String?
+  facebookUrl  String?
+  youtubeUrl   String?
+  websiteUrl   String?
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  draftStatus  String   @default("PUBLISHED")
+  draftJson    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([published, sortOrder])
 }
@@ -1133,6 +1142,7 @@ model BrandCreator {
   name        String
   handle      String?
   category    String?
+  description String?
   imageUrl    String
   videoUrl    String?
   published   Boolean  @default(true)
@@ -1205,6 +1215,83 @@ model CmsRevision {
   actorUserId  String?
   snapshotJson String
   createdAt    DateTime @default(now())
+}
+
+// =========================
+// New Updates Platform Models
+// =========================
+
+model UpdateRelease {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  title           String
+  artistName      String
+  releaseType     String    @default("SINGLE")
+  releaseDate     String?
+  coverUrl        String
+  description     String?
+  spotifyUrl      String?
+  appleMusicUrl   String?
+  youtubeMusicUrl String?
+  otherLinksJson  String    @default("[]")
+  featured        Boolean   @default(false)
+  trending        Boolean   @default(false)
+  published       Boolean   @default(true)
+  scheduledAt     DateTime?
+  sortOrder       Int       @default(0)
+  draftStatus     String    @default("PUBLISHED")
+  draftJson       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+  @@index([featured, published])
+  @@index([scheduledAt])
+}
+
+model UpdateSpotifyTrack {
+  id          String    @id @default(cuid())
+  spotifyUrl  String
+  spotifyUri  String?
+  itemType    String    @default("track")
+  section     String    @default("SPOTIFY")
+  title       String
+  artistName  String
+  coverUrl    String?
+  metricLabel String?
+  featured    Boolean   @default(false)
+  published   Boolean   @default(true)
+  scheduledAt DateTime?
+  sortOrder   Int       @default(0)
+  draftStatus String    @default("PUBLISHED")
+  draftJson   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([section, published, sortOrder])
+  @@index([scheduledAt])
+}
+
+model UpdateYoutubeVideo {
+  id           String    @id @default(cuid())
+  youtubeUrl   String
+  videoId      String
+  title        String
+  channelName  String?
+  description  String?
+  thumbnailUrl String
+  featured     Boolean   @default(false)
+  published    Boolean   @default(true)
+  scheduledAt  DateTime?
+  sortOrder    Int       @default(0)
+  draftStatus  String    @default("PUBLISHED")
+  draftJson    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+  @@index([featured, published])
+  @@index([scheduledAt])
 }
 
 // =========================

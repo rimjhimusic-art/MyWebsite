@@ -31,7 +31,23 @@ export default async function AboutPage({
 
   const heroSec = cms.sectionMap["about"]?.["hero"];
   const storySec = cms.sectionMap["about"]?.["story"];
-  let storyExtra: { artistImageUrl?: string } = {};
+
+  let heroExtra: { galleryImages?: string[] } = {};
+  if (heroSec?.extraJson) {
+    try {
+      heroExtra = JSON.parse(heroSec.extraJson);
+    } catch {
+      heroExtra = {};
+    }
+  }
+
+  let storyExtra: {
+    partnerCompanyName?: string;
+    partnerLogos?: Array<{ name: string; logoUrl: string; websiteUrl?: string }>;
+    artistImageUrl?: string;
+    artistImagePosition?: string;
+    pillars?: Array<{ title: string; description: string }>;
+  } = {};
   if (storySec?.extraJson) {
     try {
       storyExtra = JSON.parse(storySec.extraJson);
@@ -39,6 +55,44 @@ export default async function AboutPage({
       storyExtra = {};
     }
   }
+
+  const galleryImages =
+    Array.isArray(heroExtra.galleryImages) && heroExtra.galleryImages.length > 0
+      ? heroExtra.galleryImages
+      : undefined;
+
+  const partnerCompanyName = storyExtra.partnerCompanyName || "Vydia Inc.";
+  const partnerLogos =
+    Array.isArray(storyExtra.partnerLogos) && storyExtra.partnerLogos.length > 0
+      ? storyExtra.partnerLogos
+      : [
+          {
+            name: partnerCompanyName,
+            logoUrl: storySec?.mediaUrl || "/ref/vydia-logo.png",
+            websiteUrl: "",
+          },
+        ];
+
+  const pillars =
+    Array.isArray(storyExtra.pillars) && storyExtra.pillars.length > 0
+      ? storyExtra.pillars
+      : [
+          {
+            title: "Artist-First Economy",
+            description:
+              "Leading 90% revenue share model, ensuring earnings stay with the artist.",
+          },
+          {
+            title: "Cultural Preservation",
+            description:
+              "Digitizing regional genres like Baul and Folk music for a global platform.",
+          },
+          {
+            title: "Transparency & Trust",
+            description:
+              "No hidden fees. Crystal clear reporting and consistent monthly payouts.",
+          },
+        ];
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
@@ -49,17 +103,25 @@ export default async function AboutPage({
         previewActive={cms.previewActive}
       />
 
-      {/* INTRO BANNER WITH FULL-WIDTH VIDEO */}
+      {/* INTRO BANNER WITH FULL-WIDTH VIDEO OR IMAGE */}
       {(!heroSec || heroSec.enabled !== false) && (
         <section className="w-full h-[60vh] min-h-[500px] relative overflow-hidden flex justify-center items-center bg-black">
-          <video
-            src={heroSec?.mediaUrl || "/ref/video/about-bg.mp4"}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-60"
-          />
+          {heroSec?.mediaType === "image" && heroSec?.mediaUrl ? (
+            <img
+              src={heroSec.mediaUrl}
+              alt={heroSec.title || "About Goldex Media Network"}
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-60"
+            />
+          ) : (
+            <video
+              src={heroSec?.mediaUrl || "/ref/video/about-bg.mp4"}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+            />
+          )}
           <div className="relative z-10 text-center px-6 sm:px-10 max-w-[900px]">
             <h1 className="text-[2.2rem] sm:text-[3.5rem] font-extrabold mb-5 text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] leading-[1.1]">
               {heroSec?.title &&
@@ -68,7 +130,7 @@ export default async function AboutPage({
                 heroSec.title
               ) : (
                 <>
-                  About <span className="text-[#3b82f6]">Goldex Media Network</span>{" "}
+                  About <span className="text-[#3b82f6]">{cms.settings.siteName}</span>{" "}
                   <span className="inline-block animate-bounce">🎵</span>
                 </>
               )}
@@ -86,9 +148,9 @@ export default async function AboutPage({
       )}
 
       {/* INDIAN FLAG DUAL-TRACK RIBBON GALLERY SLIDER */}
-      <AboutDualSlider />
+      <AboutDualSlider images={galleryImages} />
 
-      {/* VYDIA & ARTIST-FIRST ECONOMY PARTNER CANVAS */}
+      {/* EXCLUSIVE LICENSING & JOIN NETWORK PARTNER CANVAS */}
       {(!storySec || storySec.enabled !== false) && (
         <div
           className="py-[50px] px-5 flex justify-center"
@@ -106,11 +168,13 @@ export default async function AboutPage({
                 }}
               />
               <div>
-                <p className="text-[1.25rem] font-semibold text-white mb-5">
-                  {storySec?.title || (
+                <p className="text-[1.25rem] font-semibold text-white mb-4">
+                  {storySec?.title ? (
+                    storySec.title
+                  ) : (
                     <>
                       Exclusive licensing &amp; royalty agreement with{" "}
-                      <span className="text-[#c19f62]">Vydia Inc.</span>
+                      <span className="text-[#c19f62]">{partnerCompanyName}</span>
                     </>
                   )}
                 </p>
@@ -118,52 +182,67 @@ export default async function AboutPage({
                   {storySec?.subtitle ||
                     "This strategic partnership empowers Goldex Media Network with elite-level tools—advanced analytics, rights management, and direct supply chain access to major DSPs."}
                 </p>
+                {storySec?.bodyHtml && (
+                  <p className="text-xs text-[#cbd5e1] mt-3 leading-relaxed opacity-90">
+                    {storySec.bodyHtml}
+                  </p>
+                )}
               </div>
-              <div className="bg-white/[0.03] rounded-[16px] p-5 mt-[30px] flex items-center justify-center">
-                <img
-                  src={storySec?.mediaUrl || "/ref/vydia-logo.png"}
-                  alt="Vydia Logo"
-                  className="max-h-[80px] w-auto object-contain"
-                />
+              <div className="bg-white/[0.03] border border-white/5 rounded-[16px] p-5 mt-[30px] flex flex-wrap items-center justify-center gap-6">
+                {partnerLogos.map((partner, idx) => {
+                  const content = (
+                    <div className="flex flex-col items-center gap-1.5 group">
+                      <img
+                        src={partner.logoUrl}
+                        alt={partner.name || "Partner Logo"}
+                        className="max-h-[72px] w-auto object-contain transition-transform group-hover:scale-105"
+                      />
+                      {partner.name && partnerLogos.length > 1 && (
+                        <span className="text-[11px] text-[#b0b0b8] font-medium">
+                          {partner.name}
+                        </span>
+                      )}
+                    </div>
+                  );
+                  return partner.websiteUrl ? (
+                    <a
+                      key={`${partner.name}-${idx}`}
+                      href={partner.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:opacity-90 transition-opacity"
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <div key={`${partner.name}-${idx}`}>{content}</div>
+                  );
+                })}
               </div>
             </div>
 
             <div className="flex-[1.3] bg-[#141414]/60 backdrop-blur-xl border border-white/10 hover:border-[#c19f62]/30 rounded-[24px] p-8 sm:p-10 flex flex-col md:flex-row gap-8 items-center shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition-all">
-              <div className="w-full md:w-[220px] h-[280px] md:h-full rounded-[16px] overflow-hidden shrink-0">
+              <div className="w-full md:w-[220px] h-[280px] md:h-full min-h-[280px] rounded-[16px] overflow-hidden shrink-0 bg-black/50">
                 <img
                   src={storyExtra.artistImageUrl || "/ref/about-artist.jpg"}
                   alt="Independent Artist"
+                  style={{
+                    objectPosition: storyExtra.artistImagePosition || "center top",
+                  }}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="flex-1 space-y-5 text-left">
-                <div>
-                  <span className="block text-base font-bold text-[#c19f62] mb-1">
-                    Artist-First Economy
-                  </span>
-                  <span className="text-sm text-[#94a3b8] leading-relaxed">
-                    Leading 90% revenue share model, ensuring earnings stay with
-                    the artist.
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-base font-bold text-[#c19f62] mb-1">
-                    Cultural Preservation
-                  </span>
-                  <span className="text-sm text-[#94a3b8] leading-relaxed">
-                    Digitizing regional genres like Baul and Folk music for a
-                    global platform.
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-base font-bold text-[#c19f62] mb-1">
-                    Transparency &amp; Trust
-                  </span>
-                  <span className="text-sm text-[#94a3b8] leading-relaxed">
-                    No hidden fees. Crystal clear reporting and consistent monthly
-                    payouts.
-                  </span>
-                </div>
+                {pillars.map((pillar, idx) => (
+                  <div key={`${pillar.title}-${idx}`}>
+                    <span className="block text-base font-bold text-[#c19f62] mb-1">
+                      {pillar.title}
+                    </span>
+                    <span className="text-sm text-[#94a3b8] leading-relaxed">
+                      {pillar.description}
+                    </span>
+                  </div>
+                ))}
                 <Link
                   href={storySec?.ctaHref || "/signup"}
                   className="inline-block mt-2 px-7 py-3 rounded-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold text-sm transition-all"

@@ -1,6 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { Globe } from "lucide-react";
+import {
+  InstagramIcon,
+  FacebookIcon,
+  YouTubeIcon,
+  LinkedInIcon,
+} from "@/components/BrandIcons";
 
 const GALLERY_IMAGES = Array.from(
   { length: 8 },
@@ -52,9 +59,10 @@ export const TEAM_MEMBERS = [
   },
 ];
 
-export function AboutDualSlider() {
+export function AboutDualSlider({ images }: { images?: string[] }) {
   const [backZ, setBackZ] = useState(1);
-  const doubled = [...GALLERY_IMAGES, ...GALLERY_IMAGES];
+  const sourceImages = images && images.length > 0 ? images : GALLERY_IMAGES;
+  const doubled = [...sourceImages, ...sourceImages];
 
   return (
     <div className="clean-slider">
@@ -102,6 +110,11 @@ export interface CmsTeamMemberItem {
   imageUrl?: string;
   img?: string;
   desc?: string;
+  linkedinUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  youtubeUrl?: string | null;
+  websiteUrl?: string | null;
 }
 
 export function TeamCardDeck({
@@ -120,8 +133,21 @@ export function TeamCardDeck({
           role: m.role,
           img: m.imageUrl || m.img || "/ref/team/sujoy.png",
           desc: m.bio ?? m.desc ?? "",
+          linkedinUrl: m.linkedinUrl,
+          instagramUrl: m.instagramUrl,
+          facebookUrl: m.facebookUrl,
+          youtubeUrl: m.youtubeUrl,
+          websiteUrl: m.websiteUrl,
         }))
-      : TEAM_MEMBERS.map((m, idx) => ({ ...m, id: `fallback-${idx}` }));
+      : TEAM_MEMBERS.map((m, idx) => ({
+          ...m,
+          id: `fallback-${idx}`,
+          linkedinUrl: null,
+          instagramUrl: null,
+          facebookUrl: null,
+          youtubeUrl: null,
+          websiteUrl: null,
+        }));
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -147,38 +173,65 @@ export function TeamCardDeck({
       </h2>
 
       <div className="flex flex-wrap justify-center gap-[30px] max-w-[1400px] mx-auto">
-        {list.map((member, index) => (
-          <div
-            key={member.id || `${member.name}-${index}`}
-            style={{
-              transitionDelay: `${index * 120}ms`,
-            }}
-            className={`w-full max-w-[350px] sm:w-[300px] rounded-[20px] bg-[#111] border border-[#222] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-700 hover:-translate-y-3 hover:border-[#3b82f6] hover:shadow-[0_20px_50px_rgba(59,130,246,0.2)] group ${
-              dealt
-                ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 translate-y-12 scale-95"
-            }`}
-          >
-            <div className="w-full h-[300px] sm:h-[320px] relative bg-gradient-to-t from-black to-transparent overflow-hidden">
-              <img
-                src={member.img}
-                alt={member.name}
-                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-              />
-            </div>
-            <div className="p-[25px] text-left bg-[#111] border-t border-[#222]">
-              <div className="text-[1.4rem] font-bold text-white mb-1">
-                {member.name}
+        {list.map((member, index) => {
+          const socials = [
+            { key: "instagram", url: member.instagramUrl, label: "Instagram", icon: <InstagramIcon className="w-3.5 h-3.5" color="#E1306C" /> },
+            { key: "facebook", url: member.facebookUrl, label: "Facebook", icon: <FacebookIcon className="w-3.5 h-3.5" color="#1877F2" /> },
+            { key: "youtube", url: member.youtubeUrl, label: "YouTube", icon: <YouTubeIcon className="w-3.5 h-3.5" color="#FF0000" /> },
+            { key: "linkedin", url: member.linkedinUrl, label: "LinkedIn", icon: <LinkedInIcon className="w-3.5 h-3.5" color="#0A66C2" /> },
+            { key: "website", url: member.websiteUrl, label: "Website / X", icon: <Globe className="w-3.5 h-3.5 text-[#60a5fa]" /> },
+          ].filter((s) => Boolean(s.url && s.url.trim()));
+
+          return (
+            <div
+              key={member.id || `${member.name}-${index}`}
+              style={{
+                transitionDelay: `${index * 120}ms`,
+              }}
+              className={`w-full max-w-[350px] sm:w-[300px] rounded-[20px] bg-[#111] border border-[#222] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-700 hover:-translate-y-3 hover:border-[#3b82f6] hover:shadow-[0_20px_50px_rgba(59,130,246,0.2)] group ${
+                dealt
+                  ? "opacity-100 translate-y-0 scale-100"
+                  : "opacity-0 translate-y-12 scale-95"
+              }`}
+            >
+              <div className="w-full h-[300px] sm:h-[320px] relative bg-gradient-to-t from-black to-transparent overflow-hidden">
+                <img
+                  src={member.img}
+                  alt={member.name}
+                  className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                />
               </div>
-              <span className="text-[0.75rem] text-[#3b82f6] uppercase tracking-[1px] font-semibold block mb-3">
-                {member.role}
-              </span>
-              <div className="text-[0.85rem] text-[#9ca3af] leading-[1.5]">
-                {member.desc}
+              <div className="p-[25px] text-left bg-[#111] border-t border-[#222]">
+                <div className="text-[1.4rem] font-bold text-white mb-1">
+                  {member.name}
+                </div>
+                <span className="text-[0.75rem] text-[#3b82f6] uppercase tracking-[1px] font-semibold block mb-3">
+                  {member.role}
+                </span>
+                <div className="text-[0.85rem] text-[#9ca3af] leading-[1.5]">
+                  {member.desc}
+                </div>
+                {socials.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/10">
+                    {socials.map((s) => (
+                      <a
+                        key={s.key}
+                        href={s.url!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${member.name} ${s.label}`}
+                        title={s.label}
+                        className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center transition-colors"
+                      >
+                        {s.icon}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -38,6 +38,9 @@ const SettingsSchema = z.object({
   copyrightCompanyName: z.string().trim().min(1).max(200).optional(),
   copyrightYear: z.number().int().min(2000).max(2100).optional(),
   copyrightText: z.string().trim().max(300).optional(),
+  showNewUpdatesBadge: z.boolean().optional(),
+  newUpdatesBadgeText: z.string().trim().min(1).max(20).optional(),
+  newUpdatesBadgePulse: z.boolean().optional(),
 });
 
 export async function GET(request: Request) {

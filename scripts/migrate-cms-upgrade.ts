@@ -1,0 +1,302 @@
+import { prisma } from "../src/lib/db";
+
+const DEFAULT_ABOUT_GALLERY = Array.from(
+  { length: 8 },
+  (_, i) => `/ref/flag/about-${i + 1}.png`
+);
+
+const DEFAULT_STORY_EXTRA = {
+  partnerCompanyName: "Vydia Inc.",
+  partnerLogos: [
+    {
+      name: "Vydia Inc.",
+      logoUrl: "/ref/vydia-logo.png",
+      websiteUrl: "https://vydia.com",
+    },
+  ],
+  artistImageUrl: "/ref/about-artist.jpg",
+  artistImagePosition: "center top",
+  pillars: [
+    {
+      title: "Artist-First Economy",
+      description:
+        "Leading 90% revenue share model, ensuring earnings stay with the artist.",
+    },
+    {
+      title: "Cultural Preservation",
+      description:
+        "Digitizing regional genres like Baul and Folk music for a global platform.",
+    },
+    {
+      title: "Transparency & Trust",
+      description:
+        "No hidden fees. Crystal clear reporting and consistent monthly payouts.",
+    },
+  ],
+};
+
+async function main() {
+  console.log("Running non-destructive CMS upgrade migration...");
+
+  // 1. Ensure WebsiteSettings badge defaults exist without altering customized branding
+  const settings = await prisma.websiteSettings.findUnique({ where: { id: "default" } });
+  if (settings) {
+    await prisma.websiteSettings.update({
+      where: { id: "default" },
+      data: {
+        newUpdatesBadgeText: settings.newUpdatesBadgeText || "NEW",
+      },
+    });
+  }
+
+  // 2. Non-destructively insert "New Updates" into HEADER navigation if missing
+  const existingHeaderUpdates = await prisma.navigationItem.findFirst({
+    where: { location: "HEADER", href: "/updates" },
+  });
+  if (!existingHeaderUpdates) {
+    const headerItems = await prisma.navigationItem.findMany({
+      where: { location: "HEADER" },
+      orderBy: { sortOrder: "asc" },
+    });
+    // Place right after About (or index 2) while preserving user order cleanly
+    let nextOrder = 1;
+    let inserted = false;
+    for (const item of headerItems) {
+      await prisma.navigationItem.update({
+        where: { id: item.id },
+        data: { sortOrder: nextOrder++ },
+      });
+      if (!inserted && (item.href === "/about" || nextOrder > 2)) {
+        await prisma.navigationItem.create({
+          data: {
+            location: "HEADER",
+            label: "New Updates",
+            href: "/updates",
+            isButton: false,
+            openNewTab: false,
+            enabled: true,
+            sortOrder: nextOrder++,
+            draftStatus: "PUBLISHED",
+          },
+        });
+        inserted = true;
+      }
+    }
+    if (!inserted) {
+      await prisma.navigationItem.create({
+        data: {
+          location: "HEADER",
+          label: "New Updates",
+          href: "/updates",
+          isButton: false,
+          openNewTab: false,
+          enabled: true,
+          sortOrder: nextOrder,
+          draftStatus: "PUBLISHED",
+        },
+      });
+    }
+    console.log("Added 'New Updates' (/updates) to HEADER navigation.");
+  }
+
+  // Also add to FOOTER_QUICK if missing
+  const existingFooterUpdates = await prisma.navigationItem.findFirst({
+    where: { location: "FOOTER_QUICK", href: "/updates" },
+  });
+  if (!existingFooterUpdates) {
+    const maxFooter = await prisma.navigationItem.aggregate({
+      where: { location: "FOOTER_QUICK" },
+      _max: { sortOrder: true },
+    });
+    await prisma.navigationItem.create({
+      data: {
+        location: "FOOTER_QUICK",
+        label: "New Updates",
+        href: "/updates",
+        isButton: false,
+        enabled: true,
+        sortOrder: (maxFooter._max.sortOrder ?? 2) + 1,
+        draftStatus: "PUBLISHED",
+      },
+    });
+  }
+
+  // 3. Enrich About PageSections (about.hero & about.story) non-destructively
+  const aboutHero = await prisma.pageSection.findUnique({
+    where: { pageSlug_sectionKey: { pageSlug: "about", sectionKey: "hero" } },
+  });
+  if (!aboutHero) {
+    await prisma.pageSection.create({
+      data: {
+        pageSlug: "about",
+        sectionKey: "hero",
+        title: "About Goldex Media Network",
+        subtitle:
+          "Goldex Media Network Private Limited is a dynamic digital media and music distribution company dedicated to empowering creators, artists, and record labels. We specialize in comprehensive CMS management, licensing operations, and DRM.",
+        badgeText:
+          "Our Mission: To empower independent creators with a transparent, technology-driven ecosystem for global reach and monetization.",
+        mediaUrl: "/ref/video/about-bg.mp4",
+        mediaType: "video",
+        extraJson: JSON.stringify({ galleryImages: DEFAULT_ABOUT_GALLERY }),
+        enabled: true,
+        sortOrder: 1,
+        draftStatus: "PUBLISHED",
+      },
+    });
+  } else {
+    let parsedHero: Record<string, unknown> = {};
+    try {
+      parsedHero = JSON.parse(aboutHero.extraJson || "{}");
+    } catch {
+      parsedHero = {};
+    }
+    if (!Array.isArray(parsedHero.galleryImages) || parsedHero.galleryImages.length === 0) {
+      await prisma.pageSection.update({
+        where: { id: aboutHero.id },
+        data: {
+          mediaUrl: aboutHero.mediaUrl || "/ref/video/about-bg.mp4",
+          mediaType: aboutHero.mediaType || "video",
+          extraJson: JSON.stringify({
+            ...parsedHero,
+            galleryImages: DEFAULT_ABOUT_GALLERY,
+          }),
+        },
+      });
+    }
+  }
+
+  const aboutStory = await prisma.pageSection.findUnique({
+    where: { pageSlug_sectionKey: { pageSlug: "about", sectionKey: "story" } },
+  });
+  if (!aboutStory) {
+    await prisma.pageSection.create({
+      data: {
+        pageSlug: "about",
+        sectionKey: "story",
+        title: "Exclusive licensing & royalty agreement with Vydia Inc.",
+        subtitle:
+          "This strategic partnership empowers Goldex Media Network with elite-level tools—advanced analytics, rights management, and direct supply chain access to major DSPs.",
+        bodyHtml:
+          "Direct global licensing, priority catalog delivery, and rights protection built for independent artists and record labels.",
+        mediaUrl: "/ref/vydia-logo.png",
+        ctaLabel: "Join & Distribute",
+        ctaHref: "/signup",
+        extraJson: JSON.stringify(DEFAULT_STORY_EXTRA),
+        enabled: true,
+        sortOrder: 2,
+        draftStatus: "PUBLISHED",
+      },
+    });
+  } else {
+    let parsedStory: Record<string, unknown> = {};
+    try {
+      parsedStory = JSON.parse(aboutStory.extraJson || "{}");
+    } catch {
+      parsedStory = {};
+    }
+    const mergedStory = {
+      ...DEFAULT_STORY_EXTRA,
+      ...parsedStory,
+      partnerLogos:
+        Array.isArray(parsedStory.partnerLogos) && parsedStory.partnerLogos.length > 0
+          ? parsedStory.partnerLogos
+          : [
+              {
+                name: String(parsedStory.partnerCompanyName || "Vydia Inc."),
+                logoUrl: aboutStory.mediaUrl || "/ref/vydia-logo.png",
+                websiteUrl: "https://vydia.com",
+              },
+            ],
+      pillars:
+        Array.isArray(parsedStory.pillars) && parsedStory.pillars.length > 0
+          ? parsedStory.pillars
+          : DEFAULT_STORY_EXTRA.pillars,
+    };
+    await prisma.pageSection.update({
+      where: { id: aboutStory.id },
+      data: {
+        mediaUrl: aboutStory.mediaUrl || "/ref/vydia-logo.png",
+        ctaLabel: aboutStory.ctaLabel || "Join & Distribute",
+        ctaHref: aboutStory.ctaHref || "/signup",
+        extraJson: JSON.stringify(mergedStory),
+      },
+    });
+  }
+
+  // 4. Ensure SEO record for /updates
+  await prisma.seoSetting.upsert({
+    where: { pageSlug: "updates" },
+    update: {},
+    create: {
+      pageSlug: "updates",
+      metaTitle: "New Updates & Releases - Goldex Media Network",
+      metaDescription:
+        "Discover latest releases, Spotify embeds, trending songs, and official YouTube music videos from Goldex Media Network artists.",
+      ogImageUrl: "/ref/goldex-og.svg",
+      draftStatus: "PUBLISHED",
+    },
+  });
+
+  // 5. Ensure at least starter Updates items ONLY when all 3 tables are empty (never overwriting existing entries)
+  const [relCount, spCount, ytCount] = await Promise.all([
+    prisma.updateRelease.count(),
+    prisma.updateSpotifyTrack.count(),
+    prisma.updateYoutubeVideo.count(),
+  ]);
+
+  if (relCount === 0 && spCount === 0 && ytCount === 0) {
+    await prisma.updateRelease.createMany({
+      data: [
+        {
+          slug: "abir-biswas-aay-na-phire-aay",
+          title: "Aay Na Phire Aay",
+          artistName: "Abir Biswas",
+          releaseType: "SINGLE",
+          releaseDate: "2026-03-15",
+          coverUrl: "/ref/abir.jpg",
+          description:
+            "Soulful independent single distributed globally via Goldex Media Network across Spotify, Apple Music, and YouTube Music.",
+          spotifyUrl: "https://open.spotify.com",
+          appleMusicUrl: "https://music.apple.com",
+          youtubeMusicUrl: "https://music.youtube.com",
+          otherLinksJson: JSON.stringify([
+            { label: "JioSaavn", url: "https://www.jiosaavn.com" },
+          ]),
+          featured: true,
+          trending: true,
+          published: true,
+          sortOrder: 1,
+        },
+        {
+          slug: "keshab-dey-hay-re-boka-mon",
+          title: "Hay Re Boka Mon",
+          artistName: "Keshab Dey",
+          releaseType: "SINGLE",
+          releaseDate: "2026-02-28",
+          coverUrl: "/ref/keshab.jpg",
+          description:
+            "Classically rooted contemporary folk crossover capturing listeners across digital streaming platforms.",
+          spotifyUrl: "https://open.spotify.com",
+          youtubeMusicUrl: "https://music.youtube.com",
+          otherLinksJson: "[]",
+          featured: true,
+          trending: false,
+          published: true,
+          sortOrder: 2,
+        },
+      ],
+    });
+    console.log("Seeded starter UpdateRelease entries (no existing Updates found).");
+  }
+
+  console.log("CMS upgrade migration complete.");
+}
+
+main()
+  .catch((err) => {
+    console.error("Migration error:", err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

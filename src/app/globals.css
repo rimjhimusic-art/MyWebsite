@@ -68,9 +68,27 @@ body {
   .goldex-mailbox-float {
     animation: none !important;
   }
+  .goldex-new-badge-pulse {
+    animation: none !important;
+  }
   .goldex-bubbles-layer {
     display: none !important;
   }
+}
+
+@keyframes goldexNewBadgePulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.45), 0 0 18px rgba(59, 130, 246, 0.18);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 14px rgba(96, 165, 250, 0.8), 0 0 26px rgba(59, 130, 246, 0.35);
+    transform: scale(1.04);
+  }
+}
+
+.goldex-new-badge-pulse {
+  animation: goldexNewBadgePulse 2.4s ease-in-out infinite;
 }
 
 @keyframes goldexMailboxFloat {

@@ -11,6 +11,7 @@ export interface BrandCreatorItem {
   name: string;
   handle: string | null;
   category?: string | null;
+  description?: string | null;
   imageUrl: string;
   videoUrl: string | null;
 }
@@ -257,6 +258,11 @@ export function BrandClient({
                     {item.handle && (
                       <p className="text-[#aaa] text-[0.9rem] mt-1">
                         {item.handle}
+                      </p>
+                    )}
+                    {item.description && (
+                      <p className="text-zinc-300 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+                        {item.description}
                       </p>
                     )}
                   </div>

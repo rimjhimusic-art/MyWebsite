@@ -14,7 +14,9 @@ export interface CmsArtistRow {
   instagramUrl?: string | null;
   youtubeUrl?: string | null;
   spotifyUrl?: string | null;
+  appleMusicUrl?: string | null;
   websiteUrl?: string | null;
+  otherSocialsJson?: string | null;
   published: boolean;
   sortOrder: number;
 }
@@ -52,6 +54,10 @@ export interface CmsTeamRow {
   bio?: string | null;
   imageUrl: string;
   linkedinUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  youtubeUrl?: string | null;
+  websiteUrl?: string | null;
   published: boolean;
   sortOrder: number;
 }
@@ -82,7 +88,9 @@ export function ArtistsManagerPanel({
     instagramUrl: "",
     youtubeUrl: "",
     spotifyUrl: "",
+    appleMusicUrl: "",
     websiteUrl: "",
+    otherSocialsJson: "",
     published: true,
   });
 
@@ -222,6 +230,28 @@ export function ArtistsManagerPanel({
               }
               className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
             />
+            <input
+              type="url"
+              placeholder="Apple Music URL (optional)"
+              value={(editing ? editing.appleMusicUrl : newForm.appleMusicUrl) || ""}
+              onChange={(e) =>
+                editing
+                  ? setEditing({ ...editing, appleMusicUrl: e.target.value })
+                  : setNewForm({ ...newForm, appleMusicUrl: e.target.value })
+              }
+              className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+            <input
+              type="url"
+              placeholder="Website / Other URL (optional)"
+              value={(editing ? editing.websiteUrl : newForm.websiteUrl) || ""}
+              onChange={(e) =>
+                editing
+                  ? setEditing({ ...editing, websiteUrl: e.target.value })
+                  : setNewForm({ ...newForm, websiteUrl: e.target.value })
+              }
+              className="px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
           </div>
 
           <div className="flex items-center gap-4 text-xs pt-1">
@@ -298,7 +328,9 @@ export function ArtistsManagerPanel({
                       instagramUrl: "",
                       youtubeUrl: "",
                       spotifyUrl: "",
+                      appleMusicUrl: "",
                       websiteUrl: "",
+                      otherSocialsJson: "",
                       published: true,
                     });
                   }}
@@ -320,7 +352,9 @@ export function ArtistsManagerPanel({
                       instagramUrl: "",
                       youtubeUrl: "",
                       spotifyUrl: "",
+                      appleMusicUrl: "",
                       websiteUrl: "",
+                      otherSocialsJson: "",
                       published: true,
                     });
                   }}
@@ -759,6 +793,10 @@ export function TeamManagerPanel({
     bio: "",
     imageUrl: "/ref/team/sujoy.png",
     linkedinUrl: "",
+    instagramUrl: "",
+    facebookUrl: "",
+    youtubeUrl: "",
+    websiteUrl: "",
     published: true,
   });
 
@@ -814,13 +852,43 @@ export function TeamManagerPanel({
               Pick
             </button>
           </div>
-          <input
-            type="url"
-            placeholder="LinkedIn / Social URL (optional)"
-            value={(editing ? editing.linkedinUrl : form.linkedinUrl) || ""}
-            onChange={(e) => editing ? setEditing({ ...editing, linkedinUrl: e.target.value }) : setForm({ ...form, linkedinUrl: e.target.value })}
-            className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input
+              type="url"
+              placeholder="Instagram URL"
+              value={(editing ? editing.instagramUrl : form.instagramUrl) || ""}
+              onChange={(e) => editing ? setEditing({ ...editing, instagramUrl: e.target.value }) : setForm({ ...form, instagramUrl: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+            <input
+              type="url"
+              placeholder="Facebook URL"
+              value={(editing ? editing.facebookUrl : form.facebookUrl) || ""}
+              onChange={(e) => editing ? setEditing({ ...editing, facebookUrl: e.target.value }) : setForm({ ...form, facebookUrl: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+            <input
+              type="url"
+              placeholder="YouTube URL"
+              value={(editing ? editing.youtubeUrl : form.youtubeUrl) || ""}
+              onChange={(e) => editing ? setEditing({ ...editing, youtubeUrl: e.target.value }) : setForm({ ...form, youtubeUrl: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+            <input
+              type="url"
+              placeholder="LinkedIn URL"
+              value={(editing ? editing.linkedinUrl : form.linkedinUrl) || ""}
+              onChange={(e) => editing ? setEditing({ ...editing, linkedinUrl: e.target.value }) : setForm({ ...form, linkedinUrl: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+            <input
+              type="url"
+              placeholder="Twitter / Website URL"
+              value={(editing ? editing.websiteUrl : form.websiteUrl) || ""}
+              onChange={(e) => editing ? setEditing({ ...editing, websiteUrl: e.target.value }) : setForm({ ...form, websiteUrl: e.target.value })}
+              className="sm:col-span-2 w-full px-3 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+          </div>
           <textarea
             rows={3}
             placeholder="Short Biography"
@@ -849,7 +917,7 @@ export function TeamManagerPanel({
                   type="button"
                   onClick={async () => {
                     await onCreate(form, "draft");
-                    setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png", linkedinUrl: "", published: true });
+                    setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png", linkedinUrl: "", instagramUrl: "", facebookUrl: "", youtubeUrl: "", websiteUrl: "", published: true });
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold cursor-pointer"
                 >
@@ -859,7 +927,7 @@ export function TeamManagerPanel({
                   type="button"
                   onClick={async () => {
                     await onCreate(form, "publish");
-                    setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png", linkedinUrl: "", published: true });
+                    setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png", linkedinUrl: "", instagramUrl: "", facebookUrl: "", youtubeUrl: "", websiteUrl: "", published: true });
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-[#3b82f6] text-white text-xs font-bold cursor-pointer"
                 >

@@ -28,6 +28,8 @@ export interface CmsPageSectionRow {
   cta2Label: string | null;
   cta2Href: string | null;
   mediaUrl: string | null;
+  mediaType?: string | null;
+  extraJson?: string;
   bgColor: string | null;
   textColor: string | null;
   enabled: boolean;
@@ -71,6 +73,9 @@ export interface CmsWebsiteSettingsRow {
   copyrightCompanyName?: string;
   copyrightYear?: number;
   copyrightText: string;
+  showNewUpdatesBadge?: boolean;
+  newUpdatesBadgeText?: string;
+  newUpdatesBadgePulse?: boolean;
 }
 
 export interface CmsSeoRow {

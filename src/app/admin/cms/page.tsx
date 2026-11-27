@@ -15,10 +15,18 @@ import {
   Search,
   Menu as MenuIcon,
   MessageSquare,
+  Sparkles,
+  Megaphone,
+  Info,
 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 import { CmsConfirmModal } from "@/components/admin/CmsConfirmModal";
 import { CmsMediaPickerModal } from "@/components/admin/CmsMediaPickerModal";
+import {
+  AboutManagerPanel,
+  BrandSolutionsManagerPanel,
+  type CmsBrandCreatorRow,
+} from "@/components/admin/BrandAboutPanels";
 import {
   ArtistsManagerPanel,
   ServicesManagerPanel,
@@ -50,6 +58,7 @@ interface CmsOverviewPayload {
   stores: CmsStoreRow[];
   services: CmsServiceRow[];
   team: CmsTeamRow[];
+  brandCreators: CmsBrandCreatorRow[];
   seoMap: Record<string, CmsSeoRow>;
   pendingDrafts: number;
   revisions: Array<{ id: string; summary: string; createdAt: string }>;
@@ -64,10 +73,12 @@ interface LegacyServicePayload {
 
 const TABS = [
   { key: "pages", label: "Pages & Sections", icon: FileText },
+  { key: "about", label: "About Section CMS", icon: Info },
+  { key: "brand", label: "Brand Solutions CMS", icon: Megaphone },
   { key: "artists", label: "Featured Artists", icon: Users },
   { key: "stores", label: "Digital Stores", icon: Disc3 },
   { key: "services", label: "Services Cards", icon: Layers },
-  { key: "team", label: "Team Members", icon: Users },
+  { key: "team", label: "Leadership & Team", icon: Users },
   { key: "navigation", label: "Header & Footer Nav", icon: MenuIcon },
   { key: "branding", label: "Logos & Footer", icon: Settings },
   { key: "media", label: "Media Library", icon: ImageIcon },
@@ -185,6 +196,12 @@ export default function AdminCmsStudioPage() {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
+            href="/admin/updates"
+            className="px-4 py-2 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-400/35 text-blue-300 text-xs font-bold inline-flex items-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5" /> New Updates Manager
+          </Link>
+          <Link
             href="/?preview=1"
             target="_blank"
             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold inline-flex items-center gap-1.5"
@@ -250,6 +267,43 @@ export default function AdminCmsStudioPage() {
             if (ok) showToast(mode === "publish" ? "Section published!" : "Section draft saved.", "success");
           }}
           onPickMedia={(cb, folder = "general") => setMediaPicker({ open: true, folder, callback: cb })}
+        />
+      )}
+
+      {tab === "about" && (
+        <AboutManagerPanel
+          sections={cms.sections}
+          onSaveSection={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/pages", "PATCH", { ...payload, mode });
+            if (ok) showToast(mode === "publish" ? "About section published live!" : "About section draft saved.", "success");
+          }}
+          onPickMedia={(cb, folder = "about") => setMediaPicker({ open: true, folder, callback: cb })}
+          onGoToTeamTab={() => setTab("team")}
+        />
+      )}
+
+      {tab === "brand" && (
+        <BrandSolutionsManagerPanel
+          creators={cms.brandCreators || []}
+          sections={cms.sections}
+          onCreateCreator={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/collections?type=brand", "POST", { ...payload, mode });
+            if (ok) showToast("Brand Solutions creator added!", "success");
+          }}
+          onSaveCreator={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/collections?type=brand", "PATCH", { ...payload, mode });
+            if (ok) showToast("Brand Solutions creator updated!", "success");
+          }}
+          onReorderCreators={async (ids) => {
+            await callCms("/api/admin/cms/collections?type=brand", "PATCH", { action: "reorder", ids, mode: "publish" });
+            showToast("Creators display order updated.", "success");
+          }}
+          onDeleteCreator={(id, label) => confirmDelete(`/api/admin/cms/collections?type=brand&id=${id}&mode=publish`, label)}
+          onSaveSection={async (payload, mode) => {
+            const ok = await callCms("/api/admin/cms/pages", "PATCH", { ...payload, mode });
+            if (ok) showToast("Brand Solutions page section saved!", "success");
+          }}
+          onPickMedia={(cb, folder = "brand") => setMediaPicker({ open: true, folder, callback: cb })}
         />
       )}
 

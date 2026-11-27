@@ -8,6 +8,7 @@ export const CMS_PUBLIC_REVALIDATE_PATHS = [
   "/",
   "/about",
   "/brand",
+  "/updates",
   "/services",
   "/plan",
   "/control",
@@ -232,6 +233,9 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
     copyrightYear: 2026,
     copyrightText:
       "© 2026 Goldex Media Network Private Limited All Right Reserved",
+    showNewUpdatesBadge: true,
+    newUpdatesBadgeText: "NEW",
+    newUpdatesBadgePulse: true,
     draftStatus: "PUBLISHED",
     draftJson: null as string | null,
     lastPublishedAt: null as Date | null,

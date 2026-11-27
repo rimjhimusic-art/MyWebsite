@@ -18,11 +18,15 @@ export interface CmsBrandHeaderSettings {
   headerLogoUrl: string;
   headerLogoWidth: number;
   headerLogoHeight: number;
+  showNewUpdatesBadge?: boolean;
+  newUpdatesBadgeText?: string;
+  newUpdatesBadgePulse?: boolean;
 }
 
 const DEFAULT_NAV: CmsNavLink[] = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
+  { href: "/updates", label: "New Updates" },
   { href: "/brand", label: "Brand Solutions" },
   { href: "/services", label: "Services" },
   { href: "/plan", label: "Plan" },
@@ -134,19 +138,24 @@ export function Navbar({
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-[30px] mr-[40px]">
+          <nav className="hidden lg:flex items-center gap-[24px] xl:gap-[28px] mr-[32px]">
             {regularLinks.map((item) => {
               const active =
                 item.href === "/"
                   ? pathname === "/"
                   : pathname.startsWith(item.href);
+              const isUpdatesItem = item.href === "/updates";
+              const showBadge =
+                isUpdatesItem && settings?.showNewUpdatesBadge !== false;
+              const badgeText = settings?.newUpdatesBadgeText || "NEW";
+              const badgePulse = settings?.newUpdatesBadgePulse !== false;
               return (
                 <Link
                   key={`${item.href}-${item.label}`}
                   href={item.href}
                   target={item.openNewTab ? "_blank" : undefined}
                   rel={item.openNewTab ? "noopener noreferrer" : undefined}
-                  className={`relative font-bold text-[0.8rem] uppercase tracking-[1px] transition-colors whitespace-nowrap after:content-[''] after:absolute after:h-[2px] after:left-0 after:bottom-[-5px] after:bg-[#3b82f6] after:transition-all after:duration-300 ${
+                  className={`relative inline-flex items-center gap-1.5 font-bold text-[0.78rem] xl:text-[0.8rem] uppercase tracking-[1px] transition-colors whitespace-nowrap after:content-[''] after:absolute after:h-[2px] after:left-0 after:bottom-[-5px] after:bg-[#3b82f6] after:transition-all after:duration-300 ${
                     active
                       ? isLightScrolled
                         ? "text-[#1a73e8] after:w-full"
@@ -156,7 +165,18 @@ export function Navbar({
                       : "text-[#ddd] hover:text-white after:w-0 hover:after:w-full"
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {showBadge && (
+                    <span
+                      className={`inline-flex items-center px-1.5 py-[1px] rounded-full text-[9px] font-extrabold tracking-[0.08em] uppercase border backdrop-blur-md ${
+                        isLightScrolled
+                          ? "bg-blue-600/15 border-blue-600/40 text-blue-700"
+                          : "bg-blue-500/25 border-blue-400/50 text-blue-200"
+                      } ${badgePulse ? "goldex-new-badge-pulse" : ""}`}
+                    >
+                      {badgeText}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -221,11 +241,20 @@ export function Navbar({
                   target={item.openNewTab ? "_blank" : undefined}
                   rel={item.openNewTab ? "noopener noreferrer" : undefined}
                   onClick={() => setMobileOpen(false)}
-                  className={`block py-2 text-xs font-bold uppercase tracking-[1px] border-b border-white/10 ${
+                  className={`flex items-center justify-between py-2 text-xs font-bold uppercase tracking-[1px] border-b border-white/10 ${
                     active ? "text-[#3b82f6]" : "text-zinc-200 hover:text-white"
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.href === "/updates" && settings?.showNewUpdatesBadge !== false && (
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-[0.08em] uppercase bg-blue-500/25 border border-blue-400/50 text-blue-200 backdrop-blur-md ${
+                        settings?.newUpdatesBadgePulse !== false ? "goldex-new-badge-pulse" : ""
+                      }`}
+                    >
+                      {settings?.newUpdatesBadgeText || "NEW"}
+                    </span>
+                  )}
                 </Link>
               );
             })}

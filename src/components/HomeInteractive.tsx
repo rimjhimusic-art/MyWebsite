@@ -5,6 +5,7 @@ import confetti from "canvas-confetti";
 import { ChevronLeft, ChevronRight, Globe, Send, X } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 import {
+  AppleMusicIcon,
   FacebookIcon,
   InstagramIcon,
   SpotifyIcon,
@@ -23,7 +24,9 @@ export interface FeaturedArtistItem {
   instagramUrl?: string | null;
   youtubeUrl?: string | null;
   spotifyUrl?: string | null;
+  appleMusicUrl?: string | null;
   websiteUrl?: string | null;
+  otherSocialsJson?: string | null;
 }
 
 const DEFAULT_HERO_VIDEOS = [
@@ -147,43 +150,73 @@ export function FeaturedArtistsSection({
   );
 
   const configuredSocials = selected
-    ? [
-        {
-          key: "facebook",
-          url: selected.facebookUrl,
-          label: "Facebook",
-          hoverClass: "hover:bg-[#1877F2]/20 hover:border-[#1877F2]",
-          icon: <FacebookIcon className="w-[18px] h-[18px]" color="#1877F2" />,
-        },
-        {
-          key: "instagram",
-          url: selected.instagramUrl,
-          label: "Instagram",
-          hoverClass: "hover:bg-[#E1306C]/20 hover:border-[#E1306C]",
-          icon: <InstagramIcon className="w-[18px] h-[18px]" color="#E1306C" />,
-        },
-        {
-          key: "youtube",
-          url: selected.youtubeUrl,
-          label: "YouTube",
-          hoverClass: "hover:bg-[#FF0000]/20 hover:border-[#FF0000]",
-          icon: <YouTubeIcon className="w-[18px] h-[18px]" color="#FF0000" />,
-        },
-        {
-          key: "spotify",
-          url: selected.spotifyUrl,
-          label: "Spotify",
-          hoverClass: "hover:bg-[#1DB954]/20 hover:border-[#1DB954]",
-          icon: <SpotifyIcon className="w-[18px] h-[18px]" color="#1DB954" />,
-        },
-        {
-          key: "website",
-          url: selected.websiteUrl,
-          label: "Website",
-          hoverClass: "hover:bg-[#3b82f6]/20 hover:border-[#3b82f6]",
-          icon: <Globe className="w-[18px] h-[18px] text-[#3b82f6]" />,
-        },
-      ].filter((s) => Boolean(s.url && s.url.trim()))
+    ? (() => {
+        const extraLinks: Array<{ label: string; url: string }> = (() => {
+          if (!selected.otherSocialsJson) return [];
+          try {
+            const parsed = JSON.parse(selected.otherSocialsJson);
+            return Array.isArray(parsed)
+              ? parsed.filter((x) => x && typeof x.url === "string" && x.url.trim().length > 0)
+              : [];
+          } catch {
+            return [];
+          }
+        })();
+
+        const base = [
+          {
+            key: "facebook",
+            url: selected.facebookUrl,
+            label: "Facebook",
+            hoverClass: "hover:bg-[#1877F2]/25 hover:border-[#1877F2]",
+            icon: <FacebookIcon className="w-[18px] h-[18px]" color="#1877F2" />,
+          },
+          {
+            key: "instagram",
+            url: selected.instagramUrl,
+            label: "Instagram",
+            hoverClass: "hover:bg-[#E1306C]/25 hover:border-[#E1306C]",
+            icon: <InstagramIcon className="w-[18px] h-[18px]" color="#E1306C" />,
+          },
+          {
+            key: "youtube",
+            url: selected.youtubeUrl,
+            label: "YouTube",
+            hoverClass: "hover:bg-[#FF0000]/25 hover:border-[#FF0000]",
+            icon: <YouTubeIcon className="w-[18px] h-[18px]" color="#FF0000" />,
+          },
+          {
+            key: "spotify",
+            url: selected.spotifyUrl,
+            label: "Spotify",
+            hoverClass: "hover:bg-[#1DB954]/25 hover:border-[#1DB954]",
+            icon: <SpotifyIcon className="w-[18px] h-[18px]" color="#1DB954" />,
+          },
+          {
+            key: "apple_music",
+            url: selected.appleMusicUrl,
+            label: "Apple Music",
+            hoverClass: "hover:bg-[#FA243C]/25 hover:border-[#FA243C]",
+            icon: <AppleMusicIcon className="w-[18px] h-[18px]" color="#FA243C" />,
+          },
+          {
+            key: "website",
+            url: selected.websiteUrl,
+            label: "Website",
+            hoverClass: "hover:bg-[#3b82f6]/25 hover:border-[#3b82f6]",
+            icon: <Globe className="w-[18px] h-[18px] text-[#60a5fa]" />,
+          },
+          ...extraLinks.map((extra, idx) => ({
+            key: `extra-${idx}`,
+            url: extra.url,
+            label: extra.label || "Link",
+            hoverClass: "hover:bg-white/20 hover:border-white/50",
+            icon: <Globe className="w-[18px] h-[18px] text-white" />,
+          })),
+        ];
+
+        return base.filter((s) => Boolean(s.url && s.url.trim()));
+      })()
     : [];
 
   return (
@@ -260,48 +293,63 @@ export function FeaturedArtistsSection({
 
       {selected && (
         <div
-          className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5"
           onClick={() => setSelected(null)}
         >
           <div
-            className="bg-[#18181b] w-full max-w-[500px] rounded-[20px] border border-[#2a2a2a] shadow-[0_25px_50px_rgba(0,0,0,0.6)] relative overflow-hidden"
+            data-testid="artist-profile-popup"
+            className="relative w-full max-w-[540px] min-h-[470px] sm:min-h-[540px] max-h-[90vh] rounded-[26px] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.8)] overflow-hidden bg-black flex flex-col justify-end"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Full Artist Portrait Background with responsive face-safe framing */}
+            <img
+              src={selected.imageUrl || "/ref/abir.jpg"}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover object-top scale-105 blur-lg opacity-40"
+            />
+            <img
+              src={selected.imageUrl || "/ref/abir.jpg"}
+              alt={selected.name}
+              className="absolute inset-0 w-full h-full object-cover object-top"
+            />
+
+            {/* Subtle dark cinematic gradient + light transparent black glass overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.32) 48%, rgba(0,0,0,0.72) 100%)",
+              }}
+            />
+
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="absolute top-[15px] right-[15px] w-[35px] h-[35px] rounded-full bg-black/70 hover:bg-[#E3001B] text-white flex items-center justify-center z-10 cursor-pointer transition-all hover:rotate-90"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/45 hover:bg-[#E3001B] backdrop-blur-md border border-white/20 text-white flex items-center justify-center z-20 cursor-pointer transition-all hover:rotate-90"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />
             </button>
-            <div className="h-[220px] relative">
-              <img
-                src={selected.imageUrl || "/ref/abir.jpg"}
-                alt={selected.name}
-                className="w-full h-full object-cover object-top"
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: "linear-gradient(to top, #18181b 10%, transparent)",
-                }}
-              />
-            </div>
-            <div className="p-[25px] text-left">
-              <h3 className="text-[2rem] font-extrabold text-white mb-1 flex items-center gap-2">
+
+            {/* Clear breathing room above so artist face stays unobstructed */}
+            <div className="h-[190px] sm:h-[240px] shrink-0 pointer-events-none" />
+
+            {/* Glassmorphism Overlay Content Card */}
+            <div className="relative z-10 m-3 sm:m-5 rounded-[20px] bg-black/45 backdrop-blur-md border border-white/15 p-5 sm:p-6 text-left shadow-[0_12px_40px_rgba(0,0,0,0.45)] overflow-y-auto max-h-[55vh]">
+              <h3 className="text-[1.6rem] sm:text-[2rem] font-extrabold text-white mb-1 flex items-center gap-2 leading-tight">
                 <span>{selected.name}</span>
-                {selected.verified && <VerifiedBadgeIcon className="w-5 h-5" />}
+                {selected.verified && <VerifiedBadgeIcon className="w-5 h-5 shrink-0" />}
               </h3>
-              <div className="text-[#3b82f6] text-[0.85rem] font-bold uppercase mb-[15px] tracking-[1px]">
+              <div className="text-[#60a5fa] text-xs sm:text-[0.82rem] font-bold uppercase mb-3 tracking-[1.2px]">
                 {selected.roleBadge || "Independent Artist"}
               </div>
-              <p className="text-[0.95rem] text-[#b0b0b8] leading-[1.6] mb-5">
+              <p className="text-sm sm:text-[0.95rem] text-zinc-100/90 leading-[1.65] mb-4">
                 {selected.bio}
               </p>
 
               {configuredSocials.length > 0 && (
-                <div className="flex flex-wrap gap-3" data-testid="artist-modal-socials">
+                <div className="flex flex-wrap gap-2.5 pt-1" data-testid="artist-modal-socials">
                   {configuredSocials.map((s) => (
                     <a
                       key={s.key}
@@ -310,7 +358,7 @@ export function FeaturedArtistsSection({
                       rel="noopener noreferrer"
                       aria-label={s.label}
                       title={s.label}
-                      className={`w-10 h-10 rounded-full bg-[#242429] border border-white/10 ${s.hoverClass} hover:-translate-y-0.5 flex items-center justify-center transition-all`}
+                      className={`w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/20 ${s.hoverClass} hover:-translate-y-0.5 flex items-center justify-center transition-all`}
                     >
                       {s.icon}
                     </a>
