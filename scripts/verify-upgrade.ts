@@ -25,12 +25,14 @@ async function waitForServer(url: string) {
 async function main() {
   await waitForServer(`${BASE_URL}/api/health`);
   console.log("=== 1. DB Preservation & Schema Parity Checks ===");
-  const [adminUser, artistCount, teamCount, brandCount, navUpdates, aboutHero, aboutStory] =
+  const [adminUser, artistCount, teamCount, brandCount, brandVideoCount, aboutSlideCount, navUpdates, aboutHero, aboutStory] =
     await Promise.all([
       prisma.user.findUnique({ where: { email: "godaramixing@gmail.com" } }),
       prisma.featuredArtist.count(),
       prisma.teamMember.count(),
       prisma.brandCreator.count(),
+      prisma.brandVideo.count(),
+      prisma.aboutSliderImage.count(),
       prisma.navigationItem.findFirst({ where: { location: "HEADER", href: "/updates" } }),
       prisma.pageSection.findUnique({
         where: { pageSlug_sectionKey: { pageSlug: "about", sectionKey: "hero" } },
@@ -44,11 +46,35 @@ async function main() {
   assert(artistCount >= 3, `Expected >= 3 FeaturedArtists, got ${artistCount}`);
   assert(teamCount >= 7, `Expected >= 7 TeamMembers, got ${teamCount}`);
   assert(brandCount >= 7, `Expected >= 7 BrandCreators, got ${brandCount}`);
+  assert(brandVideoCount >= 7, `Expected >= 7 migrated BrandVideos, got ${brandVideoCount}`);
+  assert(aboutSlideCount >= 8, `Expected >= 8 migrated AboutSliderImages, got ${aboutSlideCount}`);
   assert(navUpdates && navUpdates.enabled, "HEADER nav item /updates missing");
   assert(aboutHero && aboutStory, "About CMS PageSections missing");
   console.log(
-    `[OK] DB preserved: artists=${artistCount}, team=${teamCount}, brandCreators=${brandCount}, nav=/updates`
+    `[OK] DB preserved & migrated: artists=${artistCount}, team=${teamCount}, brandCreators=${brandCount}, brandVideos=${brandVideoCount}, aboutSlides=${aboutSlideCount}, nav=/updates`
   );
+
+  // CRUD persistence test on AboutSliderImage + BrandVideo (reverted right after)
+  const testSlide = await prisma.aboutSliderImage.create({
+    data: { imageUrl: "/ref/flag/about-1.png", title: "QA Slide", description: "Temp test", enabled: true, sortOrder: 99 },
+  });
+  await prisma.aboutSliderImage.update({ where: { id: testSlide.id }, data: { enabled: false, title: "QA Updated" } });
+  await prisma.aboutSliderImage.delete({ where: { id: testSlide.id } });
+
+  const testBVideo = await prisma.brandVideo.create({
+    data: {
+      title: "QA Brand Video",
+      description: "Temp test",
+      videoUrl: "https://youtu.be/dQw4w9WgXcQ",
+      thumbnailUrl: "/ref/influencers/1770471884_img.jpg",
+      featured: true,
+      published: true,
+      sortOrder: 99,
+    },
+  });
+  await prisma.brandVideo.update({ where: { id: testBVideo.id }, data: { published: false } });
+  await prisma.brandVideo.delete({ where: { id: testBVideo.id } });
+  console.log("[OK] AboutSliderImage & BrandVideo CRUD persistence verified.");
 
   // URL Parsers Unit Check
   const spParsed = parseSpotifyUrl("https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=test");
@@ -169,9 +195,14 @@ async function main() {
 
       // /about & /brand
       await page.goto(`${BASE_URL}/about`, { waitUntil: "networkidle" });
+      await page.locator('[data-testid="about-top-slider"]').waitFor({ state: "visible" });
       await page.locator("text=Our Leadership & Team").waitFor({ state: "visible" });
       await page.goto(`${BASE_URL}/brand`, { waitUntil: "networkidle" });
+      await page.locator('[data-testid="brand-videos-section"]').waitFor({ state: "visible" });
       await page.locator("text=Brand Managers").waitFor({ state: "visible" });
+      await page.locator('[data-testid="brand-videos-section"] button').first().click();
+      await page.locator('[data-testid="brand-video-modal"]').waitFor({ state: "visible" });
+      await page.locator('[aria-label="Close brand video player"]').click();
 
       assert(errors.length === 0, `Page console errors on ${vp.name}: ${errors.join("; ")}`);
       await page.close();
@@ -203,7 +234,11 @@ async function main() {
       console.log("[INFO] Skipping passworded admin login in script; testing auth protection instead.");
       const guardRes = await adminPage.request.get(`${BASE_URL}/api/admin/updates`);
       assert(guardRes.status() === 401, `Expected 401 unauthenticated on /api/admin/updates, got ${guardRes.status()}`);
-      console.log("[OK] /api/admin/updates auth guard verified (401 without session).");
+      const guardSlide = await adminPage.request.get(`${BASE_URL}/api/admin/cms/about-slider`);
+      assert(guardSlide.status() === 401, `Expected 401 on /api/admin/cms/about-slider, got ${guardSlide.status()}`);
+      const guardBVideo = await adminPage.request.get(`${BASE_URL}/api/admin/cms/brand-videos`);
+      assert(guardBVideo.status() === 401, `Expected 401 on /api/admin/cms/brand-videos, got ${guardBVideo.status()}`);
+      console.log("[OK] /api/admin/updates, /about-slider, /brand-videos auth guards verified (401 without session).");
     }
     await adminPage.close();
   } finally {

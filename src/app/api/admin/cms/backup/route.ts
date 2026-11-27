@@ -276,6 +276,41 @@ export async function POST(request: Request) {
         }
       }
 
+      if (Array.isArray(data.brandVideos)) {
+        await tx.brandVideo.deleteMany();
+        for (const v of data.brandVideos) {
+          await tx.brandVideo.create({
+            data: {
+              title: v.title,
+              description: v.description ?? null,
+              videoUrl: v.videoUrl,
+              thumbnailUrl: v.thumbnailUrl,
+              creatorName: v.creatorName ?? null,
+              featured: Boolean(v.featured),
+              published: v.published !== false,
+              sortOrder: Number(v.sortOrder || 0),
+              draftStatus: "PUBLISHED",
+            },
+          });
+        }
+      }
+
+      if (Array.isArray(data.aboutSliderImages)) {
+        await tx.aboutSliderImage.deleteMany();
+        for (const s of data.aboutSliderImages) {
+          await tx.aboutSliderImage.create({
+            data: {
+              imageUrl: s.imageUrl,
+              title: s.title ?? null,
+              description: s.description ?? null,
+              enabled: s.enabled !== false,
+              sortOrder: Number(s.sortOrder || 0),
+              draftStatus: "PUBLISHED",
+            },
+          });
+        }
+      }
+
       if (Array.isArray(data.plans)) {
         await tx.distributionPlan.deleteMany();
         for (const p of data.plans) {
@@ -311,6 +346,41 @@ export async function POST(request: Request) {
               ctaHref: c.ctaHref ?? null,
               published: c.published !== false,
               sortOrder: Number(c.sortOrder || 0),
+              draftStatus: "PUBLISHED",
+            },
+          });
+        }
+      }
+
+      if (Array.isArray(data.brandVideos)) {
+        await tx.brandVideo.deleteMany();
+        for (const v of data.brandVideos) {
+          await tx.brandVideo.create({
+            data: {
+              title: v.title,
+              description: v.description ?? null,
+              videoUrl: v.videoUrl,
+              thumbnailUrl: v.thumbnailUrl,
+              creatorName: v.creatorName ?? null,
+              featured: Boolean(v.featured),
+              published: v.published !== false,
+              sortOrder: Number(v.sortOrder || 0),
+              draftStatus: "PUBLISHED",
+            },
+          });
+        }
+      }
+
+      if (Array.isArray(data.aboutSliderImages)) {
+        await tx.aboutSliderImage.deleteMany();
+        for (const s of data.aboutSliderImages) {
+          await tx.aboutSliderImage.create({
+            data: {
+              imageUrl: s.imageUrl,
+              title: s.title ?? null,
+              description: s.description ?? null,
+              enabled: s.enabled !== false,
+              sortOrder: Number(s.sortOrder || 0),
               draftStatus: "PUBLISHED",
             },
           });
