@@ -30,6 +30,7 @@ import {
   ShieldAlert,
   FileText,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 
@@ -49,6 +50,7 @@ const ADMIN_DEFAULT_NAV: NavItem[] = [
   { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
   { href: "/admin/chatbot", label: "AI Chatbot & Live Support", icon: MessageSquare },
   { href: "/admin/cms", label: "Website CMS Studio", icon: FileText },
+  { href: "/admin/contact-settings", label: "Contact & Social Settings", icon: Mail },
   { href: "/admin/settings", label: "Integrations & Audit Logs", icon: Settings },
 ];
 
@@ -141,7 +143,7 @@ export function DashboardShell({
       >
         <div className="p-5 border-b border-[#232329] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/ref/logo.png" alt="OneTab" className="h-8" />
+            <img src="/ref/goldex-logo.svg" alt="Goldex Media Network" className="h-8 w-auto" />
           </Link>
           <button
             type="button"

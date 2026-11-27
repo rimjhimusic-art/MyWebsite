@@ -193,6 +193,9 @@ export function Navbar({
 
         {mobileOpen && (
           <div className="lg:hidden mt-3 rounded-xl bg-black/95 backdrop-blur-xl border border-white/10 px-5 py-4 space-y-2.5 shadow-2xl">
+            <div className="pb-2 border-b border-white/10">
+              <img src={logoUrl} alt={siteName} className="h-8 w-auto object-contain" />
+            </div>
             {regularLinks.map((item) => {
               const active =
                 item.href === "/"
