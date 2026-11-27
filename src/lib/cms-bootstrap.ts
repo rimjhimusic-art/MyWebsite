@@ -289,6 +289,116 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
         }
       }
 
+      // Non-destructively ensure HEADER /updates nav item & editable PageSections for /updates exist
+      // on existing production DBs without overwriting any customized CMS rows.
+      const [hasUpdatesHeaderNav, hasUpdatesHeroSec] = await Promise.all([
+        prisma.navigationItem.count({ where: { location: "HEADER", href: "/updates" } }),
+        prisma.pageSection.count({ where: { pageSlug: "updates", sectionKey: "hero" } }),
+      ]);
+
+      if (hasUpdatesHeaderNav === 0) {
+        await prisma.navigationItem.create({
+          data: {
+            location: "HEADER",
+            label: "New Updates",
+            href: "/updates",
+            isButton: false,
+            openNewTab: false,
+            enabled: true,
+            sortOrder: 3,
+            draftStatus: "PUBLISHED",
+          },
+        });
+      }
+
+      if (hasUpdatesHeroSec === 0) {
+        const updateSections = [
+          {
+            pageSlug: "updates",
+            sectionKey: "hero",
+            title: "NEW UPDATES",
+            subtitle: "Latest Releases, Curated Spotify Picks & Official Music Videos",
+            badgeText: "",
+            bodyHtml:
+              "Explore fresh drops, streaming releases, trending highlights, and official visuals across the network.",
+            bgColor: "rgba(255,255,255,0.04)",
+            textColor: "#ef4444",
+            extraJson: JSON.stringify({
+              glowColor: "#ef4444",
+              animationEnabled: true,
+              subtitleColor: "#e2e8f0",
+              spacing: "normal",
+              showFilterPills: true,
+              additionalText: "",
+            }),
+            enabled: true,
+            sortOrder: 1,
+          },
+          {
+            pageSlug: "updates",
+            sectionKey: "releases",
+            title: "LATEST RELEASES",
+            subtitle: "Fresh catalog drops distributed across global digital stores.",
+            badgeText: "Catalog Drop",
+            enabled: true,
+            sortOrder: 2,
+          },
+          {
+            pageSlug: "updates",
+            sectionKey: "spotify",
+            title: "SPOTIFY MUSIC",
+            subtitle: "Stream curated tracks directly with interactive Spotify embeds.",
+            badgeText: "Official Streaming",
+            extraJson: JSON.stringify({
+              autoScroll: true,
+              scrollSpeed: 32,
+              pauseOnHover: true,
+            }),
+            enabled: true,
+            sortOrder: 3,
+          },
+          {
+            pageSlug: "updates",
+            sectionKey: "trending",
+            title: "TRENDING ON SPOTIFY",
+            subtitle: "Curated rotation favorites gaining listener momentum.",
+            badgeText: "Hot Picks",
+            enabled: true,
+            sortOrder: 4,
+          },
+          {
+            pageSlug: "updates",
+            sectionKey: "videos",
+            title: "LATEST MUSIC VIDEOS",
+            subtitle: "Official visuals and music premieres ready for instant playback.",
+            badgeText: "Official Premieres",
+            enabled: true,
+            sortOrder: 5,
+          },
+          {
+            pageSlug: "updates",
+            sectionKey: "featured",
+            title: "FEATURED UPDATES",
+            subtitle: "Editor spotlights across releases, Spotify, and video premieres.",
+            badgeText: "Spotlight",
+            enabled: true,
+            sortOrder: 6,
+          },
+        ];
+        for (const sec of updateSections) {
+          await prisma.pageSection.upsert({
+            where: {
+              pageSlug_sectionKey: {
+                pageSlug: sec.pageSlug,
+                sectionKey: sec.sectionKey,
+              },
+            },
+            update: {},
+            create: sec,
+          });
+        }
+      }
+
       globalBoot.__goldexCmsBootstrapped = true;
     } catch (err) {
       console.warn("CMS non-destructive bootstrap skipped:", err);

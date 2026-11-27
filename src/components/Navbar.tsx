@@ -138,7 +138,7 @@ export function Navbar({
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-[24px] xl:gap-[28px] mr-[32px]">
+          <nav className="hidden lg:flex items-center gap-[18px] xl:gap-[26px] mr-[24px] xl:mr-[32px]">
             {regularLinks.map((item) => {
               const active =
                 item.href === "/"

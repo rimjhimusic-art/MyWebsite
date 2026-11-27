@@ -71,9 +71,55 @@ body {
   .goldex-new-badge-pulse {
     animation: none !important;
   }
+  .goldex-red-hero-glow {
+    animation: none !important;
+  }
+  .spotify-update-card {
+    transition: none !important;
+  }
   .goldex-bubbles-layer {
     display: none !important;
   }
+}
+
+@keyframes goldexRedUpdatesGlow {
+  0%, 100% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  50% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+.goldex-red-hero-glow {
+  animation: goldexRedUpdatesGlow 2.8s ease-in-out infinite;
+}
+
+.spotify-update-card {
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 240ms ease, border-color 240ms ease;
+}
+
+@media (hover: hover) {
+  .spotify-update-card:hover {
+    transform: translateY(-5px) scale(1.025);
+    box-shadow: 0 14px 32px rgba(29, 185, 84, 0.22);
+    border-color: rgba(29, 185, 84, 0.55);
+  }
+}
+
+.spotify-update-card:active,
+.spotify-update-card.is-pressed {
+  transform: scale(0.965);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @keyframes goldexNewBadgePulse {

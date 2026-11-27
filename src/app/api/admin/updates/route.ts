@@ -42,7 +42,7 @@ export async function GET(request: Request) {
   const auth = await requireCmsApiAuth(request, { resource: "cms", action: "view" });
   if (!auth.ok) return auth.response;
 
-  const [feed, settings] = await Promise.all([
+  const [feed, settings, sectionRows] = await Promise.all([
     getUpdatesFeed({ includeUnpublished: true }),
     prisma.websiteSettings.findUnique({
       where: { id: "default" },
@@ -52,10 +52,20 @@ export async function GET(request: Request) {
         newUpdatesBadgePulse: true,
       },
     }),
+    prisma.pageSection.findMany({
+      where: { pageSlug: "updates" },
+      orderBy: { sortOrder: "asc" },
+    }),
   ]);
+
+  const sections: Record<string, (typeof sectionRows)[number]> = {};
+  for (const row of sectionRows) {
+    sections[row.sectionKey] = row;
+  }
 
   return NextResponse.json({
     ...feed,
+    sections,
     badgeSettings: {
       showNewUpdatesBadge: settings?.showNewUpdatesBadge ?? true,
       newUpdatesBadgeText: settings?.newUpdatesBadgeText || "NEW",
@@ -295,6 +305,73 @@ export async function PATCH(request: Request) {
       });
     }
 
+    if (type === "section") {
+      const sectionKey = String(body.sectionKey || "").trim().toLowerCase();
+      if (!sectionKey) {
+        return NextResponse.json({ error: "sectionKey is required." }, { status: 400 });
+      }
+      const existingSec = await prisma.pageSection.findUnique({
+        where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey } },
+      });
+
+      const data: Record<string, unknown> = {
+        pageSlug: "updates",
+        sectionKey,
+        draftStatus: "PUBLISHED",
+        draftJson: null,
+      };
+      if ("title" in body) data.title = typeof body.title === "string" ? body.title : null;
+      if ("subtitle" in body) data.subtitle = typeof body.subtitle === "string" ? body.subtitle : null;
+      if ("badgeText" in body) data.badgeText = typeof body.badgeText === "string" ? body.badgeText : null;
+      if ("bodyHtml" in body) data.bodyHtml = typeof body.bodyHtml === "string" ? body.bodyHtml : null;
+      if ("mediaUrl" in body) data.mediaUrl = cleanStr(body.mediaUrl);
+      if ("bgColor" in body) data.bgColor = cleanStr(body.bgColor);
+      if ("textColor" in body) data.textColor = cleanStr(body.textColor);
+      if (typeof body.enabled === "boolean") data.enabled = body.enabled;
+      if (typeof body.extraJson === "string") {
+        data.extraJson = body.extraJson;
+      } else if (body.extra && typeof body.extra === "object") {
+        let prevExtra: Record<string, unknown> = {};
+        if (existingSec?.extraJson) {
+          try {
+            prevExtra = JSON.parse(existingSec.extraJson);
+          } catch {
+            prevExtra = {};
+          }
+        }
+        data.extraJson = JSON.stringify({ ...prevExtra, ...body.extra });
+      }
+
+      const section = existingSec
+        ? await prisma.pageSection.update({ where: { id: existingSec.id }, data })
+        : await prisma.pageSection.create({
+            data: {
+              pageSlug: "updates",
+              sectionKey,
+              title: (data.title as string | null) ?? null,
+              subtitle: (data.subtitle as string | null) ?? null,
+              badgeText: (data.badgeText as string | null) ?? null,
+              bodyHtml: (data.bodyHtml as string | null) ?? null,
+              mediaUrl: (data.mediaUrl as string | null) ?? null,
+              bgColor: (data.bgColor as string | null) ?? null,
+              textColor: (data.textColor as string | null) ?? null,
+              extraJson: (data.extraJson as string | undefined) ?? "{}",
+              enabled: typeof body.enabled === "boolean" ? body.enabled : true,
+              draftStatus: "PUBLISHED",
+            },
+          });
+
+      await recordAuditLog({
+        actorUserId: auth.user.id,
+        action: "UPDATES_SECTION_UPDATE",
+        entityType: "PageSection",
+        entityId: section.id,
+        metadata: { sectionKey },
+      });
+      revalidateUpdatesRoutes();
+      return NextResponse.json({ ok: true, section });
+    }
+
     if (body.action === "reorder" && Array.isArray(body.ids)) {
       const ids = body.ids.map(String);
       const modelMap = {
@@ -349,7 +426,22 @@ export async function PATCH(request: Request) {
 
     if (type === "spotify") {
       const data: Record<string, unknown> = {};
-      if (typeof body.spotifyUrl === "string" && body.spotifyUrl.trim()) {
+      if (body.refreshMetadata) {
+        const current = await prisma.updateSpotifyTrack.findUnique({ where: { id } });
+        if (current) {
+          const fetched = await fetchSpotifyMetadata(
+            typeof body.spotifyUrl === "string" && body.spotifyUrl.trim()
+              ? body.spotifyUrl
+              : current.spotifyUrl
+          );
+          data.spotifyUrl = fetched.canonicalUrl;
+          data.spotifyUri = fetched.spotifyUri;
+          data.itemType = fetched.itemType;
+          if (fetched.title) data.title = fetched.title;
+          if (fetched.artistName) data.artistName = fetched.artistName;
+          if (fetched.coverUrl) data.coverUrl = fetched.coverUrl;
+        }
+      } else if (typeof body.spotifyUrl === "string" && body.spotifyUrl.trim()) {
         const parsed = parseSpotifyUrl(body.spotifyUrl);
         if (!parsed) {
           return NextResponse.json({ error: "Invalid Spotify URL." }, { status: 400 });

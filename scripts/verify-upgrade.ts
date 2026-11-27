@@ -83,21 +83,32 @@ async function main() {
   assert(ytParsed && ytParsed.videoId === "dQw4w9WgXcQ" && ytParsed.embedUrl.includes("youtube-nocookie.com/embed/"), "YouTube URL parser failed");
   console.log("[OK] Spotify & YouTube URL parsers verified.");
 
-  // Seed temporary Spotify & YouTube test records for Playwright /updates QA, then clean up in finally
-  const tempSp = await prisma.updateSpotifyTrack.create({
-    data: {
-      spotifyUrl: "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT",
-      spotifyUri: "spotify:track:4cOdK2wGLETKBW3PvgPWqT",
-      itemType: "track",
-      section: "SPOTIFY",
-      title: "QA Spotify Showcase Track",
-      artistName: "Goldex Test Artist",
-      coverUrl: "/ref/abir.jpg",
-      featured: true,
-      published: true,
-      sortOrder: 99,
-    },
-  });
+  // Seed temporary Spotify (4 tracks for 4-card carousel test!) & YouTube test records, then clean up in finally
+  const sampleIds = [
+    "4cOdK2wGLETKBW3PvgPWqT",
+    "3n3Ppam7vgaVa1iaRUc9Lp",
+    "7qiZfU4dY1lWllzX7mPBI3",
+    "0VjIjW4GlUZAMYd2vXMi3b",
+    "1BxfuPKGuaTgP7aM0Bbdwr",
+  ];
+  const createdSpotifyIds: string[] = [];
+  for (let i = 0; i < sampleIds.length; i++) {
+    const sp = await prisma.updateSpotifyTrack.create({
+      data: {
+        spotifyUrl: `https://open.spotify.com/track/${sampleIds[i]}`,
+        spotifyUri: `spotify:track:${sampleIds[i]}`,
+        itemType: "track",
+        section: "SPOTIFY",
+        title: `QA Spotify Showcase ${i + 1}`,
+        artistName: "Goldex Test Artist",
+        coverUrl: "/ref/abir.jpg",
+        featured: i === 0,
+        published: true,
+        sortOrder: 90 + i,
+      },
+    });
+    createdSpotifyIds.push(sp.id);
+  }
   const tempTrend = await prisma.updateSpotifyTrack.create({
     data: {
       spotifyUrl: "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT",
@@ -161,7 +172,7 @@ async function main() {
       assert(socialLinksCount >= 1, `Expected configured socials in modal on ${vp.name}`);
       await page.locator('[aria-label="Close modal"]').click();
 
-      // Check NEW badge visibility
+      // Check NEW badge visibility & link navigation
       if (vp.width >= 1024) {
         const navUpdatesLink = page.locator('header nav a[href="/updates"]');
         await navUpdatesLink.waitFor({ state: "visible" });
@@ -174,12 +185,33 @@ async function main() {
         await page.locator('[aria-label="Toggle navigation menu"]').click();
       }
 
-      // /updates page + inline YouTube Modal
+      // /updates page + Red Hero + Spotify 4-card Carousel + inline YouTube Modal
       await page.goto(`${BASE_URL}/updates`, { waitUntil: "networkidle" });
+      await page.locator('[data-testid="updates-hero-section"]').waitFor({ state: "visible" });
+      const heroText = await page.locator('[data-testid="updates-hero-section"]').innerText();
+      assert(!heroText.toLowerCase().includes("goldex media network radar"), "Old Radar pill still present in New Updates hero!");
+      const heroTitleText = await page.locator('[data-testid="updates-hero-heading"]').innerText();
+      assert(heroTitleText.toUpperCase().includes("NEW UPDATES"), `Expected NEW UPDATES heading, got: ${heroTitleText}`);
+      const heroColor = await page.locator('[data-testid="updates-hero-heading"]').evaluate((el) => getComputedStyle(el).color);
+      assert(heroColor === "rgb(239, 68, 68)", `Expected red hero color rgb(239, 68, 68), got ${heroColor}`);
+      await page.locator('[data-testid="updates-hero-glow"]').waitFor({ state: "attached" });
+
       await page.locator('[data-testid="section-latest-releases"]').waitFor({ state: "visible" });
       await page.locator('[data-testid="section-spotify-music"]').waitFor({ state: "visible" });
       await page.locator('[data-testid="section-trending-spotify"]').waitFor({ state: "visible" });
       await page.locator('[data-testid="section-latest-videos"]').waitFor({ state: "visible" });
+
+      // Verify compact Spotify card width & auto-scroll advancement on desktop
+      const firstSpCardBox = await page.locator('[data-testid="spotify-music-card"]').first().boundingBox();
+      assert(firstSpCardBox && firstSpCardBox.width <= 300, `Spotify card too wide (${firstSpCardBox?.width}px) to fit 4 in desktop row!`);
+      if (vp.width >= 1024) {
+        const scrollTrack = page.locator('[data-testid="spotify-carousel-scroll"]');
+        await scrollTrack.waitFor({ state: "visible" });
+        const s1 = await scrollTrack.evaluate((el) => el.scrollLeft);
+        await page.waitForTimeout(450);
+        const s2 = await scrollTrack.evaluate((el) => el.scrollLeft);
+        assert(s2 > s1, `Expected Spotify carousel right-to-left auto-scroll to advance (before=${s1}, after=${s2})`);
+      }
 
       const overflowUpdates = await page.evaluate(
         () => document.documentElement.scrollWidth > window.innerWidth + 2
@@ -242,7 +274,7 @@ async function main() {
     }
     await adminPage.close();
   } finally {
-    await prisma.updateSpotifyTrack.deleteMany({ where: { id: { in: [tempSp.id, tempTrend.id] } } });
+    await prisma.updateSpotifyTrack.deleteMany({ where: { id: { in: [...createdSpotifyIds, tempTrend.id] } } });
     await prisma.updateYoutubeVideo.deleteMany({ where: { id: tempYt.id } });
     await chrome.close();
     await prisma.$disconnect();
