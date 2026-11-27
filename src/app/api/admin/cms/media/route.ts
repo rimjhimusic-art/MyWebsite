@@ -132,6 +132,9 @@ export async function POST(request: Request) {
     const ext = path.extname(validated.data.originalName).toLowerCase();
     const storageKey = `cms/${folder}/${crypto.randomUUID()}${ext}`;
     await putObject(storageKey, validated.data.buffer, validated.data.mimeType);
+    const shouldInlineDb =
+      process.env.STORAGE_DRIVER !== "s3" && validated.data.buffer.length <= 4 * 1024 * 1024;
+    const inlineData = shouldInlineDb ? new Uint8Array(validated.data.buffer) : null;
 
     if (replaceAssetId) {
       const existing = await prisma.mediaAsset.findUnique({ where: { id: replaceAssetId } });
@@ -149,10 +152,25 @@ export async function POST(request: Request) {
           sha256: validated.data.sha256,
           width: validated.data.width,
           height: validated.data.height,
+          inlineData,
           title: title || existing.title || validated.data.originalName,
           altText: altText || existing.altText || validated.data.originalName,
           folder: folder || existing.folder,
           isPublicCms: true,
+        },
+        select: {
+          id: true,
+          kind: true,
+          originalName: true,
+          storageKey: true,
+          mimeType: true,
+          sizeBytes: true,
+          width: true,
+          height: true,
+          folder: true,
+          title: true,
+          altText: true,
+          createdAt: true,
         },
       });
       await recordAuditLog({
@@ -179,10 +197,25 @@ export async function POST(request: Request) {
         width: validated.data.width,
         height: validated.data.height,
         validationNotes: validated.data.validationNotes,
+        inlineData,
         isPublicCms: true,
         folder: folder || "general",
         title: title || validated.data.originalName,
         altText: altText || title || validated.data.originalName,
+      },
+      select: {
+        id: true,
+        kind: true,
+        originalName: true,
+        storageKey: true,
+        mimeType: true,
+        sizeBytes: true,
+        width: true,
+        height: true,
+        folder: true,
+        title: true,
+        altText: true,
+        createdAt: true,
       },
     });
 

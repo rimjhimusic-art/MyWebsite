@@ -309,8 +309,15 @@ export async function putObject(
   }
 
   const targetPath = path.join(STORAGE_ROOT, safeKey);
-  await fs.mkdir(path.dirname(targetPath), { recursive: true });
-  await fs.writeFile(targetPath, buffer);
+  try {
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.writeFile(targetPath, buffer);
+  } catch (err) {
+    // On read-only serverless filesystems (e.g. Vercel without S3), inlineData in DB persists the asset
+    if (!process.env.VERCEL) {
+      console.warn("Local storage write skipped:", err);
+    }
+  }
   return { driver: "local", storageKey: safeKey };
 }
 

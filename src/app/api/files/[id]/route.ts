@@ -57,7 +57,10 @@ export async function GET(
     }
   }
 
-  const buffer = await getObject(asset.storageKey);
+  let buffer = await getObject(asset.storageKey);
+  if (!buffer && asset.inlineData) {
+    buffer = Buffer.from(asset.inlineData);
+  }
   if (!buffer) {
     return NextResponse.json({ error: "Stored object missing." }, { status: 404 });
   }

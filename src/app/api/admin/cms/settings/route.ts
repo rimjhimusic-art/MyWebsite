@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit";
-import { applyDraftOverlay, countPendingCmsDrafts, requireCmsApiAuth } from "@/lib/cms";
+import {
+  applyDraftOverlay,
+  buildDynamicCopyrightText,
+  buildWhatsappHref,
+  countPendingCmsDrafts,
+  requireCmsApiAuth,
+} from "@/lib/cms";
 import { buildDraftPatch, revalidatePublicCmsPaths } from "@/lib/cms-crud";
 
 const SettingsSchema = z.object({
@@ -23,6 +29,14 @@ const SettingsSchema = z.object({
   facebookUrl: z.string().trim().max(500).optional(),
   whatsappUrl: z.string().trim().max(500).optional(),
   youtubeUrl: z.string().trim().max(500).optional(),
+  instagramEnabled: z.boolean().optional(),
+  facebookEnabled: z.boolean().optional(),
+  whatsappEnabled: z.boolean().optional(),
+  youtubeEnabled: z.boolean().optional(),
+  socialOrderJson: z.string().trim().max(300).optional(),
+  whatsappUsePhone: z.boolean().optional(),
+  copyrightCompanyName: z.string().trim().min(1).max(200).optional(),
+  copyrightYear: z.number().int().min(2000).max(2100).optional(),
   copyrightText: z.string().trim().max(300).optional(),
 });
 
@@ -58,12 +72,42 @@ export async function PATCH(request: Request) {
     create: { id: "default" },
   });
 
-  const patch = buildDraftPatch(existing, updates, mode);
+  const mergedUpdates: Record<string, unknown> = { ...updates };
+
+  // Keep copyrightText synchronized with copyrightCompanyName + copyrightYear
+  const effectiveCompany =
+    updates.copyrightCompanyName ?? existing.copyrightCompanyName;
+  const effectiveYear = updates.copyrightYear ?? existing.copyrightYear;
+  if (
+    updates.copyrightCompanyName !== undefined ||
+    updates.copyrightYear !== undefined
+  ) {
+    mergedUpdates.copyrightText = buildDynamicCopyrightText(
+      effectiveCompany,
+      effectiveYear,
+      updates.copyrightText ?? existing.copyrightText
+    );
+  }
+
+  // Generate dynamic WhatsApp URL from phone when whatsappUsePhone is enabled
+  const usePhone = updates.whatsappUsePhone ?? existing.whatsappUsePhone;
+  const effectivePhone = updates.contactPhone ?? existing.contactPhone;
+  if (usePhone && (updates.contactPhone !== undefined || updates.whatsappUsePhone !== undefined)) {
+    mergedUpdates.whatsappUrl = buildWhatsappHref(
+      effectivePhone,
+      updates.whatsappUrl ?? existing.whatsappUrl,
+      true
+    );
+  }
+
+  const patch = buildDraftPatch(existing, mergedUpdates, mode);
   const updated = await prisma.websiteSettings.update({
     where: { id: "default" },
     data: {
       ...patch,
-      ...(mode === "publish" ? { lastPublishedAt: new Date(), lastPublishedById: auth.user.id } : {}),
+      ...(mode === "publish"
+        ? { lastPublishedAt: new Date(), lastPublishedById: auth.user.id }
+        : {}),
     },
   });
 
@@ -72,7 +116,7 @@ export async function PATCH(request: Request) {
     action: "CMS_SETTINGS_UPDATE",
     entityType: "WebsiteSettings",
     entityId: "default",
-    metadata: { mode, fields: Object.keys(updates) },
+    metadata: { mode, fields: Object.keys(mergedUpdates) },
   });
 
   if (mode === "publish") revalidatePublicCmsPaths();
