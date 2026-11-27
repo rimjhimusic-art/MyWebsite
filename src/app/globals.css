@@ -90,6 +90,9 @@ body {
     transition: none !important;
     transform: none !important;
   }
+  .goldex-hero-bg-photo {
+    transition: none !important;
+  }
   .spotify-update-card {
     transition: none !important;
   }
@@ -119,6 +122,18 @@ body {
 
 .font-brush {
   font-family: var(--font-brush), "Kaushan Script", "Brush Script MT", cursive;
+}
+
+.goldex-hero-bg-photo {
+  filter: brightness(0.76) contrast(0.9);
+  transition: filter 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: filter;
+}
+
+@media (hover: hover) {
+  .goldex-hero-photo-stage:hover .goldex-hero-bg-photo {
+    filter: brightness(1) contrast(1);
+  }
 }
 
 /* 10-second full brightness -> dim -> fade out -> short pause -> smooth fade in cycle */

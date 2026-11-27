@@ -253,8 +253,8 @@ async function main() {
       const heroText = await heroSec.innerText();
       assert(!heroText.toLowerCase().includes("goldex media network radar"), "Old Radar pill still present in New Updates hero!");
       assert(!heroText.toLowerCase().includes("explore upcoming"), "EXPLORE UPCOMING button text must be completely removed from Hero!");
-      const heroButtonsCount = await heroSec.locator("a, button").count();
-      assert(heroButtonsCount === 0, `Expected 0 buttons inside Hero after removing EXPLORE UPCOMING, found ${heroButtonsCount}`);
+      const heroContentButtonsCount = await heroSec.locator('[data-testid="updates-hero-content"] a, [data-testid="updates-hero-content"] button').count();
+      assert(heroContentButtonsCount === 0, `Expected 0 buttons inside Hero typography content after removing EXPLORE UPCOMING, found ${heroContentButtonsCount}`);
 
       const fullPageText = await page.locator("main").innerText();
       assert(!/\bcatalog drop\b/i.test(fullPageText), `"Catalog Drop" must be completely removed from /updates! Found in: ${fullPageText.slice(0, 300)}`);
@@ -338,22 +338,44 @@ async function main() {
       });
       assert(heroImgStats.complete && heroImgStats.naturalWidth > 0, `Hero background image failed to load on ${vp.name}`);
       assert(heroImgStats.objectFit === "contain", `Expected object-fit: contain on hero background artwork to prevent cropping, got ${heroImgStats.objectFit}`);
-      assert(heroImgStats.filter === "none", `Expected crystal-clear Hero photograph with NO blur, got filter=${heroImgStats.filter}`);
+      assert(!heroImgStats.filter.includes("blur"), `Expected crystal-clear Hero photograph with NO blur, got filter=${heroImgStats.filter}`);
+      const dimMatch = heroImgStats.filter.match(/brightness\(([\d.]+)\)/);
+      const dimBrightness = dimMatch ? parseFloat(dimMatch[1]) : 1;
+      assert(dimBrightness < 0.86, `Expected default slightly dimmed Hero photo brightness (<0.86), got filter=${heroImgStats.filter}`);
       assert(heroImgStats.maskImage !== "none", "Expected 4-side dissolve maskImage on Hero artwork wrapper");
 
-      const neonNavWrap = page.locator('[data-testid="updates-subnav-neon-border"]');
+      if (vp.name === "desktop" && heroBox) {
+        await page.mouse.move(heroBox.x + 24, heroBox.y + 24);
+        await page.waitForTimeout(800);
+        const hoveredFilter = await heroBgImg.evaluate((img: HTMLImageElement) => getComputedStyle(img).filter);
+        const hovMatch = hoveredFilter.match(/brightness\(([\d.]+)\)/);
+        const hovBrightness = hovMatch ? parseFloat(hovMatch[1]) : hoveredFilter === "none" ? 1 : 0;
+        assert(hovBrightness >= 0.98, `Expected Hero photo brightness restored (~1.0) on hover, got ${hoveredFilter}`);
+        await page.mouse.move(5, 5);
+        await page.waitForTimeout(800);
+      }
+
+      const heroContentBox = await page.locator('[data-testid="updates-hero-content"]').boundingBox();
+      const neonNavWrap = heroSec.locator('[data-testid="updates-subnav-neon-border"]');
       await neonNavWrap.waitFor({ state: "visible" });
       const neonAnimName = await neonNavWrap.locator(".goldex-neon-nav-rotator").first().evaluate((el) => getComputedStyle(el).animationName);
       assert(neonAnimName.includes("goldexNeonPerimeterSpin"), `Expected continuous neon perimeter animation, got ${neonAnimName}`);
 
-      const subnav = page.locator('[data-testid="updates-subnav-box"]');
+      const subnav = heroSec.locator('[data-testid="updates-subnav-box"]');
       await subnav.waitFor({ state: "visible" });
       const subnavText = (await subnav.innerText()).toUpperCase();
       for (const navLbl of ["ALL UPDATES", "LATEST RELEASES", "SPOTIFY MUSIC", "TRENDING MUSIC", "MUSIC VIDEOS"]) {
         assert(subnavText.includes(navLbl), `Missing preserved navigation option "${navLbl}"`);
       }
-      const subnavBox = await subnav.boundingBox();
-      assert(heroBox && subnavBox && subnavBox.y >= heroBox.y + heroBox.height - 28, `Expected neon subnav below Hero on ${vp.name}`);
+      const subnavBox = await neonNavWrap.boundingBox();
+      assert(
+        heroBox && subnavBox && subnavBox.y >= heroBox.y && subnavBox.y + subnavBox.height <= heroBox.y + heroBox.height + 2,
+        `Expected navigation box positioned INSIDE Hero photo on ${vp.name}`
+      );
+      assert(
+        heroContentBox && subnavBox && heroContentBox.y + heroContentBox.height <= subnavBox.y + 2,
+        `Expected shifted-up Hero content above embedded Navigation Box with zero overlap on ${vp.name}`
+      );
 
       await page.locator('[data-testid="section-latest-releases"]').waitFor({ state: "visible" });
       const attnBtn = page.locator('[data-testid="upcoming-attention-btn"]');

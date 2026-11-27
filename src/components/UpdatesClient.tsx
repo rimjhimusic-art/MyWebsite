@@ -290,10 +290,10 @@ export function UpdatesClient({
 
   const spacingHeight =
     heroConfig.spacing === "compact"
-      ? "min-h-[360px] sm:min-h-[430px] lg:h-[500px]"
+      ? "min-h-[480px] sm:min-h-[540px] lg:min-h-[580px]"
       : heroConfig.spacing === "spacious"
-      ? "min-h-[450px] sm:min-h-[540px] lg:h-[640px]"
-      : "min-h-[400px] sm:min-h-[490px] lg:aspect-[16/9] lg:max-h-[600px]";
+      ? "min-h-[580px] sm:min-h-[640px] lg:min-h-[720px]"
+      : "min-h-[520px] sm:min-h-[580px] lg:min-h-[650px]";
 
   const supportingLabels =
     heroConfig.supportingLabels && heroConfig.supportingLabels.length > 0
@@ -329,7 +329,7 @@ export function UpdatesClient({
       />
 
       <main className="relative z-10 pt-22 sm:pt-26 pb-20 px-4 sm:px-8 max-w-[1280px] mx-auto space-y-12 sm:space-y-14">
-        {/* FUTURISTIC SEAMLESS HERO WITH CRYSTAL-CLEAR PHOTOGRAPH & 4-EDGE DISSOLVE */}
+        {/* FUTURISTIC SEAMLESS HERO WITH CRYSTAL-CLEAR HOVER-BRIGHT PHOTOGRAPH & EMBEDDED NEON NAV */}
         {heroConfig.enabled && (
           <section
             data-testid="updates-hero-section"
@@ -341,65 +341,68 @@ export function UpdatesClient({
                   ? heroConfig.bgColor
                   : "transparent",
             }}
-            className={`relative w-full ${spacingHeight} overflow-hidden flex flex-col justify-end items-center text-center px-4 sm:px-10 pb-8 sm:pb-10 pt-8`}
+            className={`goldex-hero-photo-stage relative w-full ${spacingHeight} overflow-hidden flex flex-col justify-between items-center text-center px-4 sm:px-8 pt-6 sm:pt-10 pb-5 sm:pb-7`}
           >
-            {/* Atmospheric glass cinema light behind artwork (fades smoothly to transparent, zero seams) */}
+            {/* Atmospheric glass cinema light behind artwork */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-0"
               style={{
                 background:
-                  "radial-gradient(ellipse 64% 56% at 50% 44%, rgba(239,68,68,0.14) 0%, rgba(59,130,246,0.10) 44%, rgba(34,211,238,0.05) 66%, transparent 86%)",
+                  "radial-gradient(ellipse 68% 58% at 50% 42%, rgba(239,68,68,0.14) 0%, rgba(59,130,246,0.10) 44%, rgba(34,211,238,0.05) 66%, transparent 86%)",
               }}
             />
 
-            {/* Crystal-clear unblurred photograph dissolved smoothly to transparent on ALL 4 SIDES */}
+            {/* Unblurred Hero photograph filling the stage background, initially dimmed and smoothly restoring full brightness/contrast on hover */}
             {heroConfig.bgImageUrl && (
               <div
                 aria-hidden="true"
                 className="pointer-events-none select-none absolute inset-0 z-[1] flex items-center justify-center overflow-hidden"
               >
-                <div className="goldex-hero-dissolve-mask relative h-full max-w-full inline-flex items-center justify-center">
+                <div className="goldex-hero-dissolve-mask relative w-full h-full flex items-center justify-center">
                   <img
                     data-testid="updates-hero-bg-image"
                     src={heroConfig.bgImageUrl}
                     alt={heroConfig.subtitle || "Upcoming release artwork"}
-                    className="block h-full w-auto max-w-full object-contain object-center"
+                    className="goldex-hero-bg-photo block w-full h-full object-contain object-center"
                   />
                 </div>
               </div>
             )}
 
-            {/* Soft localized legibility scrim purely behind lower foreground typography (never creates outer box edge) */}
+            {/* Subtle dark readability scrim across Hero so overlaid text & embedded nav remain crisp even at full photo brightness */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 z-[2]"
               style={{
                 background:
-                  "radial-gradient(ellipse 70% 46% at 50% 82%, rgba(5,5,5,0.74) 0%, rgba(5,5,5,0.34) 56%, transparent 100%)",
+                  "linear-gradient(180deg, rgba(5,5,5,0.42) 0%, rgba(5,5,5,0.22) 38%, rgba(5,5,5,0.48) 72%, rgba(5,5,5,0.72) 100%)",
               }}
             />
             {/* Delicate frosted glass lighting sheen */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[3] opacity-30"
+              className="pointer-events-none absolute inset-0 z-[3] opacity-25"
               style={{
                 background:
                   "radial-gradient(ellipse 68% 58% at 50% 42%, rgba(255,255,255,0.05) 0%, rgba(34,211,238,0.03) 48%, transparent 80%)",
               }}
             />
 
-            {/* FOREGROUND TYPOGRAPHY COMPOSITION DIRECTLY OVER LOWER ARTWORK */}
-            <div className="relative z-10 w-full max-w-[820px] mx-auto flex flex-col items-center gap-2.5 sm:gap-3">
+            {/* FOREGROUND TYPOGRAPHY COMPOSITION SHIFTED UPWARD ABOVE EMBEDDED NAVIGATION BOX */}
+            <div
+              data-testid="updates-hero-content"
+              className="relative z-10 w-full max-w-[820px] mx-auto my-auto pb-5 sm:pb-8 flex flex-col items-center gap-2 sm:gap-2.5"
+            >
               {/* Small, subtle supporting labels around the main UPCOMING heading */}
               <div
                 data-testid="updates-hero-supporting-labels"
-                className="flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3.5 gap-y-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-zinc-300/80"
+                className="flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3.5 gap-y-1 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.26em] text-zinc-200/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
               >
                 {supportingLabels.map((lbl, idx) => (
                   <React.Fragment key={`${lbl}-${idx}`}>
                     {idx > 0 && (
-                      <span aria-hidden="true" className="text-cyan-400/50 text-[8px]">
+                      <span aria-hidden="true" className="text-cyan-400/60 text-[8px]">
                         /
                       </span>
                     )}
@@ -415,10 +418,10 @@ export function UpdatesClient({
                 glowColor={heroConfig.glowColor}
               />
 
-              {/* Compact, restrained glass metadata strip for upcoming release details (no bulky box or CTA button) */}
+              {/* Compact, restrained glass metadata strip for upcoming release details */}
               {(heroConfig.subtitle || heroConfig.statusBadge || heroConfig.releaseDate || heroConfig.description || heroConfig.additionalText) && (
                 <div className="w-full max-w-[680px] mx-auto flex flex-col items-center gap-1.5 pt-0.5">
-                  <div className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 px-4 py-1.5 rounded-full bg-white/[0.04] backdrop-blur-md border border-white/10">
+                  <div className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 px-4 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15">
                     {heroConfig.statusBadge && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.18em] text-red-300">
                         <Sparkles className="w-2.5 h-2.5 text-red-400" />
@@ -445,76 +448,76 @@ export function UpdatesClient({
                   </div>
 
                   {heroConfig.description && (
-                    <p className="text-[11px] sm:text-xs text-zinc-300/80 max-w-xl leading-relaxed line-clamp-2">
+                    <p className="text-[11px] sm:text-xs text-zinc-200/90 max-w-xl leading-relaxed line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
                       {heroConfig.description}
                     </p>
                   )}
 
                   {heroConfig.additionalText && (
-                    <p className="text-[10px] sm:text-[11px] text-cyan-200/85 tracking-wide">
+                    <p className="text-[10px] sm:text-[11px] text-cyan-200/90 tracking-wide drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
                       {heroConfig.additionalText}
                     </p>
                   )}
                 </div>
               )}
             </div>
-          </section>
-        )}
 
-        {/* NAVIGATION BOX BELOW HERO WITH CONTINUOUS RED/BLUE/CYAN PERIMETER NEON ANIMATION */}
-        {heroConfig.showFilterBar && (
-          <div
-            data-testid="updates-subnav-neon-border"
-            className="goldex-neon-nav-wrap -mt-4 sm:-mt-6 shadow-[0_14px_40px_rgba(0,0,0,0.55)]"
-          >
-            {/* Outer soft glowing trail hugging the perimeter */}
-            <div aria-hidden="true" className="goldex-neon-nav-halo">
-              <div className="goldex-neon-nav-rotator" />
-            </div>
-            {/* Crisp animated neon border line along all 4 sides */}
-            <div aria-hidden="true" className="goldex-neon-nav-border">
-              <div className="goldex-neon-nav-rotator" />
-            </div>
-            {/* Preserved original frosted-glass navigation options & layout */}
-            <nav
-              aria-label="New Updates Categories"
-              data-testid="updates-subnav-box"
-              className="relative z-[1] rounded-[16px] bg-[#0a0a0d]/85 backdrop-blur-xl px-3 sm:px-5 py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
-            >
-              {(
-                [
-                  { key: "all", label: "ALL UPDATES", anchor: undefined },
-                  sectionsConfig.releases.enabled
-                    ? { key: "releases", label: `LATEST RELEASES (${releases.length})`, anchor: "latest-releases" }
-                    : null,
-                  sectionsConfig.spotify.enabled
-                    ? { key: "spotify", label: `SPOTIFY MUSIC (${spotifyMusic.length})`, anchor: "spotify-music" }
-                    : null,
-                  sectionsConfig.trending.enabled
-                    ? { key: "trending", label: `TRENDING MUSIC (${trendingSpotify.length})`, anchor: "trending-music" }
-                    : null,
-                  sectionsConfig.videos.enabled
-                    ? { key: "videos", label: `MUSIC VIDEOS (${youtubeVideos.length})`, anchor: "music-videos" }
-                    : null,
-                ] as Array<{ key: FilterTab; label: string; anchor?: string } | null>
-              )
-                .filter((x): x is { key: FilterTab; label: string; anchor?: string } => Boolean(x))
-                .map((pill) => (
-                  <button
-                    key={pill.key}
-                    type="button"
-                    onClick={() => handleNavFilter(pill.key, pill.anchor)}
-                    className={`px-4 py-2 rounded-xl text-[11px] sm:text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer border ${
-                      filter === pill.key
-                        ? "bg-[#ef4444] text-white border-[#ef4444] shadow-[0_6px_22px_rgba(239,68,68,0.42)]"
-                        : "bg-white/[0.04] text-zinc-300 border-white/10 hover:text-white hover:bg-white/[0.09] hover:border-white/25"
-                    }`}
-                  >
-                    {pill.label}
-                  </button>
-                ))}
-            </nav>
-          </div>
+            {/* EXISTING NAVIGATION BOX MOVED INSIDE LOWER PORTION OF HERO OVER THE PHOTOGRAPH */}
+            {heroConfig.showFilterBar && (
+              <div
+                data-testid="updates-subnav-neon-border"
+                className="goldex-neon-nav-wrap relative z-10 w-full max-w-[1040px] mx-auto mt-auto shadow-[0_14px_40px_rgba(0,0,0,0.65)]"
+              >
+                {/* Outer soft glowing trail hugging the perimeter */}
+                <div aria-hidden="true" className="goldex-neon-nav-halo">
+                  <div className="goldex-neon-nav-rotator" />
+                </div>
+                {/* Crisp animated neon border line along all 4 sides */}
+                <div aria-hidden="true" className="goldex-neon-nav-border">
+                  <div className="goldex-neon-nav-rotator" />
+                </div>
+                {/* Preserved original frosted-glass navigation options & layout */}
+                <nav
+                  aria-label="New Updates Categories"
+                  data-testid="updates-subnav-box"
+                  className="relative z-[1] rounded-[16px] bg-[#0a0a0d]/85 backdrop-blur-xl px-3 sm:px-5 py-2.5 sm:py-3 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
+                >
+                  {(
+                    [
+                      { key: "all", label: "ALL UPDATES", anchor: undefined },
+                      sectionsConfig.releases.enabled
+                        ? { key: "releases", label: `LATEST RELEASES (${releases.length})`, anchor: "latest-releases" }
+                        : null,
+                      sectionsConfig.spotify.enabled
+                        ? { key: "spotify", label: `SPOTIFY MUSIC (${spotifyMusic.length})`, anchor: "spotify-music" }
+                        : null,
+                      sectionsConfig.trending.enabled
+                        ? { key: "trending", label: `TRENDING MUSIC (${trendingSpotify.length})`, anchor: "trending-music" }
+                        : null,
+                      sectionsConfig.videos.enabled
+                        ? { key: "videos", label: `MUSIC VIDEOS (${youtubeVideos.length})`, anchor: "music-videos" }
+                        : null,
+                    ] as Array<{ key: FilterTab; label: string; anchor?: string } | null>
+                  )
+                    .filter((x): x is { key: FilterTab; label: string; anchor?: string } => Boolean(x))
+                    .map((pill) => (
+                      <button
+                        key={pill.key}
+                        type="button"
+                        onClick={() => handleNavFilter(pill.key, pill.anchor)}
+                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer border ${
+                          filter === pill.key
+                            ? "bg-[#ef4444] text-white border-[#ef4444] shadow-[0_6px_22px_rgba(239,68,68,0.42)]"
+                            : "bg-white/[0.04] text-zinc-300 border-white/10 hover:text-white hover:bg-white/[0.09] hover:border-white/25"
+                        }`}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                </nav>
+              </div>
+            )}
+          </section>
         )}
 
         {!hasAnyContent && (
