@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
-import { ChevronLeft, ChevronRight, Globe, Mail, MapPin, Phone, Send, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Globe, Send, X } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 import {
   FacebookIcon,
@@ -401,12 +401,40 @@ export function ContactFormSection({
     message: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const submitLockRef = React.useRef(false);
   const [sentMessage, setSentMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLockRef.current || submitting) return;
+
+    const trimmedName = form.name.trim();
+    const trimmedEmail = form.email.trim();
+    const trimmedMessage = form.message.trim();
+    if (trimmedName.length < 2) {
+      const msg = "Name must be at least 2 characters.";
+      setErrorMessage(msg);
+      showToast(msg, "error");
+      return;
+    }
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      const msg = "Please enter a valid email address.";
+      setErrorMessage(msg);
+      showToast(msg, "error");
+      return;
+    }
+    if (trimmedMessage.length < 5) {
+      const msg = "Message must be at least 5 characters.";
+      setErrorMessage(msg);
+      showToast(msg, "error");
+      return;
+    }
+
+    submitLockRef.current = true;
     setSubmitting(true);
     setSentMessage(null);
+    setErrorMessage(null);
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -414,26 +442,36 @@ export function ContactFormSection({
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) {
-        showToast(data.error || "Failed to send message.", "error");
+      if (!res.ok || !data?.ok) {
+        const errText = data?.error || "Failed to send message. Please try again.";
+        setErrorMessage(errText);
+        showToast(errText, "error");
         return;
       }
-      setSentMessage(data.message);
-      showToast(data.message, "success");
+      setSentMessage("Successfully Sent!");
+      showToast("Successfully Sent!", "success");
       setForm({ name: "", email: "", phone: "", message: "" });
     } catch {
-      showToast("Network error while sending message.", "error");
+      const netErr = "Network error while sending message. Please try again.";
+      setErrorMessage(netErr);
+      showToast(netErr, "error");
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   };
+
+  // Suppress unused-prop warning cleanly while keeping signature backwards-compatible
+  void contactEmail;
+  void contactPhone;
+  void contactAddress;
 
   return (
     <section
       id="contact"
       className="bg-[#0f172a] flex justify-center items-center py-[80px] px-5 relative z-[5] border-t border-[#2a2a2a]"
     >
-      <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] rounded-[10px] overflow-hidden">
+      <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] rounded-[10px] overflow-hidden shadow-2xl">
         <div
           className="p-10 sm:p-[50px] text-white flex flex-col justify-center"
           style={{
@@ -446,30 +484,53 @@ export function ContactFormSection({
           <p className="text-[1.1rem] leading-[1.6] text-[#cbd5e1] mb-[30px]">
             {subtitle}
           </p>
-          <div className="bg-white/10 p-5 rounded-[12px] space-y-3 text-left">
-            <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(contactAddress || "Guwahati, Assam, India")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 text-[0.92rem] text-white hover:text-[#60a5fa] transition-colors"
-            >
-              <MapPin className="w-5 h-5 text-[#ef4444] shrink-0" />
-              <span>{contactAddress}</span>
-            </a>
-            <a
-              href={`tel:${contactPhone.replace(/[^+\d]/g, "")}`}
-              className="flex items-center gap-3 text-[0.92rem] text-white hover:text-[#60a5fa] transition-colors"
-            >
-              <Phone className="w-5 h-5 text-[#25D366] shrink-0" />
-              <span>{contactPhone}</span>
-            </a>
-            <a
-              href={`mailto:${contactEmail}`}
-              className="flex items-center gap-3 text-[0.92rem] text-white hover:text-[#60a5fa] transition-colors break-all"
-            >
-              <Mail className="w-5 h-5 text-[#3b82f6] shrink-0" />
-              <span>{contactEmail}</span>
-            </a>
+          <div
+            data-testid="contact-mailbox-showcase"
+            className="bg-white/10 border border-white/10 px-6 py-8 rounded-[12px] flex flex-col items-center justify-center text-center shadow-[0_12px_32px_rgba(0,0,0,0.25)]"
+          >
+            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400/20 via-blue-500/15 to-amber-500/25 border border-amber-300/35 flex items-center justify-center shadow-[0_0_28px_rgba(245,158,11,0.2)] goldex-mailbox-float">
+              <svg
+                viewBox="0 0 64 64"
+                className="w-11 h-11"
+                fill="none"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient id="goldexMailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FDE68A" />
+                    <stop offset="55%" stopColor="#F59E0B" />
+                    <stop offset="100%" stopColor="#D97706" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M10 24L32 10L54 24V48C54 50.2091 52.2091 52 50 52H14C11.7909 52 10 50.2091 10 48V24Z"
+                  fill="rgba(255,255,255,0.08)"
+                  stroke="url(#goldexMailGrad)"
+                  strokeWidth="2.5"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M17 21H47V34L32 43L17 34V21Z"
+                  fill="rgba(255,255,255,0.92)"
+                />
+                <path
+                  d="M23 26H41M23 30.5H35"
+                  stroke="#0f172a"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M10 25L32 39L54 25"
+                  stroke="url(#goldexMailGrad)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[1.5px] text-amber-300">
+              Goldex Media Network Desk
+            </span>
           </div>
         </div>
 
@@ -479,8 +540,22 @@ export function ContactFormSection({
           </h3>
 
           {sentMessage && (
-            <div className="mb-5 p-3 rounded-[5px] bg-[#dcfce7] text-[#166534] border border-[#22c55e] text-sm font-semibold text-center">
+            <div
+              role="status"
+              data-testid="contact-success-banner"
+              className="mb-5 p-3.5 rounded-[5px] bg-[#dcfce7] text-[#166534] border border-[#22c55e] text-sm font-bold text-center"
+            >
               {sentMessage}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div
+              role="alert"
+              data-testid="contact-error-banner"
+              className="mb-5 p-3.5 rounded-[5px] bg-[#fee2e2] text-[#991b1b] border border-[#ef4444] text-sm font-semibold text-center"
+            >
+              {errorMessage}
             </div>
           )}
 
@@ -488,6 +563,7 @@ export function ContactFormSection({
             <div className="mb-5">
               <input
                 type="text"
+                name="name"
                 required
                 placeholder="Your Name"
                 value={form.name}
@@ -499,6 +575,7 @@ export function ContactFormSection({
             <div className="flex flex-col sm:flex-row gap-5 mb-5">
               <input
                 type="email"
+                name="email"
                 required
                 placeholder="Enter your email*"
                 value={form.email}
@@ -507,6 +584,7 @@ export function ContactFormSection({
               />
               <input
                 type="text"
+                name="phone"
                 placeholder="Phone #"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -516,6 +594,7 @@ export function ContactFormSection({
 
             <div className="mb-6">
               <textarea
+                name="message"
                 required
                 placeholder="Write your message"
                 value={form.message}
@@ -527,7 +606,7 @@ export function ContactFormSection({
             <button
               type="submit"
               disabled={submitting}
-              className="bg-[#ea580c] hover:bg-[#c2410c] text-white px-[35px] py-[14px] rounded-[5px] text-base font-bold cursor-pointer transition-all hover:-translate-y-0.5 inline-flex items-center gap-2.5 disabled:opacity-60"
+              className="bg-[#ea580c] hover:bg-[#c2410c] text-white px-[35px] py-[14px] rounded-[5px] text-base font-bold cursor-pointer transition-all hover:-translate-y-0.5 inline-flex items-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span>{submitting ? "Sending..." : "Send Message"}</span>
               <Send className="w-4 h-4" />

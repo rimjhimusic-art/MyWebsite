@@ -14,11 +14,11 @@ import { getCmsSiteData } from "@/lib/cms";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import {
-  AnimatedStatBubbles,
   ContactFormSection,
   FeaturedArtistsSection,
   HeroBackgroundVideo,
 } from "@/components/HomeInteractive";
+import { RevolutionMaps } from "@/components/RevolutionMaps";
 
 export const dynamic = "force-dynamic";
 
@@ -254,9 +254,9 @@ export default async function HomePage({
                 "radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%)",
             }}
           />
-          <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-[40px] lg:gap-[60px] relative">
-            <div className="flex-1 text-center lg:text-left z-[5]">
-              <h2 className="text-[2.4rem] sm:text-[3.5rem] font-extrabold text-white mb-[25px] leading-[1.1]">
+          <div className="max-w-[1280px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-[40px] lg:gap-[48px] relative">
+            <div className="w-full lg:w-[38%] text-center lg:text-left z-[5]">
+              <h2 className="text-[2.4rem] sm:text-[3.3rem] font-extrabold text-white mb-[25px] leading-[1.1]">
                 {revSec?.title?.includes("#GoldexRevolution") ||
                 revSec?.title?.includes("#OneTabRevolution") ? (
                   <>
@@ -272,46 +272,13 @@ export default async function HomePage({
                   )
                 )}
               </h2>
-              <p className="text-[#b0b0b8] text-[1.1rem] leading-[1.7] max-w-[90%] mx-auto lg:mx-0">
+              <p className="text-[#b0b0b8] text-[1.08rem] leading-[1.7] max-w-[95%] mx-auto lg:mx-0">
                 {revSec?.subtitle ||
                   "Why join any label if you can be your own boss! Kick start your journey in the entertainment industry with Goldex Media Network's reliable all-in-one distribution solution to manage and sell your content to digital platforms directly. Just Upload, and we'll do the rest for you at no extra cost. Join #GoldexRevolution and spread the sound of independent music with Goldex Media Network now."}
               </p>
             </div>
 
-            <div className="map-visual-wrapper">
-              <img
-                src={revSec?.mediaUrl || "/ref/in.svg"}
-                alt="India Map"
-                className="india-map-base"
-              />
-
-              <div className="city-marker" id="city-delhi">
-                <span className="cm-label">New Delhi</span>
-                <div className="cm-dot" />
-              </div>
-              <div className="city-marker" id="city-patna">
-                <div className="cm-dot" />
-                <span className="cm-label">Patna</span>
-              </div>
-              <div className="city-marker" id="city-assam">
-                <div className="cm-dot" />
-                <span className="cm-label">Assam</span>
-              </div>
-              <div className="city-marker" id="city-kolkata">
-                <div className="cm-dot" />
-                <span className="cm-label">Kolkata</span>
-              </div>
-              <div className="city-marker" id="city-mumbai">
-                <span className="cm-label">Mumbai</span>
-                <div className="cm-dot" />
-              </div>
-              <div className="city-marker" id="city-bengaluru">
-                <span className="cm-label">Bengaluru</span>
-                <div className="cm-dot" />
-              </div>
-
-              <AnimatedStatBubbles />
-            </div>
+            <RevolutionMaps mediaUrl={revSec?.mediaUrl} />
           </div>
         </section>
       )}
