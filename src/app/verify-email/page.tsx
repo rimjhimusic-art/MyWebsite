@@ -52,7 +52,7 @@ function VerifyEmailInner() {
 
   return (
     <div className="w-full max-w-md rounded-3xl bg-[#18181b] border border-[#2a2a2a] p-8 text-center">
-      <img src="/ref/logo.png" alt="OneTab" className="h-9 mx-auto mb-6" />
+      <img src="/ref/goldex-logo.svg" alt="Goldex Media Network" className="h-10 mx-auto mb-6" />
       <h1 className="text-2xl font-extrabold mb-2">Email Verification</h1>
 
       {status === "verifying" && (

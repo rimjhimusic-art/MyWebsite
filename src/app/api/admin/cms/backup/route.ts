@@ -90,12 +90,21 @@ export async function POST(request: Request) {
             whatsappUrl: s.whatsappUrl,
             youtubeUrl: s.youtubeUrl || "",
             copyrightText: s.copyrightText,
+            copyrightCompanyName:
+              s.copyrightCompanyName || "Goldex Media Network Private Limited",
+            copyrightYear: Number(s.copyrightYear || 2026),
+            instagramEnabled: s.instagramEnabled !== false,
+            facebookEnabled: s.facebookEnabled !== false,
+            whatsappEnabled: s.whatsappEnabled !== false,
+            youtubeEnabled: s.youtubeEnabled === true,
+            socialOrderJson: s.socialOrderJson || '["instagram","facebook","whatsapp","youtube"]',
+            whatsappUsePhone: s.whatsappUsePhone !== false,
             draftStatus: "PUBLISHED",
             draftJson: null,
           },
           create: {
             id: "default",
-            siteName: s.siteName || "OneTab Media Network",
+            siteName: s.siteName || "Goldex Media Network",
           },
         });
       }

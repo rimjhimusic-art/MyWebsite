@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       const verifyUrl = `${appUrl}/verify-email?token=${rawToken}`;
       await sendPlatformEmail({
         toEmail: dbUser.email,
-        subject: "Verify your OneTab Media Network email",
+        subject: "Verify your Goldex Media Network email",
         bodyPreview: `Verify your email: ${verifyUrl}`,
         template: "email_verification",
       });

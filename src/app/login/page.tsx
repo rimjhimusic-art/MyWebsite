@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md rounded-3xl bg-[#18181b]/95 border border-[#2a2a2a] p-8 sm:p-10 shadow-2xl">
         <div className="flex justify-center mb-6">
-          <img src="/ref/logo.png" alt="OneTab Media" className="h-10" />
+          <img src="/ref/goldex-logo.svg" alt="Goldex Media Network" className="h-11" />
         </div>
         <h1 className="text-2xl font-extrabold text-center">Welcome Back</h1>
         <p className="text-sm text-[#b0b0b8] text-center mt-1 mb-7">

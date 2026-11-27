@@ -76,7 +76,7 @@ export default function SupportTicketsPage() {
       <div>
         <h1 className="text-2xl font-extrabold">Support Tickets</h1>
         <p className="text-sm text-[#b0b0b8]">
-          Communicate directly with OneTab Catalog, Rights, and Royalty teams.
+          Communicate directly with Goldex Media Network Catalog, Rights, and Royalty teams.
         </p>
       </div>
 

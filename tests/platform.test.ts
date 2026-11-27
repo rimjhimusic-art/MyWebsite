@@ -224,11 +224,13 @@ describe("Integration Tests: Full Platform Workflows", () => {
       const r = await fetch(`${BASE_URL}${route}`);
       assert.equal(r.status, 200, `Route ${route} returned ${r.status}`);
       const html = await r.text();
-      assert.ok(html.includes("OneTab"), `Route ${route} missing OneTab text`);
+      assert.ok(html.includes("Goldex Media Network"), `Route ${route} missing Goldex Media Network text`);
     }
 
     const mediaAssets = [
-      "/ref/logo.png",
+      "/ref/goldex-logo.svg",
+      "/ref/goldex-favicon.svg",
+      "/ref/goldex-og.svg",
       "/ref/video/hero-studio-perform.mp4",
       "/ref/video/hero-singer-mic.mp4",
       "/ref/video/hero-guitar-studio.mp4",

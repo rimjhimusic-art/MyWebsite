@@ -67,7 +67,7 @@ export default function AdminSetupPage() {
           <p className="text-xs text-[#b0b0b8] mt-1.5">
             {hasSuperAdmin
               ? "A Super Admin already exists. Enter a valid ADMIN_SETUP_TOKEN to create an additional Admin/Editor or reset."
-              : "Create the primary Super Admin account for OneTab CMS."}
+              : "Create the primary Super Admin account for Goldex Media Network CMS."}
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export default function AdminSetupPage() {
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="OneTab Super Admin"
+                placeholder="Goldex Super Admin"
                 className="w-full rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-[#3b82f6]"
               />
             </div>
@@ -95,7 +95,7 @@ export default function AdminSetupPage() {
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="admin@onetabmedia.in"
+                placeholder="support@goldexmedianetwork.com"
                 className="w-full rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-[#3b82f6]"
               />
             </div>

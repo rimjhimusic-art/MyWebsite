@@ -125,7 +125,7 @@ export async function POST(request: Request) {
 
     await sendPlatformEmail({
       toEmail: user.email,
-      subject: "Verify your OneTab Media Network email",
+      subject: "Verify your Goldex Media Network email",
       bodyPreview: `Welcome ${user.name}! Verify your email here: ${verifyUrl}`,
       template: "email_verification",
     });
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     await createNotification({
       userId: user.id,
       type: "ACCOUNT",
-      title: "Welcome to OneTab Media Network",
+      title: "Welcome to Goldex Media Network",
       message:
         "Your creator account is active. Please verify your email address and complete your payout profile.",
       link: "/dashboard/settings",

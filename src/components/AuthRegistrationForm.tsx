@@ -40,11 +40,11 @@ const DEFAULT_SIGNUP_LOGOS: SignupPlatformLogo[] = [
 
 export function AuthRegistrationForm({
   accountType,
-  logoUrl = "/ref/logo.png",
-  siteName = "OneTab Media Network",
+  logoUrl = "/ref/goldex-logo.svg",
+  siteName = "Goldex Media Network",
   heroTitle = "Music Distribution Simplified.",
   heroSubtitle = "Upload your music, keep 100% of your earnings, and get heard across all major platforms globally.",
-  copyrightText = "© 2026 OneTab Media Network Pvt. Ltd. All Rights Reserved.",
+  copyrightText = "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
   platformLogos,
 }: {
   accountType: "ARTIST" | "LABEL";
@@ -127,14 +127,14 @@ export function AuthRegistrationForm({
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#1e293b]">
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
-        {/* Left Royal Blue Brand Panel matching OneTab reference */}
+        {/* Left Royal Blue Brand Panel */}
         <div className="bg-[#0052cc] text-white p-8 sm:p-14 flex flex-col justify-center items-start">
           <div className="max-w-lg w-full mx-auto lg:mx-0">
             <Link href="/" className="inline-block mb-8">
               <img
                 src={logoUrl}
                 alt={siteName}
-                className="h-[50px] w-auto object-contain brightness-0 invert"
+                className="h-[52px] w-auto object-contain"
               />
             </Link>
 

@@ -118,7 +118,7 @@ async function main() {
       slug: "eastern-wave-records",
       ownerId: userMap["label@onetabmedia.in"],
       description: "Independent South Asian & Global Pop Record Label.",
-      website: "https://www.onetabmedianetwork.com",
+      website: "https://www.goldexmedianetwork.com",
       country: "India",
       defaultRevenueSharePercent: 20,
       status: "APPROVED",
@@ -392,7 +392,7 @@ async function main() {
   // 7. Seed Configurable FAQs (used by /faq and Floating Support Chatbot)
   const faqs = [
     {
-      question: "How much does music distribution cost on OneTab?",
+      question: "How much does music distribution cost on Goldex Media Network?",
       answer: "Our Free Artist plan starts at ₹0/year with 90% revenue share and zero upfront fees. Pro Artist and Record Label plans offer priority review, custom ISRC/UPC pools, sub-labels, and VEVO eligibility.",
       category: "Pricing & Plans",
       keywords: "price pricing cost plan free zero ₹0 fee",
@@ -407,7 +407,7 @@ async function main() {
     },
     {
       question: "Do I keep 100% ownership of my music rights?",
-      answer: "Yes. You retain 100% ownership of your master recordings and compositions. OneTab Media Network only receives the non-exclusive distribution license needed to deliver and monetize your music per your instructions.",
+      answer: "Yes. You retain 100% ownership of your master recordings and compositions. Goldex Media Network only receives the non-exclusive distribution license needed to deliver and monetize your music per your instructions.",
       category: "Rights & Ownership",
       keywords: "rights ownership copyright master masters",
       sortOrder: 3,
@@ -514,11 +514,11 @@ async function main() {
     },
     {
       slug: "about",
-      title: "About OneTab Media Network",
+      title: "About Goldex Media Network",
       subtitle: "Empowering independent creators with a transparent, technology-driven ecosystem for global reach and monetization.",
       contentJson: JSON.stringify({
-        companyName: "OneTab Media Network Private Limited",
-        location: "Nadia, West Bengal, India",
+        companyName: "Goldex Media Network Private Limited",
+        location: "Assam, Guwahati, India",
       }),
     },
   ];

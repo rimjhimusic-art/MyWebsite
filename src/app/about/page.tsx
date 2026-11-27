@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const seo = cms.seoMap["about"];
   return {
     title: seo?.metaTitle || `About - ${cms.settings.siteName}`,
-    description: seo?.metaDescription || "About OneTab Media Network.",
+    description: seo?.metaDescription || "About Goldex Media Network.",
   };
 }
 
@@ -62,18 +62,20 @@ export default async function AboutPage({
           />
           <div className="relative z-10 text-center px-6 sm:px-10 max-w-[900px]">
             <h1 className="text-[2.2rem] sm:text-[3.5rem] font-extrabold mb-5 text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] leading-[1.1]">
-              {heroSec?.title && heroSec.title !== "About OneTab Media" ? (
+              {heroSec?.title &&
+              heroSec.title !== "About OneTab Media" &&
+              heroSec.title !== "About Goldex Media Network" ? (
                 heroSec.title
               ) : (
                 <>
-                  About <span className="text-[#3b82f6]">OneTab Media</span>{" "}
+                  About <span className="text-[#3b82f6]">Goldex Media Network</span>{" "}
                   <span className="inline-block animate-bounce">🎵</span>
                 </>
               )}
             </h1>
             <p className="text-[1.05rem] sm:text-[1.15rem] text-[#e2e8f0] leading-[1.6] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               {heroSec?.subtitle ||
-                "OneTab Media Network Private Limited is a dynamic digital media and music distribution company dedicated to empowering creators, artists, and record labels. We specialize in comprehensive CMS management, licensing operations, and DRM."}
+                "Goldex Media Network Private Limited is a dynamic digital media and music distribution company dedicated to empowering creators, artists, and record labels. We specialize in comprehensive CMS management, licensing operations, and DRM."}
             </p>
             <p className="text-[1.05rem] sm:text-[1.15rem] leading-[1.6] mt-4 font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               {heroSec?.badgeText ||
@@ -114,7 +116,7 @@ export default async function AboutPage({
                 </p>
                 <p className="text-[#94a3b8] leading-[1.6]">
                   {storySec?.subtitle ||
-                    "This strategic partnership empowers OneTab Media with elite-level tools—advanced analytics, rights management, and direct supply chain access to major DSPs."}
+                    "This strategic partnership empowers Goldex Media Network with elite-level tools—advanced analytics, rights management, and direct supply chain access to major DSPs."}
                 </p>
               </div>
               <div className="bg-white/[0.03] rounded-[16px] p-5 mt-[30px] flex items-center justify-center">

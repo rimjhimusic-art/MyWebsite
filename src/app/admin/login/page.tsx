@@ -59,7 +59,11 @@ function AdminLoginForm() {
 
       <div className="relative z-10 w-full max-w-md rounded-3xl bg-[#18181b]/95 border border-[#2a2a2a] p-8 sm:p-10 shadow-2xl">
         <div className="text-center mb-8">
-          <img src="/ref/logo.png" alt="OneTab Media" className="h-10 mx-auto mb-4" />
+          <img
+            src="/ref/goldex-logo.svg"
+            alt="Goldex Media Network"
+            className="h-11 mx-auto mb-4"
+          />
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[11px] font-bold uppercase tracking-wider mb-3">
             <ShieldCheck className="w-3.5 h-3.5" /> CMS &amp; Admin Console
           </div>
@@ -82,7 +86,7 @@ function AdminLoginForm() {
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@onetabmedia.in"
+                placeholder="support@goldexmedianetwork.com"
                 className="w-full rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] pl-10 pr-4 py-3 text-sm text-white focus:border-[#3b82f6] outline-none"
               />
             </div>

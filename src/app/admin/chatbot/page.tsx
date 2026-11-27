@@ -1119,7 +1119,7 @@ export default function AdminChatbotPage() {
                   type="text"
                   value={settings.replyRoutingDomain}
                   onChange={(e) => setSettings({ ...settings, replyRoutingDomain: e.target.value })}
-                  placeholder="reply.onetabmedia.in"
+                  placeholder="reply.goldexmedianetwork.com"
                   className="w-full px-3 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a]"
                 />
               </div>

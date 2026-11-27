@@ -34,7 +34,7 @@ function escapeHtml(str: string): string {
 }
 
 function makeRfcMessageId(conversationId: string, domain: string): string {
-  const cleanDomain = (domain || "reply.onetabmedia.in").replace(/^@+/, "").trim();
+  const cleanDomain = (domain || "reply.goldexmedianetwork.com").replace(/^@+/, "").trim();
   const rand = crypto.randomBytes(6).toString("hex");
   return `<chat-${conversationId}-${Date.now()}.${rand}@${cleanDomain}>`;
 }
@@ -213,7 +213,7 @@ export async function sendSupportHandoverEmail(params: {
 
   const shortId = conv.id.slice(-8).toUpperCase();
   const subjectPrefix = params.isFollowUp ? "Re: " : "";
-  const subject = `${subjectPrefix}[OneTab Support #${shortId}] ${
+  const subject = `${subjectPrefix}[Goldex Support #${shortId}] ${
     conv.visitor.name || "Website Visitor"
   } — ${params.reason.slice(0, 60)}`;
 
@@ -232,7 +232,7 @@ export async function sendSupportHandoverEmail(params: {
 
   const textBody = [
     params.isFollowUp
-      ? "A visitor replied in an ongoing support conversation on OneTab Media:"
+      ? "A visitor replied in an ongoing support conversation on Goldex Media Network:"
       : "AI Support Assistant escalated a conversation requiring human support:",
     "",
     `Visitor ID: ${conv.visitorId}`,
@@ -279,7 +279,7 @@ export async function sendSupportHandoverEmail(params: {
 
   const htmlBody = `
     <div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;color:#18181b;">
-      <h2 style="color:#2563eb;margin-bottom:6px;">OneTab Media Customer Support Handover</h2>
+      <h2 style="color:#2563eb;margin-bottom:6px;">Goldex Media Network Customer Support Handover</h2>
       <p style="font-size:13px;color:#52525b;">Reply directly to this email and your message will appear in the visitor's website chat.</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;background:#fafafa;border:1px solid #e4e4e7;">
         <tr><td style="padding:6px 10px;font-weight:bold;">Visitor ID</td><td style="padding:6px 10px;">${escapeHtml(conv.visitorId)}</td></tr>
@@ -433,9 +433,9 @@ export async function sendTestSupportEmail(): Promise<{
     fromEmail: settings.senderEmail,
     toEmail: settings.supportEmail,
     replyTo: `reply+test.verification@${settings.replyRoutingDomain}`,
-    subject: "[OneTab Support] Email Integration Connection Verification",
-    textBody: "This is a test verification email from OneTab Media AI Customer Support.",
-    htmlBody: "<p>This is a test verification email from <strong>OneTab Media AI Customer Support</strong>.</p>",
+    subject: "[Goldex Support] Email Integration Connection Verification",
+    textBody: "This is a test verification email from Goldex Media Network AI Customer Support.",
+    htmlBody: "<p>This is a test verification email from <strong>Goldex Media Network AI Customer Support</strong>.</p>",
     messageIdHeader: testMsgId,
   });
 
@@ -445,7 +445,7 @@ export async function sendTestSupportEmail(): Promise<{
       provider: settings.emailProvider,
       fromEmail: settings.senderEmail,
       toEmail: settings.supportEmail,
-      subject: "[OneTab Support] Email Integration Connection Verification",
+      subject: "[Goldex Support] Email Integration Connection Verification",
       messageIdHeader: testMsgId,
       status: dispatch.ok ? "SENT" : "FAILED",
       errorMessage: dispatch.error || null,

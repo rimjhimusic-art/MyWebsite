@@ -1,12 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none">
-  <rect x="2" y="6" width="36" height="36" rx="10" fill="url(#otGrad)"/>
-  <path d="M12 28V20M17 31V15M22 27V21M27 32V16" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
-  <text x="48" y="29" fill="#FFFFFF" font-family="Outfit, system-ui, sans-serif" font-weight="800" font-size="21" letter-spacing="-0.5">OneTab</text>
-  <text x="125" y="29" fill="#3B82F6" font-family="Outfit, system-ui, sans-serif" font-weight="600" font-size="14" letter-spacing="1.2">MEDIA</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 64" width="360" height="64" fill="none" role="img" aria-label="GOLDEX MEDIA NETWORK">
   <defs>
-    <linearGradient id="otGrad" x1="2" y1="6" x2="38" y2="42" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3B82F6"/>
-      <stop offset="1" stop-color="#1D4ED8"/>
+    <linearGradient id="goldexGradImg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="45%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="goldexAccentImg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#F59E0B" />
     </linearGradient>
   </defs>
+  <rect x="4" y="8" width="48" height="48" rx="14" fill="url(#goldexGradImg)" />
+  <rect x="7" y="11" width="42" height="42" rx="11" stroke="#0F0F0F" stroke-opacity="0.22" stroke-width="1.5" />
+  <path d="M35.5 23.5C33.4 21.8 30.8 21 28 21C21.9 21 17 25.9 17 32C17 38.1 21.9 43 28 43C33.5 43 37.8 39.2 38.6 33.8H28.5V29.6H43V32C43 40.6 36.4 47 28 47C19.6 47 13 40.3 13 32C13 23.7 19.7 17 28 17C32 17 35.6 18.4 38.3 20.9L35.5 23.5Z" fill="#0F0F0F" />
+  <text x="66" y="34" fill="#FFFFFF" font-family="'Outfit', 'Inter', system-ui, -apple-system, sans-serif" font-weight="800" font-size="25" letter-spacing="2.4">GOLDEX</text>
+  <rect x="66" y="39" width="114" height="2" rx="1" fill="url(#goldexAccentImg)" />
+  <text x="67" y="54" fill="#FBBF24" font-family="'Outfit', 'Inter', system-ui, -apple-system, sans-serif" font-weight="700" font-size="11.5" letter-spacing="3.8">MEDIA NETWORK</text>
 </svg>

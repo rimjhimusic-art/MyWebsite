@@ -16,22 +16,52 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const cms = await getCmsSiteData();
     const homeSeo = cms.seoMap["home"];
-    const favicon = cms.settings.faviconUrl || "/ref/logo.png";
+    const favicon = cms.settings.faviconUrl || "/ref/goldex-favicon.svg";
+    const title = homeSeo?.metaTitle || `${cms.settings.siteName} | Music Distribution Services`;
+    const description =
+      homeSeo?.metaDescription ||
+      "Distribute your music globally with Goldex Media Network to Spotify, Apple Music, JioSaavn, TikTok, and 150+ stores. Keep 100% of your rights and manage releases, labels, royalties, VEVO, and YouTube Content ID.";
+    const ogTitle = homeSeo?.ogTitle || title;
+    const ogDescription = homeSeo?.ogDescription || description;
+    const ogImage = homeSeo?.ogImageUrl || "/ref/goldex-og.svg";
     return {
-      title: homeSeo?.metaTitle || `${cms.settings.siteName} | Music Distribution Services`,
-      description:
-        homeSeo?.metaDescription ||
-        "Distribute your music to Spotify, Apple Music, JioSaavn, TikTok, and 150+ stores. Keep 100% of your rights and manage releases, labels, royalties, VEVO, and YouTube Content ID.",
+      title,
+      description,
       icons: {
         icon: favicon,
+        shortcut: favicon,
+        apple: favicon,
+      },
+      openGraph: {
+        title: ogTitle,
+        description: ogDescription,
+        siteName: cms.settings.siteName || "Goldex Media Network",
+        images: [{ url: ogImage, width: 1200, height: 630, alt: cms.settings.siteName || "Goldex Media Network" }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: ogTitle,
+        description: ogDescription,
+        images: [ogImage],
       },
     };
   } catch {
     return {
-      title: "OneTab Media Network | Music Distribution & Label Management",
+      title: "Goldex Media Network | Music Distribution & Label Management",
       description:
-        "Distribute your music to Spotify, Apple Music, JioSaavn, TikTok, and 150+ stores. Keep 100% of your rights and manage releases, labels, royalties, VEVO, and YouTube Content ID.",
-      icons: { icon: "/ref/logo.png" },
+        "Distribute your music globally with Goldex Media Network to Spotify, Apple Music, JioSaavn, TikTok, and 150+ stores. Keep 100% of your rights and manage releases, labels, royalties, VEVO, and YouTube Content ID.",
+      icons: {
+        icon: "/ref/goldex-favicon.svg",
+        shortcut: "/ref/goldex-favicon.svg",
+        apple: "/ref/goldex-favicon.svg",
+      },
+      openGraph: {
+        title: "Goldex Media Network | Music Distribution & Label Management",
+        description:
+          "Distribute your music globally with Goldex Media Network to 150+ stores. Keep 100% ownership and 90% revenue share.",
+        siteName: "Goldex Media Network",
+        images: [{ url: "/ref/goldex-og.svg", width: 1200, height: 630, alt: "Goldex Media Network" }],
+      },
     };
   }
 }

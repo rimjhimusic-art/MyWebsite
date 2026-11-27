@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
       await sendPlatformEmail({
         toEmail: user.email,
-        subject: "Reset your OneTab Media Network password",
+        subject: "Reset your Goldex Media Network password",
         bodyPreview: `Reset your password within 60 minutes: ${resetUrl}`,
         template: "password_reset",
       });

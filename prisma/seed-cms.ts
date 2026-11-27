@@ -29,24 +29,32 @@ export async function seedCmsData() {
     update: {},
     create: {
       id: "default",
-      siteName: "OneTab Media Network",
+      siteName: "Goldex Media Network",
       tagline:
         "India's leading digital music distribution partner empowering independent artists and labels globally with enterprise-grade technology.",
-      headerLogoUrl: "/ref/logo.png",
-      headerLogoWidth: 118,
-      headerLogoHeight: 40,
-      footerLogoUrl: "/ref/logo.png",
-      footerLogoWidth: 118,
-      footerLogoHeight: 40,
-      faviconUrl: "/ref/logo.png",
-      contactEmail: "support@onetabmedia.in",
-      contactPhone: "+91 70470 13399",
-      contactAddress: "West Bengal, India",
-      instagramUrl: "https://www.instagram.com/onetab.media/",
-      facebookUrl: "https://www.facebook.com/onetabmedia/",
-      whatsappUrl: "https://wa.me/917047013399",
-      youtubeUrl: "https://www.youtube.com/@OneTabMediaNetwork",
-      copyrightText: "© 2026 OneTab Media Network Pvt. Ltd. All Rights Reserved.",
+      headerLogoUrl: "/ref/goldex-logo.svg",
+      headerLogoWidth: 186,
+      headerLogoHeight: 42,
+      footerLogoUrl: "/ref/goldex-logo.svg",
+      footerLogoWidth: 186,
+      footerLogoHeight: 42,
+      faviconUrl: "/ref/goldex-favicon.svg",
+      contactEmail: "support@goldexmedianetwork.com",
+      contactPhone: "+918724804659",
+      contactAddress: "Assam, Guwahati, India",
+      instagramUrl: "https://www.instagram.com/goldexmedianetwork/",
+      facebookUrl: "https://www.facebook.com/goldexmedianetwork/",
+      whatsappUrl: "https://wa.me/918724804659",
+      youtubeUrl: "https://www.youtube.com/@GoldexMediaNetwork",
+      instagramEnabled: true,
+      facebookEnabled: true,
+      whatsappEnabled: true,
+      youtubeEnabled: true,
+      socialOrderJson: '["instagram","facebook","whatsapp","youtube"]',
+      whatsappUsePhone: true,
+      copyrightCompanyName: "Goldex Media Network Private Limited",
+      copyrightYear: 2026,
+      copyrightText: "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
       lastPublishedAt: new Date(),
     },
   });
@@ -572,9 +580,9 @@ export async function seedCmsData() {
     {
       pageSlug: "home",
       sectionKey: "revolution",
-      title: "Join the #OneTabRevolution",
+      title: "Join the #GoldexRevolution",
       subtitle:
-        "Why join any label if you can be your own boss! Kick start your journey in the entertainment industry with OneTab's reliable all-in-one distribution solution to manage and sell your content to digital platforms directly. Just Upload, and we'll do the rest for you at no extra cost. Join #OneTabRevolution and spread the sound of independent music with OneTab now.",
+        "Why join any label if you can be your own boss! Kick start your journey in the entertainment industry with Goldex Media Network's reliable all-in-one distribution solution to manage and sell your content to digital platforms directly. Just Upload, and we'll do the rest for you at no extra cost. Join #GoldexRevolution and spread the sound of independent music with Goldex Media Network now.",
       mediaUrl: "/ref/in.svg",
       mediaType: "image",
       bgColor: "#0f0f0f",
@@ -600,10 +608,10 @@ export async function seedCmsData() {
     {
       pageSlug: "home",
       sectionKey: "what_is_onetab",
-      title: "What is OneTab?",
+      title: "What is Goldex Media Network?",
       subtitle: "Your Independent Music & Media Partner",
       bodyHtml:
-        "OneTab Media Network is a next-generation ecosystem empowering independent artists and creators to build sustainable careers. Powered by Vydia, we provide elite access to global music distribution, advanced content protection, and rights management technology usually reserved for major labels.\nAs a pioneer in the creator economy, OneTab offers a transparent 90% Revenue Share model with Zero Upfront Fees. We are dedicated to making music distribution accessible, allowing you to keep 100% ownership of your masters while maximizing your reach across 150+ streaming platforms worldwide.",
+        "Goldex Media Network is a next-generation ecosystem empowering independent artists and creators to build sustainable careers. Powered by Vydia, we provide elite access to global music distribution, advanced content protection, and rights management technology usually reserved for major labels.\nAs a pioneer in the creator economy, Goldex Media Network offers a transparent 90% Revenue Share model with Zero Upfront Fees. We are dedicated to making music distribution accessible, allowing you to keep 100% ownership of your masters while maximizing your reach across 150+ streaming platforms worldwide.",
       ctaLabel: "See Our Distribution Plans",
       ctaHref: "/plan",
       bgColor: "#0f0f0f",
@@ -613,8 +621,8 @@ export async function seedCmsData() {
     {
       pageSlug: "home",
       sectionKey: "seo_article",
-      title: "Music Distribution: How Can You Distribute Music With OneTab Media Network?",
-      subtitle: "#MusicDistributionService #FreeMusicDistribution #OneTabMedia #SellMusicOnline",
+      title: "Music Distribution: How Can You Distribute Music With Goldex Media Network?",
+      subtitle: "#MusicDistributionService #FreeMusicDistribution #GoldexMediaNetwork #SellMusicOnline",
       bgColor: "#0d0d0d",
       textColor: "#b0b0b8",
       sortOrder: 7,
@@ -632,9 +640,9 @@ export async function seedCmsData() {
     {
       pageSlug: "about",
       sectionKey: "hero",
-      title: "About OneTab Media",
+      title: "About Goldex Media Network",
       subtitle:
-        "OneTab Media Network Private Limited is a dynamic digital media and music distribution company dedicated to empowering creators, artists, and record labels. We specialize in comprehensive CMS management, licensing operations, and DRM.",
+        "Goldex Media Network Private Limited is a dynamic digital media and music distribution company dedicated to empowering creators, artists, and record labels. We specialize in comprehensive CMS management, licensing operations, and DRM.",
       badgeText:
         "Our Mission: To empower independent creators with a transparent, technology-driven ecosystem for global reach and monetization. 🚀",
       mediaUrl: "/ref/video/about-bg.mp4",
@@ -647,17 +655,17 @@ export async function seedCmsData() {
       sectionKey: "story",
       title: "Exclusive licensing & royalty agreement with Vydia Inc.",
       subtitle:
-        "This strategic partnership empowers OneTab Media with elite-level tools—advanced analytics, rights management, and direct supply chain access to major DSPs.",
-      ctaLabel: "Join OneTab Network",
+        "This strategic partnership empowers Goldex Media Network with elite-level tools—advanced analytics, rights management, and direct supply chain access to major DSPs.",
+      ctaLabel: "Join Goldex Network",
       ctaHref: "/signup",
       mediaUrl: "/ref/vydia-logo.png",
       mediaType: "image",
       extraJson: JSON.stringify({
         artistImageUrl: "/ref/about-artist.jpg",
         badgePill: "Your Dream, Our Technology",
-        headingRight: "Why Choose OneTab Media?",
+        headingRight: "Why Choose Goldex Media Network?",
         bodyRight:
-          "Founded in 2026 in West Bengal, India, OneTab Media Network serves as the bridge between local raw talent and global streaming giants. From YouTube Content ID & OAC management to direct distribution to 150+ international stores, we put control back into the artist's hands.",
+          "Founded in 2026 in Guwahati, Assam, India, Goldex Media Network serves as the bridge between local raw talent and global streaming giants. From YouTube Content ID & OAC management to direct distribution to 150+ international stores, we put control back into the artist's hands.",
       }),
       sortOrder: 2,
     },
@@ -759,43 +767,43 @@ export async function seedCmsData() {
   const seoList = [
     {
       pageSlug: "home",
-      metaTitle: "OneTab Media Network | Music Distribution Services",
-      metaDescription: "Upload your tracks to Spotify, Apple Music, TikTok, and 150+ digital stores. Keep 100% of your rights and receive monthly payouts.",
+      metaTitle: "Goldex Media Network | Music Distribution Services",
+      metaDescription: "Upload your tracks to Spotify, Apple Music, TikTok, and 150+ digital stores with Goldex Media Network. Keep 100% of your rights and receive monthly payouts.",
     },
     {
       pageSlug: "about",
-      metaTitle: "About - OneTab Media Network",
-      metaDescription: "Learn about OneTab Media Network Private Limited, our partnership with Vydia Inc., and our leadership team.",
+      metaTitle: "About - Goldex Media Network",
+      metaDescription: "Learn about Goldex Media Network Private Limited, our partnership with Vydia Inc., and our leadership team.",
     },
     {
       pageSlug: "brand",
-      metaTitle: "Brand Solutions - OneTab Media Network",
-      metaDescription: "Partner with top digital creators and artists through OneTab Media Network Brand Solutions.",
+      metaTitle: "Brand Solutions - Goldex Media Network",
+      metaDescription: "Partner with top digital creators and artists through Goldex Media Network Brand Solutions.",
     },
     {
       pageSlug: "services",
-      metaTitle: "Services - OneTab Media Network",
+      metaTitle: "Services - Goldex Media Network",
       metaDescription: "Digital music distribution, VEVO & YouTube services, rights management, royalty splits, and publishing administration.",
     },
     {
       pageSlug: "plan",
-      metaTitle: "Distribution Plans - OneTab Media Network",
+      metaTitle: "Distribution Plans - Goldex Media Network",
       metaDescription: "Unlimited music distribution plans starting at ₹0*/year with up to 95% revenue share.",
     },
     {
       pageSlug: "control",
-      metaTitle: "Rights & Distribution Control - OneTab Media Network",
+      metaTitle: "Rights & Distribution Control - Goldex Media Network",
       metaDescription: "Complete catalog ownership, revenue split automation, and content protection.",
     },
     {
       pageSlug: "signup",
-      metaTitle: "Sign Up - OneTab Media Network",
-      metaDescription: "Create your OneTab Media Network artist or label distribution account today.",
+      metaTitle: "Sign Up - Goldex Media Network",
+      metaDescription: "Create your Goldex Media Network artist or label distribution account today.",
     },
     {
       pageSlug: "login",
-      metaTitle: "Login - OneTab Media Network",
-      metaDescription: "Sign in to your OneTab Media Network artist, label, or admin dashboard.",
+      metaTitle: "Login - Goldex Media Network",
+      metaDescription: "Sign in to your Goldex Media Network artist, label, or admin dashboard.",
     },
   ];
   for (const seo of seoList) {
@@ -825,7 +833,7 @@ export async function seedCmsData() {
     });
   }
 
-  console.log("OneTab CMS seeding completed!");
+  console.log("Goldex CMS seeding completed!");
 }
 
 if (require.main === module) {

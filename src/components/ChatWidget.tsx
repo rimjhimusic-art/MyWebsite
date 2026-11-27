@@ -63,9 +63,9 @@ export function ChatWidget() {
   const [showContactBar, setShowContactBar] = useState(false);
 
   const [config, setConfig] = useState<PublicWidgetConfig>({
-    assistantName: "OneTab Assistant",
+    assistantName: "Goldex Support Assistant",
     welcomeMessage:
-      "Hi! I'm OneTab Assistant. Ask me about distribution plans, DSP stores, audio/artwork specs, royalties, or VEVO.",
+      "Hi! I'm Goldex Support Assistant. Ask me about Goldex Media Network distribution plans, DSP stores, audio/artwork specs, royalties, or VEVO.",
     aiEnabled: true,
     humanHandoverEnabled: true,
   });
@@ -148,10 +148,10 @@ export function ChatWidget() {
             id: "welcome-local",
             conversationId: "",
             senderType: "AI",
-            senderName: data.config?.assistantName || "OneTab Assistant",
+            senderName: data.config?.assistantName || "Goldex Support Assistant",
             content:
               data.config?.welcomeMessage ||
-              "Hi! I'm OneTab Assistant. How can I help you today?",
+              "Hi! I'm Goldex Support Assistant. How can I help you today?",
             createdAt: new Date().toISOString(),
           },
         ]);
@@ -162,9 +162,9 @@ export function ChatWidget() {
           id: "welcome-fallback",
           conversationId: "",
           senderType: "AI",
-          senderName: "OneTab Assistant",
+          senderName: "Goldex Support Assistant",
           content:
-            "Hi! I'm OneTab Assistant. Ask me about distribution plans, DSP stores, audio/artwork specs, royalties, or VEVO.",
+            "Hi! I'm Goldex Support Assistant. Ask me about Goldex Media Network distribution plans, DSP stores, audio/artwork specs, royalties, or VEVO.",
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -458,7 +458,7 @@ export function ChatWidget() {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-[#3b82f6] hover:bg-[#2563eb] text-white shadow-2xl shadow-blue-500/40 flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer"
-        aria-label="Toggle OneTab Support Assistant"
+        aria-label="Toggle Goldex Support Assistant"
       >
         {open ? <X className="w-6 h-6" /> : <Bot className="w-7 h-7" />}
         {!open && escalatedToHuman && (

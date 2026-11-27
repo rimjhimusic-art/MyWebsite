@@ -42,8 +42,8 @@ export async function POST(request: Request) {
 
     await sendPlatformEmail({
       toEmail: parsed.data.email,
-      subject: "We received your inquiry — OneTab Media Network",
-      bodyPreview: `Hi ${parsed.data.name}, thank you for contacting OneTab Media Network. Reference ID: ${inquiry.id}`,
+      subject: "We received your inquiry — Goldex Media Network",
+      bodyPreview: `Hi ${parsed.data.name}, thank you for contacting Goldex Media Network. Reference ID: ${inquiry.id}`,
       template: "contact_confirmation",
     });
 

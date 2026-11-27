@@ -70,7 +70,7 @@ export default async function PublicSmartLinkPage({
 
           <div className="pt-4 text-center">
             <Link href="/" className="text-xs text-[#3b82f6] hover:underline">
-              Distributed via OneTab Media Network
+              Distributed via Goldex Media Network
             </Link>
           </div>
         </div>

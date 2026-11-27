@@ -59,6 +59,7 @@ export async function POST(request: Request) {
         storageKey: true,
         mimeType: true,
         sizeBytes: true,
+        sha256: true,
         width: true,
         height: true,
         durationSeconds: true,

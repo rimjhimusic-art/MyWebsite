@@ -29,6 +29,14 @@ if (isPostgres) {
   if (shouldPush && process.env.SKIP_PRISMA_DB_PUSH !== "1") {
     console.log("Syncing database schema with PostgreSQL (prisma db push)...");
     runPrisma(["db", "push", "--skip-generate"]);
+    if (fs.existsSync(path.join(rootDir, "scripts", "rebrand-db-goldex.ts"))) {
+      console.log("Running non-destructive Goldex Media Network check on PostgreSQL...");
+      execFileSync("npx", ["tsx", "scripts/rebrand-db-goldex.ts"], {
+        cwd: rootDir,
+        stdio: "inherit",
+        env: process.env,
+      });
+    }
   }
 } else {
   console.log("Using default SQLite Prisma schema (local environment).");

@@ -90,7 +90,7 @@ export function ReleaseWizard({ releaseId }: { releaseId?: string }) {
     producer: "",
     arranger: "",
     musicDirector: "",
-    recordLabelName: "OneTab Independent",
+    recordLabelName: "Goldex Independent",
     genre: "Pop",
     subgenre: "",
     language: "English",
@@ -161,7 +161,7 @@ export function ReleaseWizard({ releaseId }: { releaseId?: string }) {
             producer: rel.producer || "",
             arranger: rel.arranger || "",
             musicDirector: rel.musicDirector || "",
-            recordLabelName: rel.recordLabelName || "OneTab Independent",
+            recordLabelName: rel.recordLabelName || "Goldex Independent",
             genre: rel.genre || "Pop",
             subgenre: rel.subgenre || "",
             language: rel.language || "English",
@@ -1060,7 +1060,7 @@ export function ReleaseWizard({ releaseId }: { releaseId?: string }) {
             <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto" />
             <h2 className="text-2xl font-extrabold">Step 8: Ready to Submit</h2>
             <p className="text-sm text-[#b0b0b8] max-w-lg mx-auto">
-              Submitting sends your release to OneTab Quality Control for metadata,
+              Submitting sends your release to Goldex Quality Control for metadata,
               audio, artwork, and duplicate-asset verification before authorized DSP delivery.
             </p>
             <button

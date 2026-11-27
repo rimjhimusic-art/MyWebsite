@@ -62,6 +62,14 @@ export interface CmsWebsiteSettingsRow {
   facebookUrl: string;
   whatsappUrl: string;
   youtubeUrl: string;
+  instagramEnabled?: boolean;
+  facebookEnabled?: boolean;
+  whatsappEnabled?: boolean;
+  youtubeEnabled?: boolean;
+  socialOrderJson?: string;
+  whatsappUsePhone?: boolean;
+  copyrightCompanyName?: string;
+  copyrightYear?: number;
   copyrightText: string;
 }
 
@@ -408,7 +416,7 @@ export function SettingsBrandingPanel({
     <div className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-6 space-y-5">
       <h2 className="text-base font-bold text-white">Logos, Branding, Footer &amp; Social Links</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Website / Brand Name</label>
           <input
@@ -419,11 +427,38 @@ export function SettingsBrandingPanel({
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Copyright Text</label>
+          <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Copyright Company Name</label>
           <input
             type="text"
-            value={form.copyrightText}
-            onChange={(e) => setForm({ ...form, copyrightText: e.target.value })}
+            value={form.copyrightCompanyName || "Goldex Media Network Private Limited"}
+            onChange={(e) => {
+              const company = e.target.value;
+              const year = form.copyrightYear || 2026;
+              setForm({
+                ...form,
+                copyrightCompanyName: company,
+                copyrightText: `Copyright ${year} ${company.trim() || "Goldex Media Network Private Limited"}. All rights reserved.`,
+              });
+            }}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-[#b0b0b8] mb-1">Copyright Year</label>
+          <input
+            type="number"
+            min={2000}
+            max={2100}
+            value={form.copyrightYear || 2026}
+            onChange={(e) => {
+              const year = Number(e.target.value) || 2026;
+              const company = form.copyrightCompanyName || "Goldex Media Network Private Limited";
+              setForm({
+                ...form,
+                copyrightYear: year,
+                copyrightText: `Copyright ${year} ${company.trim()}. All rights reserved.`,
+              });
+            }}
             className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
           />
         </div>
@@ -573,7 +608,22 @@ export function SettingsBrandingPanel({
           onChange={(e) => setForm({ ...form, whatsappUrl: e.target.value })}
           className="px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
         />
+        <input
+          type="url"
+          placeholder="YouTube URL"
+          value={form.youtubeUrl}
+          onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
+          className="px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+        />
       </div>
+
+      <p className="text-[11px] text-[#71717a]">
+        For individual social icon toggles, ordering, WhatsApp phone sync, and live link preview, use{" "}
+        <a href="/admin/contact-settings" className="text-[#60a5fa] underline">
+          Contact &amp; Social Settings
+        </a>
+        .
+      </p>
 
       <div className="flex gap-3">
         <button
@@ -753,7 +803,7 @@ export function SeoBackupPanel({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `onetab-cms-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `goldex-cms-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast("CMS JSON backup downloaded.", "success");

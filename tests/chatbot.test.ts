@@ -33,7 +33,7 @@ describe("AI Support Chatbot & Two-Way Email Unit + Integration Suite", () => {
         const userMsg = body.messages[body.messages.length - 1]?.content || "";
 
         // Ensure real website/KB knowledge is injected into system prompt
-        assert.ok(sysPrompt.includes("OneTab Media Network"));
+        assert.ok(sysPrompt.includes("Goldex Media Network"));
 
         if (/custom\s*royalty\s*advance|private\s*contract|outside\s*knowledge/i.test(userMsg)) {
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -64,7 +64,7 @@ describe("AI Support Chatbot & Two-Way Email Unit + Integration Suite", () => {
               {
                 message: {
                   content: JSON.stringify({
-                    reply: "OneTab Media Network distributes your music to 150+ digital stores starting at ₹0/year.",
+                    reply: "Goldex Media Network distributes your music to 150+ digital stores starting at ₹0/year.",
                     language: "English",
                     confidence: 0.95,
                     shouldEscalate: false,
@@ -116,7 +116,7 @@ describe("AI Support Chatbot & Two-Way Email Unit + Integration Suite", () => {
       aiModel: "test-model",
       aiBaseUrl: mockAiBaseUrl,
       aiApiKeyEncrypted: encryptSecret("test-ai-key-123456"),
-      assistantName: "OneTab Support Assistant",
+      assistantName: "Goldex Support Assistant",
       systemInstructions: "Help artists using verified website info.",
       defaultLanguage: "auto",
       escalationThreshold: 0.65,

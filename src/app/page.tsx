@@ -241,7 +241,7 @@ export default async function HomePage({
         </div>
       )}
 
-      {/* 4. #ONETABREVOLUTION + INDIA MAP */}
+      {/* 4. #GOLDEXREVOLUTION + INDIA MAP */}
       {(!revSec || revSec.enabled !== false) && (
         <section
           className="py-[100px] px-5 sm:px-10 bg-[#0f0f0f] relative overflow-hidden z-[4]"
@@ -257,23 +257,24 @@ export default async function HomePage({
           <div className="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-[40px] lg:gap-[60px] relative">
             <div className="flex-1 text-center lg:text-left z-[5]">
               <h2 className="text-[2.4rem] sm:text-[3.5rem] font-extrabold text-white mb-[25px] leading-[1.1]">
-                {revSec?.title?.includes("#OneTabRevolution") ? (
+                {revSec?.title?.includes("#GoldexRevolution") ||
+                revSec?.title?.includes("#OneTabRevolution") ? (
                   <>
                     Join the <br />
-                    <span className="text-[#3b82f6]">#OneTabRevolution</span>
+                    <span className="text-[#3b82f6]">#GoldexRevolution</span>
                   </>
                 ) : (
                   revSec?.title || (
                     <>
                       Join the <br />
-                      <span className="text-[#3b82f6]">#OneTabRevolution</span>
+                      <span className="text-[#3b82f6]">#GoldexRevolution</span>
                     </>
                   )
                 )}
               </h2>
               <p className="text-[#b0b0b8] text-[1.1rem] leading-[1.7] max-w-[90%] mx-auto lg:mx-0">
                 {revSec?.subtitle ||
-                  "Why join any label if you can be your own boss! Kick start your journey in the entertainment industry with OneTab's reliable all-in-one distribution solution to manage and sell your content to digital platforms directly. Just Upload, and we'll do the rest for you at no extra cost. Join #OneTabRevolution and spread the sound of independent music with OneTab now."}
+                  "Why join any label if you can be your own boss! Kick start your journey in the entertainment industry with Goldex Media Network's reliable all-in-one distribution solution to manage and sell your content to digital platforms directly. Just Upload, and we'll do the rest for you at no extra cost. Join #GoldexRevolution and spread the sound of independent music with Goldex Media Network now."}
               </p>
             </div>
 
@@ -445,7 +446,7 @@ export default async function HomePage({
         </section>
       )}
 
-      {/* 6. WHAT IS ONETAB? */}
+      {/* 6. WHAT IS GOLDEX MEDIA NETWORK? */}
       {(!whatSec || whatSec.enabled !== false) && (
         <section
           className="py-[120px] px-5 relative z-[4] bg-[#0f0f0f] overflow-hidden flex justify-center border-t border-[#2a2a2a]"
@@ -460,7 +461,9 @@ export default async function HomePage({
           />
           <div className="max-w-[1000px] w-full bg-white/[0.02] border border-white/5 backdrop-blur-[20px] px-6 sm:px-[50px] py-[50px] sm:py-[70px] rounded-[30px] text-center relative z-[1] shadow-[0_30px_60px_rgba(0,0,0,0.3)]">
             <h2 className="text-[2.3rem] sm:text-[3rem] font-extrabold mb-[15px] text-white tracking-[-1px]">
-              {whatSec?.title && whatSec.title !== "What is OneTab?" ? (
+              {whatSec?.title &&
+              whatSec.title !== "What is OneTab?" &&
+              whatSec.title !== "What is Goldex Media Network?" ? (
                 whatSec.title
               ) : (
                 <>
@@ -471,7 +474,7 @@ export default async function HomePage({
                       backgroundImage: "linear-gradient(to right, #3b82f6, #60a5fa)",
                     }}
                   >
-                    OneTab?
+                    Goldex Media Network?
                   </span>
                 </>
               )}
@@ -481,7 +484,7 @@ export default async function HomePage({
             </div>
 
             {(whatSec?.bodyHtml ||
-              "OneTab Media Network is a next-generation ecosystem empowering independent artists and creators to build sustainable careers. Powered by Vydia, we provide elite access to global music distribution, advanced content protection, and rights management technology usually reserved for major labels.\nAs a pioneer in the creator economy, OneTab offers a transparent 90% Revenue Share model with Zero Upfront Fees. We are dedicated to making music distribution accessible, allowing you to keep 100% ownership of your masters while maximizing your reach across 150+ streaming platforms worldwide.")
+              "Goldex Media Network is a next-generation ecosystem empowering independent artists and creators to build sustainable careers. Powered by Vydia, we provide elite access to global music distribution, advanced content protection, and rights management technology usually reserved for major labels.\nAs a pioneer in the creator economy, Goldex Media Network offers a transparent 90% Revenue Share model with Zero Upfront Fees. We are dedicated to making music distribution accessible, allowing you to keep 100% ownership of your masters while maximizing your reach across 150+ streaming platforms worldwide.")
               .split("\n")
               .filter(Boolean)
               .map((para, i) => (
@@ -515,7 +518,7 @@ export default async function HomePage({
           <div className="max-w-[900px] mx-auto text-[#b0b0b8]">
             <h2 className="text-[1.6rem] sm:text-[2rem] text-white mb-[30px] font-extrabold">
               {seoSec?.title ||
-                "Music Distribution: How Can You Distribute Music With OneTab Media Network?"}
+                "Music Distribution: How Can You Distribute Music With Goldex Media Network?"}
             </h2>
             {seoSec?.bodyHtml ? (
               <div className="space-y-4 text-[1.05rem] leading-[1.8] whitespace-pre-line">
@@ -557,7 +560,7 @@ export default async function HomePage({
                   Distribution can be a great tool to appeal to listeners to enjoy and
                   fall in love with your great music. You may join this music industry
                   for a while but still keep wondering how to distribute your songs to
-                  more countries and platforms; OneTab Media Network is the answer.
+                  more countries and platforms; Goldex Media Network is the answer.
                 </p>
 
                 <h3 className="text-[1.3rem] sm:text-[1.5rem] text-white mt-10 mb-[15px] font-bold">
@@ -592,13 +595,13 @@ export default async function HomePage({
                     would have been a luxury dream. However, it is worth checking the
                     details of different packages. Some distribution packages might
                     have a split, but at{" "}
-                    <strong className="text-[#3b82f6]">OneTab Media Network</strong>, we
+                    <strong className="text-[#3b82f6]">Goldex Media Network</strong>, we
                     offer a transparent model where you keep 100% of your rights.
                   </p>
                 </div>
 
                 <h3 className="text-[1.3rem] sm:text-[1.5rem] text-white mt-10 mb-[15px] font-bold">
-                  Is OneTab Media Network The Best Music Distribution Service For
+                  Is Goldex Media Network The Best Music Distribution Service For
                   Independent Artists?
                 </h3>
                 <p className="text-[1.05rem] leading-[1.8] mb-5">
@@ -615,7 +618,7 @@ export default async function HomePage({
                   royalties. Don&apos;t panic if the answer is no; there are still
                   options accessible! We recognize that we aren&apos;t quite objective
                   &ndash; of course, we believe{" "}
-                  <strong className="text-[#3b82f6]">OneTab Media Network</strong> is
+                  <strong className="text-[#3b82f6]">Goldex Media Network</strong> is
                   the best music distribution service available! Only a few companies
                   will charge you no upfront costs and vow not to charge you royalties
                   in the future. However, it is up to you to decide whether or not you
@@ -627,7 +630,7 @@ export default async function HomePage({
             <p className="mt-[30px] text-sm">
               <em>
                 {seoSec?.subtitle ||
-                  "#MusicDistributionService #FreeMusicDistribution #OneTabMedia #SellMusicOnline"}
+                  "#MusicDistributionService #FreeMusicDistribution #GoldexMediaNetwork #SellMusicOnline"}
               </em>
             </p>
           </div>
@@ -643,8 +646,36 @@ export default async function HomePage({
             "Send a message to inquire about our products and services! We are committed to bringing customer satisfaction by providing quality services."
           }
           contactEmail={cms.settings.contactEmail}
+          contactPhone={cms.settings.contactPhone}
+          contactAddress={cms.settings.contactAddress}
         />
       )}
+
+      {/* Organization Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: cms.settings.siteName || "Goldex Media Network",
+            legalName: `${cms.settings.copyrightCompanyName || "Goldex Media Network Private Limited"}`,
+            email: cms.settings.contactEmail || "support@goldexmedianetwork.com",
+            telephone: cms.settings.contactPhone || "+918724804659",
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: "Guwahati",
+              addressRegion: "Assam",
+              addressCountry: "IN",
+            },
+            sameAs: [
+              cms.settings.instagramEnabled !== false ? cms.settings.instagramUrl : "",
+              cms.settings.facebookEnabled !== false ? cms.settings.facebookUrl : "",
+              cms.settings.youtubeEnabled !== false ? cms.settings.youtubeUrl : "",
+            ].filter(Boolean),
+          }),
+        }}
+      />
 
       <Footer settings={cms.settings} footerNav={cms.footerNav} />
     </div>
