@@ -1136,21 +1136,60 @@ model TeamMember {
 }
 
 model BrandCreator {
+  id           String   @id @default(cuid())
+  name         String
+  handle       String?
+  category     String?
+  bio          String?
+  description  String?
+  imageUrl     String
+  videoUrl     String?
+  instagramUrl String?
+  facebookUrl  String?
+  youtubeUrl   String?
+  spotifyUrl   String?
+  websiteUrl   String?
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  draftStatus  String   @default("PUBLISHED")
+  draftJson    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model AboutSliderImage {
   id          String   @id @default(cuid())
-  name        String
-  handle      String?
-  category    String?
-  description String?
   imageUrl    String
-  videoUrl    String?
-  published   Boolean  @default(true)
+  title       String?
+  description String?
+  enabled     Boolean  @default(true)
   sortOrder   Int      @default(0)
   draftStatus String   @default("PUBLISHED")
   draftJson   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([published, sortOrder])
+  @@index([enabled, sortOrder])
+}
+
+model BrandVideo {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  videoUrl     String
+  thumbnailUrl String
+  creatorName  String?
+  featured     Boolean  @default(false)
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  draftStatus  String   @default("PUBLISHED")
+  draftJson    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, featured, sortOrder])
 }
 
 model DistributionPlan {
