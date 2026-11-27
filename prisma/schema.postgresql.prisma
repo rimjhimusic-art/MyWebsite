@@ -392,6 +392,7 @@ model MediaAsset {
   folder           String    @default("general")
   title            String?
   altText          String?
+  inlineData       Bytes?
   createdAt        DateTime  @default(now())
 
   owner          User             @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
@@ -969,29 +970,37 @@ model AuditLog {
 // =========================
 
 model WebsiteSettings {
-  id                  String    @id @default("default")
-  siteName            String    @default("OneTab Media Network")
-  tagline             String    @default("India's leading digital music distribution partner empowering independent artists and labels globally with enterprise-grade technology.")
-  headerLogoUrl       String    @default("/ref/logo.png")
-  headerLogoWidth     Int       @default(118)
-  headerLogoHeight    Int       @default(40)
-  footerLogoUrl       String    @default("/ref/logo.png")
-  footerLogoWidth     Int       @default(118)
-  footerLogoHeight    Int       @default(40)
-  faviconUrl          String    @default("/ref/logo.png")
-  contactEmail        String    @default("support@onetabmedia.in")
-  contactPhone        String    @default("+91 70470 13399")
-  contactAddress      String    @default("West Bengal, India")
-  instagramUrl        String    @default("https://www.instagram.com/onetab.media/")
-  facebookUrl         String    @default("https://www.facebook.com/onetabmedia/")
-  whatsappUrl         String    @default("https://wa.me/917047013399")
-  youtubeUrl          String    @default("")
-  copyrightText       String    @default("© 2026 OneTab Media Network Pvt. Ltd. All Rights Reserved.")
-  draftStatus         String    @default("PUBLISHED")
-  draftJson           String?
-  lastPublishedAt     DateTime?
-  lastPublishedById   String?
-  updatedAt           DateTime  @updatedAt
+  id                   String    @id @default("default")
+  siteName             String    @default("Goldex Media Network")
+  tagline              String    @default("India's leading digital music distribution partner empowering independent artists and labels globally with enterprise-grade technology.")
+  headerLogoUrl        String    @default("/ref/goldex-logo.svg")
+  headerLogoWidth      Int       @default(210)
+  headerLogoHeight     Int       @default(40)
+  footerLogoUrl        String    @default("/ref/goldex-logo.svg")
+  footerLogoWidth      Int       @default(210)
+  footerLogoHeight     Int       @default(40)
+  faviconUrl           String    @default("/ref/goldex-favicon.svg")
+  contactEmail         String    @default("support@goldexmedianetwork.com")
+  contactPhone         String    @default("+918724804659")
+  contactAddress       String    @default("Assam, Guwahati, India")
+  instagramUrl         String    @default("https://www.instagram.com/goldexmedianetwork/")
+  facebookUrl          String    @default("https://www.facebook.com/goldexmedianetwork/")
+  whatsappUrl          String    @default("https://wa.me/918724804659")
+  youtubeUrl           String    @default("https://www.youtube.com/@GoldexMediaNetwork")
+  instagramEnabled     Boolean   @default(true)
+  facebookEnabled      Boolean   @default(true)
+  whatsappEnabled      Boolean   @default(true)
+  youtubeEnabled       Boolean   @default(true)
+  socialOrderJson      String    @default("[\"instagram\",\"facebook\",\"whatsapp\",\"youtube\"]")
+  whatsappUsePhone     Boolean   @default(true)
+  copyrightCompanyName String    @default("Goldex Media Network Private Limited")
+  copyrightYear        Int       @default(2026)
+  copyrightText        String    @default("Copyright 2026 Goldex Media Network Private Limited. All rights reserved.")
+  draftStatus          String    @default("PUBLISHED")
+  draftJson            String?
+  lastPublishedAt      DateTime?
+  lastPublishedById    String?
+  updatedAt            DateTime  @updatedAt
 }
 
 model NavigationItem {
@@ -1209,18 +1218,18 @@ model ChatbotSettings {
   aiModel                      String    @default("gpt-4o-mini")
   aiBaseUrl                    String?
   aiApiKeyEncrypted            String?
-  assistantName                String    @default("OneTab Support Assistant")
-  welcomeMessage               String    @default("Hi! I'm OneTab Assistant. How can I help you with music distribution, plans, DSP stores, royalties, or VEVO today?")
-  systemInstructions           String    @default("You are the official AI Customer Support Assistant for OneTab Media Network. Answer visitor questions accurately using only verified website knowledge and knowledge base entries. Reply naturally in the visitor's language (English, Hindi, or Bengali). Never invent prices, promises, or policies. If unsure, missing data, or when human support is requested or needed, escalate cleanly.")
+  assistantName                String    @default("Goldex Support Assistant")
+  welcomeMessage               String    @default("Hi! I'm Goldex Assistant. How can I help you with music distribution, plans, DSP stores, royalties, or VEVO today?")
+  systemInstructions           String    @default("You are the official AI Customer Support Assistant for Goldex Media Network. Answer visitor questions accurately using only verified website knowledge and knowledge base entries. Reply naturally in the visitor's language (English, Hindi, or Bengali). Never invent prices, promises, or policies. If unsure, missing data, or when human support is requested or needed, escalate cleanly.")
   defaultLanguage              String    @default("auto")
   escalationThreshold          Float     @default(0.65)
   humanHandoverEnabled         Boolean   @default(true)
   emailEnabled                 Boolean   @default(true)
   emailProvider                String    @default("POSTMARK")
-  supportEmail                 String    @default("support@onetabmedia.in")
-  senderEmail                  String    @default("support@onetabmedia.in")
-  senderName                   String    @default("OneTab Media Support")
-  replyRoutingDomain           String    @default("reply.onetabmedia.in")
+  supportEmail                 String    @default("support@goldexmedianetwork.com")
+  senderEmail                  String    @default("support@goldexmedianetwork.com")
+  senderName                   String    @default("Goldex Media Network Support")
+  replyRoutingDomain           String    @default("reply.goldexmedianetwork.com")
   emailApiKeyEncrypted         String?
   inboundWebhookSecretEncrypted String?
   smtpHost                     String?
