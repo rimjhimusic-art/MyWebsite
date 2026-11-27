@@ -16,6 +16,7 @@ import {
 import { Navbar, type CmsBrandHeaderSettings, type CmsNavLink } from "@/components/Navbar";
 import { Footer, type CmsFooterLink, type CmsFooterSettings } from "@/components/Footer";
 import { AppleMusicIcon, SpotifyIcon, YouTubeIcon } from "@/components/BrandIcons";
+import { UpcomingBrushTitle } from "@/components/UpcomingBrushTitle";
 import type {
   PublicUpcomingRelease,
   PublicUpdateRelease,
@@ -407,35 +408,12 @@ export function UpdatesClient({
                 ))}
               </div>
 
-              {/* Stylized futuristic UPCOMING centerpiece heading */}
-              <div className="relative inline-flex flex-col items-center justify-center px-4">
-                {heroConfig.animationEnabled && (
-                  <span
-                    aria-hidden="true"
-                    data-testid="updates-hero-glow"
-                    className="goldex-red-hero-glow pointer-events-none absolute left-1/2 top-1/2 w-[125%] h-[155%] rounded-full blur-2xl -z-10"
-                    style={{
-                      background: `radial-gradient(circle, ${heroConfig.glowColor || "#ef4444"}66 0%, rgba(59,130,246,0.22) 48%, transparent 76%)`,
-                    }}
-                  />
-                )}
-                <h1
-                  data-testid="updates-hero-heading"
-                  style={{
-                    color: heroConfig.headingColor || "#ef4444",
-                    textShadow: heroConfig.animationEnabled
-                      ? `0 0 20px ${heroConfig.glowColor || "#ef4444"}88, 0 0 44px rgba(34,211,238,0.28), 0 4px 16px rgba(0,0,0,0.95)`
-                      : "0 4px 16px rgba(0,0,0,0.95)",
-                  }}
-                  className="font-futuristic text-4xl sm:text-6xl lg:text-[4.25rem] font-black tracking-[0.2em] uppercase leading-none select-none"
-                >
-                  {heroConfig.title || "UPCOMING"}
-                </h1>
-                <span
-                  aria-hidden="true"
-                  className="mt-2 h-[1.5px] w-28 sm:w-40 rounded-full bg-gradient-to-r from-transparent via-cyan-400/75 to-transparent"
-                />
-              </div>
+              {/* Stylized artistic Brush UPCOMING centerpiece heading directly over Hero image */}
+              <UpcomingBrushTitle
+                text={heroConfig.title || "UPCOMING"}
+                animationEnabled={heroConfig.animationEnabled}
+                glowColor={heroConfig.glowColor}
+              />
 
               {/* Compact, restrained glass metadata strip for upcoming release details (no bulky box or CTA button) */}
               {(heroConfig.subtitle || heroConfig.statusBadge || heroConfig.releaseDate || heroConfig.description || heroConfig.additionalText) && (

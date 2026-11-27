@@ -80,6 +80,16 @@ body {
   .goldex-neon-nav-rotator {
     animation: none !important;
   }
+  .goldex-upcoming-breath,
+  .goldex-upcoming-color,
+  .goldex-upcoming-dot-1,
+  .goldex-upcoming-dot-2,
+  .goldex-upcoming-dot-3,
+  .goldex-upcoming-letter {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
   .spotify-update-card {
     transition: none !important;
   }
@@ -105,6 +115,152 @@ body {
 
 .font-futuristic {
   font-family: var(--font-orbitron), var(--font-outfit), system-ui, sans-serif;
+}
+
+.font-brush {
+  font-family: var(--font-brush), "Kaushan Script", "Brush Script MT", cursive;
+}
+
+/* 10-second full brightness -> dim -> fade out -> short pause -> smooth fade in cycle */
+@keyframes goldexUpcomingBreathCycle {
+  0% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  72% {
+    opacity: 1;
+    filter: brightness(1.03);
+  }
+  79% {
+    opacity: 0.36;
+    filter: brightness(0.72);
+  }
+  85% {
+    opacity: 0.03;
+    filter: brightness(0.45);
+  }
+  90% {
+    opacity: 0.03;
+    filter: brightness(0.45);
+  }
+  96% {
+    opacity: 1;
+    filter: brightness(1.08);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.goldex-upcoming-breath {
+  animation: goldexUpcomingBreathCycle 13.5s ease-in-out infinite;
+  will-change: opacity, filter;
+}
+
+/* Apple-inspired luminous Golden Metallic -> Champagne Gold -> Warm White -> Subtle Amber -> Premium Silver */
+@keyframes goldexUpcomingColorCycle {
+  0%, 100% {
+    color: #f6d365;
+    text-shadow:
+      0 -1.5px 1px rgba(255, 255, 255, 0.58),
+      0 3px 10px rgba(0, 0, 0, 0.88),
+      0 0 22px rgba(246, 211, 101, 0.55),
+      0 0 46px rgba(245, 158, 11, 0.28);
+  }
+  20% {
+    color: #f4e3b8;
+    text-shadow:
+      0 -1.5px 1px rgba(255, 255, 255, 0.68),
+      0 3px 10px rgba(0, 0, 0, 0.88),
+      0 0 24px rgba(244, 227, 184, 0.55),
+      0 0 44px rgba(217, 179, 108, 0.25);
+  }
+  40% {
+    color: #fff9eb;
+    text-shadow:
+      0 -1.5px 1.5px rgba(255, 255, 255, 0.82),
+      0 3px 10px rgba(0, 0, 0, 0.88),
+      0 0 24px rgba(255, 249, 235, 0.58),
+      0 0 42px rgba(253, 230, 138, 0.28);
+  }
+  60% {
+    color: #fbbf24;
+    text-shadow:
+      0 -1.5px 1px rgba(255, 243, 196, 0.55),
+      0 3px 10px rgba(0, 0, 0, 0.9),
+      0 0 24px rgba(251, 191, 36, 0.58),
+      0 0 46px rgba(217, 119, 6, 0.3);
+  }
+  80% {
+    color: #e5e9f0;
+    text-shadow:
+      0 -1.5px 1.5px rgba(255, 255, 255, 0.78),
+      0 3px 10px rgba(0, 0, 0, 0.9),
+      0 0 22px rgba(226, 232, 240, 0.52),
+      0 0 44px rgba(148, 163, 184, 0.28);
+  }
+}
+
+.goldex-upcoming-color {
+  color: #f6d365;
+  text-shadow:
+    0 -1.5px 1px rgba(255, 255, 255, 0.58),
+    0 3px 10px rgba(0, 0, 0, 0.88),
+    0 0 22px rgba(246, 211, 101, 0.55);
+  animation: goldexUpcomingColorCycle 16s ease-in-out infinite;
+}
+
+/* Sequential 3 dots: 1 -> 2 -> 3 -> 1 -> 2 -> 3 continuous loop */
+@keyframes goldexDotOne {
+  0% { opacity: 0.15; transform: scale(0.55); }
+  10%, 76% { opacity: 1; transform: scale(1.06); }
+  88%, 100% { opacity: 0.15; transform: scale(0.55); }
+}
+
+@keyframes goldexDotTwo {
+  0%, 26% { opacity: 0.08; transform: scale(0.45); }
+  36%, 76% { opacity: 1; transform: scale(1.06); }
+  88%, 100% { opacity: 0.08; transform: scale(0.45); }
+}
+
+@keyframes goldexDotThree {
+  0%, 52% { opacity: 0.08; transform: scale(0.45); }
+  62%, 76% { opacity: 1; transform: scale(1.06); }
+  88%, 100% { opacity: 0.08; transform: scale(0.45); }
+}
+
+.goldex-upcoming-dot-1 {
+  animation: goldexDotOne 2.4s ease-in-out infinite;
+}
+.goldex-upcoming-dot-2 {
+  animation: goldexDotTwo 2.4s ease-in-out infinite;
+}
+.goldex-upcoming-dot-3 {
+  animation: goldexDotThree 2.4s ease-in-out infinite;
+}
+
+.goldex-upcoming-letter {
+  display: inline-block;
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.22, 1.32, 0.36, 1);
+  will-change: transform;
+}
+
+/* Subtle automatic floating wave on touch / mobile devices without hover cursor */
+@keyframes goldexLetterMobileFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0) rotate(-1.5deg);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .goldex-upcoming-letter {
+    animation: goldexLetterMobileFloat 3.6s ease-in-out infinite;
+  }
 }
 
 .goldex-hero-dissolve-mask {

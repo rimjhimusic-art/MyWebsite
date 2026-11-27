@@ -260,19 +260,38 @@ async function main() {
       assert(!/\bcatalog drop\b/i.test(fullPageText), `"Catalog Drop" must be completely removed from /updates! Found in: ${fullPageText.slice(0, 300)}`);
 
       const heroHeading = page.locator('[data-testid="updates-hero-heading"]');
-      const heroTitleText = await heroHeading.innerText();
+      const heroTitleText = (await heroHeading.textContent()) || "";
       assert(heroTitleText.toUpperCase().includes("UPCOMING"), `Expected UPCOMING Hero heading, got: ${heroTitleText}`);
       const headingStyles = await heroHeading.evaluate((el) => {
         const st = getComputedStyle(el);
+        const colorEl = el.querySelector(".goldex-upcoming-color");
+        const cSt = colorEl ? getComputedStyle(colorEl) : st;
+        const d1 = el.querySelector('[data-testid="upcoming-dot-1"]');
+        const d2 = el.querySelector('[data-testid="upcoming-dot-2"]');
+        const d3 = el.querySelector('[data-testid="upcoming-dot-3"]');
         return {
-          color: st.color,
           fontSize: parseFloat(st.fontSize),
           fontFamily: st.fontFamily,
-          textShadow: st.textShadow,
+          breathAnim: st.animationName,
+          breathDur: parseFloat(st.animationDuration || "0"),
+          colorAnim: cSt.animationName,
+          textShadow: cSt.textShadow,
+          d1Anim: d1 ? getComputedStyle(d1).animationName : "",
+          d2Anim: d2 ? getComputedStyle(d2).animationName : "",
+          d3Anim: d3 ? getComputedStyle(d3).animationName : "",
         };
       });
-      assert(headingStyles.fontSize >= 32, `Expected commanding UPCOMING heading >= 32px, got ${headingStyles.fontSize}`);
-      assert(headingStyles.textShadow !== "none", "Expected subtle neon glow textShadow on UPCOMING heading");
+      assert(headingStyles.fontFamily.toLowerCase().includes("kaushan"), `Expected brush font Kaushan Script, got ${headingStyles.fontFamily}`);
+      assert(headingStyles.fontSize >= 32, `Expected commanding brush UPCOMING heading >= 32px, got ${headingStyles.fontSize}`);
+      assert(headingStyles.textShadow !== "none", "Expected golden luminous textShadow on UPCOMING heading");
+      assert(headingStyles.breathAnim.includes("goldexUpcomingBreathCycle") && headingStyles.breathDur >= 10, `Expected ~10s+ breath/dimming animation cycle, got ${headingStyles.breathAnim} (${headingStyles.breathDur}s)`);
+      assert(headingStyles.colorAnim.includes("goldexUpcomingColorCycle"), `Expected periodic color changing animation, got ${headingStyles.colorAnim}`);
+      assert(
+        headingStyles.d1Anim.includes("goldexDotOne") &&
+          headingStyles.d2Anim.includes("goldexDotTwo") &&
+          headingStyles.d3Anim.includes("goldexDotThree"),
+        `Expected sequential 3 dots animation, got ${headingStyles.d1Anim}, ${headingStyles.d2Anim}, ${headingStyles.d3Anim}`
+      );
       await page.locator('[data-testid="updates-hero-glow"]').waitFor({ state: "attached" });
 
       const supportingLabels = page.locator('[data-testid="updates-hero-supporting-labels"]');
@@ -290,6 +309,15 @@ async function main() {
         heroBox && headingBox && headingBox.y >= heroBox.y - 2 && headingBox.y + headingBox.height <= heroBox.y + heroBox.height + 2,
         `Expected UPCOMING heading inside Hero container on ${vp.name}`
       );
+
+      if (vp.name === "desktop" && headingBox) {
+        await page.mouse.move(headingBox.x + headingBox.width * 0.45, headingBox.y + headingBox.height * 0.45);
+        await page.waitForTimeout(160);
+        const hoverTransform = await heroHeading.locator('[data-testid="upcoming-letter"]').nth(3).evaluate((el) => el.style.transform);
+        assert(hoverTransform && hoverTransform.includes("translate3d"), `Expected interactive 3D letter float on mouse hover, got ${hoverTransform}`);
+        await page.mouse.move(5, 5);
+        await page.waitForTimeout(120);
+      }
 
       const heroBgImg = page.locator('[data-testid="updates-hero-bg-image"]');
       await heroBgImg.waitFor({ state: "visible" });
