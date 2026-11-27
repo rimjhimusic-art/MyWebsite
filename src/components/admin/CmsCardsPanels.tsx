@@ -741,93 +741,157 @@ export function TeamManagerPanel({
   items,
   onSave,
   onCreate,
+  onReorder,
   onDelete,
   onPickMedia,
 }: {
   items: CmsTeamRow[];
   onSave: (payload: Record<string, unknown>, mode: "draft" | "publish") => Promise<void>;
   onCreate: (payload: Record<string, unknown>, mode: "draft" | "publish") => Promise<void>;
+  onReorder: (ids: string[]) => Promise<void>;
   onDelete: (id: string, label: string) => void;
   onPickMedia: (cb: (url: string) => void, folder?: string) => void;
 }) {
   const [editing, setEditing] = useState<CmsTeamRow | null>(null);
-  const [form, setForm] = useState({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png" });
+  const [form, setForm] = useState({
+    name: "",
+    role: "",
+    bio: "",
+    imageUrl: "/ref/team/sujoy.png",
+    linkedinUrl: "",
+    published: true,
+  });
+
+  const move = (idx: number, dir: -1 | 1) => {
+    const next = [...items];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onReorder(next.map((x) => x.id));
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div className="lg:col-span-4 rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-5 space-y-3 h-fit">
-        <h3 className="font-bold text-sm text-white">{editing ? `Edit ${editing.name}` : "Add Team Member"}</h3>
-        <input
-          type="text"
-          placeholder="Name*"
-          value={editing ? editing.name : form.name}
-          onChange={(e) => editing ? setEditing({ ...editing, name: e.target.value }) : setForm({ ...form, name: e.target.value })}
-          className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
-        />
-        <input
-          type="text"
-          placeholder="Role*"
-          value={editing ? editing.role : form.role}
-          onChange={(e) => editing ? setEditing({ ...editing, role: e.target.value }) : setForm({ ...form, role: e.target.value })}
-          className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
-        />
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Photo URL*"
-            value={editing ? editing.imageUrl : form.imageUrl}
-            onChange={(e) => editing ? setEditing({ ...editing, imageUrl: e.target.value }) : setForm({ ...form, imageUrl: e.target.value })}
-            className="flex-1 px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-          />
-          <button
-            type="button"
-            onClick={() => onPickMedia((u) => editing ? setEditing({ ...editing, imageUrl: u }) : setForm({ ...form, imageUrl: u }), "team")}
-            className="px-3 rounded-xl bg-white/10 text-xs font-semibold cursor-pointer"
-          >
-            Pick
-          </button>
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="font-bold text-white text-sm">
+          Leadership &amp; Team Members ({items.length})
         </div>
-        <textarea
-          rows={3}
-          placeholder="Short Bio"
-          value={(editing ? editing.bio : form.bio) || ""}
-          onChange={(e) => editing ? setEditing({ ...editing, bio: e.target.value }) : setForm({ ...form, bio: e.target.value })}
-          className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs resize-none"
-        />
-        <div className="flex gap-2">
-          {editing ? (
-            <>
-              <button type="button" onClick={async () => { await onSave(editing as unknown as Record<string, unknown>, "draft"); setEditing(null); }} className="flex-1 py-2.5 rounded-xl bg-amber-600 text-xs font-bold cursor-pointer">Save Draft</button>
-              <button type="button" onClick={async () => { await onSave(editing as unknown as Record<string, unknown>, "publish"); setEditing(null); }} className="flex-1 py-2.5 rounded-xl bg-[#3b82f6] text-xs font-bold cursor-pointer">Publish</button>
-              <button type="button" onClick={() => setEditing(null)} className="px-3 rounded-xl bg-white/10 text-xs cursor-pointer">Cancel</button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={async () => {
-                await onCreate(form, "publish");
-                setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png" });
-              }}
-              className="w-full py-2.5 rounded-xl bg-[#3b82f6] text-white text-xs font-bold cursor-pointer"
-            >
-              Add Team Member
-            </button>
-          )}
+        <div className="text-[#b0b0b8]">
+          {items.filter((m) => m.published).length} published &bull; Each member is stored individually in the database; adding one never removes existing members.
         </div>
       </div>
 
-      <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {items.map((m) => (
-          <div key={m.id} className="rounded-xl bg-[#18181b] border border-[#2a2a2a] p-3.5 flex items-center gap-3">
-            <img src={m.imageUrl} alt={m.name} className="w-14 h-14 rounded-xl object-cover object-top shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm text-white truncate">{m.name}</div>
-              <div className="text-xs text-[#3b82f6]">{m.role}</div>
-            </div>
-            <button type="button" onClick={() => setEditing(m)} className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-400 text-xs font-bold cursor-pointer">Edit</button>
-            <button type="button" onClick={() => onDelete(m.id, m.name)} className="p-1.5 rounded-lg bg-red-500/15 text-red-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-4 rounded-2xl bg-[#18181b] border border-[#2a2a2a] p-5 space-y-3 h-fit">
+          <h3 className="font-bold text-sm text-white">{editing ? `Edit ${editing.name}` : "Add Team Member"}</h3>
+          <input
+            type="text"
+            placeholder="Name*"
+            value={editing ? editing.name : form.name}
+            onChange={(e) => editing ? setEditing({ ...editing, name: e.target.value }) : setForm({ ...form, name: e.target.value })}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+          />
+          <input
+            type="text"
+            placeholder="Designation / Role*"
+            value={editing ? editing.role : form.role}
+            onChange={(e) => editing ? setEditing({ ...editing, role: e.target.value }) : setForm({ ...form, role: e.target.value })}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
+          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Photo URL*"
+              value={editing ? editing.imageUrl : form.imageUrl}
+              onChange={(e) => editing ? setEditing({ ...editing, imageUrl: e.target.value }) : setForm({ ...form, imageUrl: e.target.value })}
+              className="flex-1 px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+            />
+            <button
+              type="button"
+              onClick={() => onPickMedia((u) => editing ? setEditing({ ...editing, imageUrl: u }) : setForm({ ...form, imageUrl: u }), "team")}
+              className="px-3 rounded-xl bg-white/10 text-xs font-semibold cursor-pointer"
+            >
+              Pick
+            </button>
           </div>
-        ))}
+          <input
+            type="url"
+            placeholder="LinkedIn / Social URL (optional)"
+            value={(editing ? editing.linkedinUrl : form.linkedinUrl) || ""}
+            onChange={(e) => editing ? setEditing({ ...editing, linkedinUrl: e.target.value }) : setForm({ ...form, linkedinUrl: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+          />
+          <textarea
+            rows={3}
+            placeholder="Short Biography"
+            value={(editing ? editing.bio : form.bio) || ""}
+            onChange={(e) => editing ? setEditing({ ...editing, bio: e.target.value }) : setForm({ ...form, bio: e.target.value })}
+            className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs resize-none"
+          />
+          <label className="flex items-center gap-2 text-xs text-[#b0b0b8] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={editing ? editing.published : form.published}
+              onChange={(e) => editing ? setEditing({ ...editing, published: e.target.checked }) : setForm({ ...form, published: e.target.checked })}
+            />
+            Published on Public Website
+          </label>
+          <div className="flex gap-2">
+            {editing ? (
+              <>
+                <button type="button" onClick={async () => { await onSave(editing as unknown as Record<string, unknown>, "draft"); setEditing(null); }} className="flex-1 py-2.5 rounded-xl bg-amber-600 text-xs font-bold cursor-pointer">Save Draft</button>
+                <button type="button" onClick={async () => { await onSave(editing as unknown as Record<string, unknown>, "publish"); setEditing(null); }} className="flex-1 py-2.5 rounded-xl bg-[#3b82f6] text-xs font-bold cursor-pointer">Save &amp; Publish</button>
+                <button type="button" onClick={() => setEditing(null)} className="px-3 rounded-xl bg-white/10 text-xs cursor-pointer">Cancel</button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await onCreate(form, "draft");
+                    setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png", linkedinUrl: "", published: true });
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold cursor-pointer"
+                >
+                  Save Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await onCreate(form, "publish");
+                    setForm({ name: "", role: "", bio: "", imageUrl: "/ref/team/sujoy.png", linkedinUrl: "", published: true });
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-[#3b82f6] text-white text-xs font-bold cursor-pointer"
+                >
+                  Add &amp; Publish
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3 h-fit">
+          {items.map((m, idx) => (
+            <div key={m.id} className="rounded-xl bg-[#18181b] border border-[#2a2a2a] p-3.5 flex items-center gap-3">
+              <img src={m.imageUrl} alt={m.name} className="w-14 h-14 rounded-xl object-cover object-top shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <div className="font-bold text-sm text-white truncate">{m.name}</div>
+                  {!m.published && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Hidden</span>
+                  )}
+                </div>
+                <div className="text-xs text-[#3b82f6] truncate">{m.role}</div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button type="button" onClick={() => move(idx, -1)} className="p-1 rounded bg-white/5 hover:bg-white/10 cursor-pointer" aria-label="Move team member up"><ArrowUp className="w-3 h-3" /></button>
+                <button type="button" onClick={() => move(idx, 1)} className="p-1 rounded bg-white/5 hover:bg-white/10 cursor-pointer" aria-label="Move team member down"><ArrowDown className="w-3 h-3" /></button>
+                <button type="button" onClick={() => setEditing(m)} className="px-2 py-1 rounded-lg bg-blue-500/15 text-blue-400 text-xs font-bold cursor-pointer">Edit</button>
+                <button type="button" onClick={() => onDelete(m.id, m.name)} className="p-1.5 rounded-lg bg-red-500/15 text-red-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

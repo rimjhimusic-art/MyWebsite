@@ -311,13 +311,20 @@ export default function AdminCmsStudioPage() {
           items={cms.team}
           onCreate={async (payload, mode) => {
             const ok = await callCms("/api/admin/cms/team", "POST", { ...payload, mode });
-            if (ok) showToast("Team member added!", "success");
+            if (ok) showToast(mode === "publish" ? "Team member added & published!" : "Team member draft saved.", "success");
           }}
           onSave={async (payload, mode) => {
             const ok = await callCms("/api/admin/cms/team", "PATCH", { ...payload, mode });
-            if (ok) showToast("Team member updated!", "success");
+            if (ok) showToast(mode === "publish" ? "Team member updated & published!" : "Team member draft saved.", "success");
+          }}
+          onReorder={async (ids) => {
+            await callCms("/api/admin/cms/team", "PATCH", { action: "reorder", ids, mode: "publish" });
+            showToast("Team display order updated.", "success");
           }}
           onDelete={(id, label) => confirmDelete(`/api/admin/cms/team?id=${id}&mode=publish`, label)}
+          onPickMedia={(cb, folder = "team") => setMediaPicker({ open: true, folder, callback: cb })}
+        />
+      )}
           onPickMedia={(cb, folder = "team") => setMediaPicker({ open: true, folder, callback: cb })}
         />
       )}

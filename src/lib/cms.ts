@@ -16,6 +16,8 @@ export const CMS_PUBLIC_REVALIDATE_PATHS = [
   "/terms",
   "/privacy",
   "/faq",
+  "/help",
+  "/careers",
   "/contact",
 ];
 
@@ -68,7 +70,15 @@ export function mapDraftList<T extends DraftCapableRow & { sortOrder?: number }>
 export async function canUserPreviewCms(): Promise<boolean> {
   const user = await getCurrentUser();
   if (!user) return false;
-  return userHasAnyPermission(user, ["cms:view", "cms:edit", "cms:publish", "cms:manage"]);
+  return userHasAnyPermission(user, [
+    "cms:view",
+    "cms:edit",
+    "cms:publish",
+    "cms:manage",
+    "media:view",
+    "settings:view",
+    "settings:edit",
+  ]);
 }
 
 export function assertSectionScope(user: AuthenticatedUser, pageSlug?: string | null): Response | null {

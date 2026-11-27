@@ -32,6 +32,8 @@ export async function POST(request: Request) {
     const storageKey = `${kind.toLowerCase()}/${auth.user.id}/${Date.now()}-${safeFileName}`;
 
     await putObject(storageKey, validated.data.buffer, validated.data.mimeType);
+    const shouldInlineDb =
+      process.env.STORAGE_DRIVER !== "s3" && validated.data.buffer.length <= 4 * 1024 * 1024;
 
     const asset = await prisma.mediaAsset.create({
       data: {
@@ -48,6 +50,22 @@ export async function POST(request: Request) {
         sampleRate: validated.data.sampleRate ?? null,
         validationStatus: "VALID",
         validationNotes: validated.data.validationNotes,
+        inlineData: shouldInlineDb ? new Uint8Array(validated.data.buffer) : null,
+      },
+      select: {
+        id: true,
+        kind: true,
+        originalName: true,
+        storageKey: true,
+        mimeType: true,
+        sizeBytes: true,
+        width: true,
+        height: true,
+        durationSeconds: true,
+        sampleRate: true,
+        validationStatus: true,
+        validationNotes: true,
+        createdAt: true,
       },
     });
 
