@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="Goldex Media Network Favicon">
+  <defs>
+    <linearGradient id="gxFavGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0F0F0F" />
+  <rect x="4" y="4" width="56" height="56" rx="14" stroke="url(#gxFavGrad)" stroke-width="2.5" />
+  <path d="M41.5 21.5C38.8 19.3 35.6 18.2 32 18.2C24.3 18.2 18 24.4 18 32C18 39.6 24.3 45.8 32 45.8C38.7 45.8 44 41.3 45 34.7H32.5V29.5H50.5V32C50.5 42.6 42.3 50.8 32 50.8C21.5 50.8 13 42.3 13 32C13 21.7 21.5 13.2 32 13.2C36.9 13.2 41.4 15 44.8 18.1L41.5 21.5Z" fill="url(#gxFavGrad)" />
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" fill="none" role="img" aria-label="GOLDEX MEDIA NETWORK">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090B" />
+      <stop offset="50%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#09090B" />
+    </linearGradient>
+    <linearGradient id="ogGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  <circle cx="950" cy="140" r="240" fill="#3B82F6" fill-opacity="0.12" />
+  <circle cx="260" cy="490" r="240" fill="#F59E0B" fill-opacity="0.12" />
+  <rect x="110" y="190" width="120" height="120" rx="28" fill="url(#ogGold)" />
+  <path d="M188 228C182.5 223.8 176 221.5 169 221.5C153.5 221.5 141 234 141 249.5C141 265 153.5 277.5 169 277.5C182.5 277.5 193.5 268.2 195.8 255H170.5V244.5H207V249.5C207 271.2 190 288 169 288C147.8 288 130.5 270.8 130.5 249.5C130.5 228.2 147.8 211 169 211C179 211 188.2 214.5 195.2 220.8L188 228Z" fill="#0F0F0F" />
+  <text x="260" y="252" fill="#FFFFFF" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="800" font-size="68" letter-spacing="4">GOLDEX MEDIA NETWORK</text>
+  <text x="264" y="302" fill="#FBBF24" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="600" font-size="24" letter-spacing="6">GLOBAL MUSIC DISTRIBUTION &amp; RIGHTS MANAGEMENT</text>
+  <text x="114" y="420" fill="#CBD5E1" font-family="'Outfit', 'Inter', system-ui, sans-serif" font-weight="500" font-size="26">Assam, Guwahati, India  •  support@goldexmedianetwork.com  •  +918724804659</text>
+</svg>
