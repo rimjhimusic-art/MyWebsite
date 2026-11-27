@@ -1227,7 +1227,7 @@ model ChatbotSettings {
   supportEmail                 String    @default("support@goldexmedianetwork.com")
   senderEmail                  String    @default("support@goldexmedianetwork.com")
   senderName                   String    @default("Goldex Media Network Support")
-  replyRoutingDomain           String    @default("reply.goldexmedianetwork.com")
+  replyRoutingDomain           String    @default("reply.goldexmedianetwork.info")
   emailApiKeyEncrypted         String?
   inboundWebhookSecretEncrypted String?
   smtpHost                     String?

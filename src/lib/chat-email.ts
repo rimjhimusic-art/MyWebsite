@@ -34,7 +34,7 @@ function escapeHtml(str: string): string {
 }
 
 function makeRfcMessageId(conversationId: string, domain: string): string {
-  const cleanDomain = (domain || "reply.goldexmedianetwork.com").replace(/^@+/, "").trim();
+  const cleanDomain = (domain || "reply.goldexmedianetwork.info").replace(/^@+/, "").trim();
   const rand = crypto.randomBytes(6).toString("hex");
   return `<chat-${conversationId}-${Date.now()}.${rand}@${cleanDomain}>`;
 }

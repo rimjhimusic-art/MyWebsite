@@ -1,6 +1,8 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { encryptSecret } from "../src/lib/chat-crypto";
 import { GOLDEX_12_SERVICES } from "../src/lib/goldex-services";
 
 // Populate DATABASE_URL from .env when executed directly outside Next.js
@@ -282,9 +284,22 @@ async function run() {
   }
   console.log(`Preserved all ${teamCount} TeamMember and ${artistCount} FeaturedArtist records.`);
 
-  // 7. ChatbotSettings
+  // 7. ChatbotSettings (configure goldexmedianetwork.info inbound routing + support inbox forwarding)
   const chat = await prisma.chatbotSettings.findUnique({ where: { id: "default" } });
   if (chat) {
+    const needsSecret =
+      !chat.inboundWebhookSecretEncrypted &&
+      !(process.env.EMAIL_INBOUND_WEBHOOK_SECRET || "").trim();
+    const initialSecret = needsSecret
+      ? encryptSecret(`whsec_${crypto.randomBytes(24).toString("hex")}`)
+      : undefined;
+    const routingDomain =
+      !chat.replyRoutingDomain ||
+      /onetab/i.test(chat.replyRoutingDomain) ||
+      chat.replyRoutingDomain.trim().toLowerCase() === "reply.goldexmedianetwork.com"
+        ? "reply.goldexmedianetwork.info"
+        : chat.replyRoutingDomain;
+
     await prisma.chatbotSettings.update({
       where: { id: "default" },
       data: {
@@ -297,21 +312,25 @@ async function run() {
         systemInstructions:
           rebrandText(chat.systemInstructions) ||
           "You are Goldex Support Assistant, the official customer support assistant for Goldex Media Network.",
-        supportEmail: /onetab/i.test(chat.supportEmail)
-          ? "support@goldexmedianetwork.com"
-          : chat.supportEmail,
-        senderEmail: /onetab/i.test(chat.senderEmail)
-          ? "support@goldexmedianetwork.com"
-          : chat.senderEmail,
-        senderName: /onetab/i.test(chat.senderName)
-          ? "Goldex Media Network Support"
-          : chat.senderName,
-        replyRoutingDomain: /onetab/i.test(chat.replyRoutingDomain)
-          ? "reply.goldexmedianetwork.com"
-          : chat.replyRoutingDomain,
+        supportEmail:
+          !chat.supportEmail || /onetab/i.test(chat.supportEmail)
+            ? "support@goldexmedianetwork.com"
+            : chat.supportEmail,
+        senderEmail:
+          !chat.senderEmail || /onetab/i.test(chat.senderEmail)
+            ? "support@goldexmedianetwork.com"
+            : chat.senderEmail,
+        senderName:
+          !chat.senderName || /onetab/i.test(chat.senderName)
+            ? "Goldex Media Network Support"
+            : chat.senderName,
+        replyRoutingDomain: routingDomain,
+        emailEnabled: true,
+        humanHandoverEnabled: true,
+        ...(initialSecret ? { inboundWebhookSecretEncrypted: initialSecret } : {}),
       },
     });
-    console.log("Updated ChatbotSettings singleton.");
+    console.log("Updated ChatbotSettings singleton for goldexmedianetwork.info inbound routing.");
   }
 
   console.log("Goldex Media Network non-destructive DB migration completed!");

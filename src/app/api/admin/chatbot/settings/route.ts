@@ -1,12 +1,58 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { userHasAnyPermission } from "@/lib/permissions";
 import { recordAuditLog } from "@/lib/audit";
-import { encryptSecret } from "@/lib/chat-crypto";
-import { getOrCreateChatbotSettings, sanitizeChatbotSettingsForAdmin } from "@/lib/chat-kb";
+import { decryptSecret, encryptSecret } from "@/lib/chat-crypto";
+import { getOrCreateChatbotSettings, resolveEffectiveEmailCredentials, sanitizeChatbotSettingsForAdmin } from "@/lib/chat-kb";
 import { retryFailedSupportEmails, sendTestSupportEmail } from "@/lib/chat-email";
+import { processInboundEmailWebhook } from "@/lib/chat-email-inbound";
+
+function resolveWebhookEndpoints(request: Request): { webhookUrl: string; localWebhookUrl: string | null } {
+  const url = new URL(request.url);
+  const forwardedHost = (request.headers.get("x-forwarded-host") || "").split(",")[0].trim();
+  const forwardedProto = (request.headers.get("x-forwarded-proto") || url.protocol.replace(":", "")).split(",")[0].trim();
+  const reqHost = forwardedHost || url.host;
+  const isLocalReq = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(reqHost);
+  const localOrigin = `${url.protocol}//${url.host}`;
+
+  const envUrl = (
+    process.env.SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.APP_URL ||
+    ""
+  ).trim();
+  const isLocalEnv = !envUrl || /localhost|127\.0\.0\.1/i.test(envUrl);
+
+  let publicBase = !isLocalReq ? `${forwardedProto || "https"}://${reqHost}` : "";
+  if (!publicBase && !isLocalEnv) {
+    publicBase = envUrl;
+  }
+  if (!publicBase) {
+    try {
+      const cnamePath = path.join(process.cwd(), "CNAME");
+      if (fs.existsSync(cnamePath)) {
+        const domain = fs.readFileSync(cnamePath, "utf8").trim().split(/\r?\n/)[0]?.trim();
+        if (domain) {
+          publicBase = domain.startsWith("http") ? domain : `https://${domain}`;
+        }
+      }
+    } catch {
+      // Ignore CNAME read errors
+    }
+  }
+  if (!publicBase) {
+    publicBase = "https://www.goldexmedianetwork.info";
+  }
+
+  const webhookUrl = `${publicBase.replace(/\/+$/, "")}/api/webhooks/email/inbound`;
+  const localWebhookUrl = isLocalReq ? `${localOrigin.replace(/\/+$/, "")}/api/webhooks/email/inbound` : null;
+  return { webhookUrl, localWebhookUrl };
+}
 
 const UpdateChatbotSettingsSchema = z.object({
   aiEnabled: z.boolean().optional(),
@@ -53,12 +99,12 @@ export async function GET(request: Request) {
     take: 25,
   });
 
-  const url = new URL(request.url);
-  const baseUrl = process.env.APP_URL || `${url.protocol}//${url.host}`;
+  const { webhookUrl, localWebhookUrl } = resolveWebhookEndpoints(request);
 
   return NextResponse.json({
     settings: sanitizeChatbotSettingsForAdmin(settings),
-    webhookUrl: `${baseUrl.replace(/\/+$/, "")}/api/webhooks/email/inbound`,
+    webhookUrl,
+    localWebhookUrl,
     webhookLogs,
     emailLogs,
   });
@@ -179,6 +225,59 @@ export async function POST(request: Request) {
   if (body.action === "retry_emails") {
     const res = await retryFailedSupportEmails();
     return NextResponse.json({ ok: true, ...res });
+  }
+
+  if (body.action === "generate_webhook_secret") {
+    if (auth.user.role !== "SUPER_ADMIN" && !userHasAnyPermission(auth.user, ["integrations:manage"])) {
+      return NextResponse.json(
+        { error: "Only Super Admin or Integrations Manager may rotate the webhook secret." },
+        { status: 403 }
+      );
+    }
+    const generatedSecret = `whsec_${crypto.randomBytes(24).toString("hex")}`;
+    const updated = await prisma.chatbotSettings.update({
+      where: { id: "default" },
+      data: { inboundWebhookSecretEncrypted: encryptSecret(generatedSecret) },
+    });
+    await recordAuditLog({
+      actorUserId: auth.user.id,
+      action: "CHATBOT_WEBHOOK_SECRET_GENERATED",
+      entityType: "ChatbotSettings",
+      entityId: "default",
+    });
+    return NextResponse.json({
+      ok: true,
+      generatedSecret,
+      settings: sanitizeChatbotSettingsForAdmin(updated),
+      message: "Generated and saved a new Inbound Webhook Verification Secret.",
+    });
+  }
+
+  if (body.action === "test_inbound_webhook") {
+    const current = await getOrCreateChatbotSettings();
+    const creds = resolveEffectiveEmailCredentials(current);
+    const secret = creds.webhookSecret || decryptSecret(current.inboundWebhookSecretEncrypted);
+    if (!secret) {
+      return NextResponse.json(
+        { ok: false, error: "Generate or save an Inbound Webhook Verification Secret first." },
+        { status: 400 }
+      );
+    }
+    const rawBody = JSON.stringify({
+      RecordType: "TestVerification",
+      provider: current.emailProvider,
+      To: `reply+test.verification@${current.replyRoutingDomain}`,
+    });
+    const sig = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+    const result = await processInboundEmailWebhook({
+      rawBody,
+      headers: new Headers({
+        "content-type": "application/json",
+        "x-onetab-signature": `sha256=${sig}`,
+      }),
+      payload: JSON.parse(rawBody),
+    });
+    return NextResponse.json(result, { status: result.httpStatus });
   }
 
   return NextResponse.json({ error: "Unsupported action." }, { status: 400 });

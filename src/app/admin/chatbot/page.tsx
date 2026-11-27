@@ -155,6 +155,9 @@ export default function AdminChatbotPage() {
   // Settings & Webhook state
   const [settings, setSettings] = useState<ChatbotSettingsDto | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
+  const [localWebhookUrl, setLocalWebhookUrl] = useState<string | null>(null);
+  const [generatedSecretReveal, setGeneratedSecretReveal] = useState<string | null>(null);
+  const [testingWebhook, setTestingWebhook] = useState(false);
   const [webhookLogs, setWebhookLogs] = useState<WebhookLogDto[]>([]);
   const [newAiApiKey, setNewAiApiKey] = useState("");
   const [newEmailApiKey, setNewEmailApiKey] = useState("");
@@ -206,6 +209,7 @@ export default function AdminChatbotPage() {
       const d = await res.json();
       setSettings(d.settings);
       setWebhookUrl(d.webhookUrl || "");
+      setLocalWebhookUrl(d.localWebhookUrl || null);
       setWebhookLogs(d.webhookLogs || []);
     }
   }, []);
@@ -311,6 +315,42 @@ export default function AdminChatbotPage() {
     const d = await res.json();
     showToast(d.message || (res.ok ? "Test email sent!" : "Test email failed."), res.ok ? "success" : "error");
     loadSettings();
+  };
+
+  const handleGenerateWebhookSecret = async () => {
+    const res = await fetch("/api/admin/chatbot/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "generate_webhook_secret" }),
+    });
+    const d = await res.json();
+    if (!res.ok) {
+      showToast(d.error || "Failed to generate webhook secret.", "error");
+      return;
+    }
+    setGeneratedSecretReveal(d.generatedSecret || null);
+    if (d.settings) setSettings(d.settings);
+    showToast(d.message || "Webhook verification secret generated!", "success");
+    loadSettings();
+  };
+
+  const handleVerifyInboundWebhook = async () => {
+    setTestingWebhook(true);
+    try {
+      const res = await fetch("/api/admin/chatbot/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_inbound_webhook" }),
+      });
+      const d = await res.json();
+      showToast(
+        d.message || (res.ok ? "Inbound POST webhook verified!" : d.error || "Webhook verification failed."),
+        res.ok ? "success" : "error"
+      );
+      loadSettings();
+    } finally {
+      setTestingWebhook(false);
+    }
   };
 
   const handleSaveKb = async (e: React.FormEvent) => {
@@ -1044,21 +1084,42 @@ export default function AdminChatbotPage() {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5 text-xs flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <span className="text-[#71717a] block">Inbound Email Webhook Endpoint URL</span>
-                <code className="text-[#93c5fd] font-mono">{webhookUrl}</code>
+            <div className="p-3.5 rounded-xl bg-[#111114] border border-white/5 text-xs space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-[#71717a] block">Inbound Email Webhook Endpoint URL (POST)</span>
+                  <code className="text-[#93c5fd] font-mono break-all">{webhookUrl}</code>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(webhookUrl);
+                      showToast("Webhook URL copied!", "success");
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-[#0f0f0f] border border-[#2a2a2a] text-xs inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy className="w-3 h-3" /> Copy URL
+                  </button>
+                  <button
+                    type="button"
+                    disabled={testingWebhook}
+                    onClick={handleVerifyInboundWebhook}
+                    className="px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-60"
+                  >
+                    <CheckCircle2 className="w-3 h-3" /> {testingWebhook ? "Verifying..." : "Verify Inbound POST"}
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard?.writeText(webhookUrl);
-                  showToast("Webhook URL copied!", "success");
-                }}
-                className="px-3 py-1.5 rounded-lg bg-[#0f0f0f] border border-[#2a2a2a] text-xs inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Copy className="w-3 h-3" /> Copy URL
-              </button>
+              {localWebhookUrl && localWebhookUrl !== webhookUrl && (
+                <div className="text-[11px] text-[#71717a]">
+                  Local dev endpoint: <code className="text-[#a1a1aa]">{localWebhookUrl}</code>
+                </div>
+              )}
+              <div className="pt-2 border-t border-white/5 text-[11px] text-[#a1a1aa] grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                <div>Reply-To Domain: <span className="text-white font-mono">{settings.replyRoutingDomain}</span></div>
+                <div>Escalation Support Inbox: <span className="text-white font-mono">{settings.supportEmail}</span></div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -1119,7 +1180,7 @@ export default function AdminChatbotPage() {
                   type="text"
                   value={settings.replyRoutingDomain}
                   onChange={(e) => setSettings({ ...settings, replyRoutingDomain: e.target.value })}
-                  placeholder="reply.goldexmedianetwork.com"
+                  placeholder="reply.goldexmedianetwork.info"
                   className="w-full px-3 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a]"
                 />
               </div>
@@ -1136,10 +1197,19 @@ export default function AdminChatbotPage() {
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block font-semibold text-[#b0b0b8] mb-1">
-                  Inbound Webhook Verification Secret ({settings.inboundWebhookSecretPreview || "Unconfigured"})
-                </label>
+              <div className="md:col-span-2 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label className="block font-semibold text-[#b0b0b8]">
+                    Inbound Webhook Verification Secret ({settings.inboundWebhookSecretPreview || "Unconfigured"})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateWebhookSecret}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white text-[11px] font-semibold cursor-pointer"
+                  >
+                    Generate New Secret
+                  </button>
+                </div>
                 <input
                   type="password"
                   value={newWebhookSecret}
@@ -1147,6 +1217,21 @@ export default function AdminChatbotPage() {
                   placeholder="Secret sent via x-onetab-signature / x-postmark-webhook-token / svix-signature"
                   className="w-full px-3 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a]"
                 />
+                {generatedSecretReveal && (
+                  <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                    <span>New Secret (copy to Postmark/SendGrid/Resend): <code className="font-mono font-bold">{generatedSecretReveal}</code></span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(generatedSecretReveal);
+                        showToast("Webhook secret copied!", "success");
+                      }}
+                      className="px-2 py-1 rounded bg-emerald-500 text-black font-bold cursor-pointer"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

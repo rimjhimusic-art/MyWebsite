@@ -129,6 +129,20 @@ function collectAddressCandidates(payload: Record<string, unknown>): string[] {
   pushStr(payload.DeliveredTo);
   pushStr(payload.envelope);
 
+  // SendGrid Inbound Parse includes JSON string `envelope: {"to":["reply+...@..."],"from":"..."}`
+  if (typeof payload.envelope === "string" && payload.envelope.trim().startsWith("{")) {
+    try {
+      const env = JSON.parse(payload.envelope) as { to?: unknown };
+      if (Array.isArray(env.to)) {
+        for (const t of env.to) pushStr(t);
+      } else {
+        pushStr(env.to);
+      }
+    } catch {
+      // Ignore malformed envelope string
+    }
+  }
+
   if (Array.isArray(payload.ToFull)) {
     for (const item of payload.ToFull) {
       if (item && typeof item === "object" && "Email" in item) {
@@ -182,13 +196,20 @@ export async function processInboundEmailWebhook(params: {
     webhookSecret: creds.webhookSecret,
   });
 
-  const payload = params.payload;
+  const rawPayload = params.payload;
+  // Unwrap Resend `{ type: "email.received", data: { ... } }` envelope cleanly
+  const payload =
+    rawPayload.data && typeof rawPayload.data === "object" && !Array.isArray(rawPayload.data)
+      ? { ...rawPayload, ...(rawPayload.data as Record<string, unknown>) }
+      : rawPayload;
+
   const provider = String(payload.provider || settings.emailProvider || "POSTMARK").toUpperCase();
   const externalMsgId =
     String(
       payload.MessageID ||
         payload.MessageId ||
         payload.message_id ||
+        payload.email_id ||
         extractHeaderValue(payload, "Message-ID") ||
         ""
     ).trim() || null;
@@ -236,8 +257,26 @@ export async function processInboundEmailWebhook(params: {
     };
   }
 
-  // Handle Bounce / Delivery Failure webhook cleanly
+  // Handle Bounce / Delivery Failure / Verification Test webhook cleanly
   const recordType = String(payload.RecordType || payload.event || payload.type || "").toLowerCase();
+  if (recordType === "testverification" || recordType === "webhook.test") {
+    await prisma.chatWebhookLog.create({
+      data: {
+        provider,
+        eventType: "TEST_VERIFICATION",
+        eventHash: sha256Hex(`verify:${Date.now()}:${eventHash}`),
+        signatureValid: true,
+        status: "PROCESSED",
+        summary: `Verified inbound webhook POST delivery (${settings.replyRoutingDomain})`,
+      },
+    });
+    return {
+      ok: true,
+      httpStatus: 200,
+      status: "WEBHOOK_VERIFIED",
+      message: "Inbound email POST webhook verified cleanly.",
+    };
+  }
   if (recordType.includes("bounce") || recordType.includes("failed") || recordType === "email.bounced") {
     const bouncedMsgId = String(payload.MessageID || payload.messageId || "").trim();
     if (bouncedMsgId) {

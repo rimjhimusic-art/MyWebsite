@@ -1,5 +1,6 @@
+import crypto from "node:crypto";
 import { prisma } from "@/lib/db";
-import { decryptSecret, maskSecretPreview } from "@/lib/chat-crypto";
+import { decryptSecret, encryptSecret, maskSecretPreview } from "@/lib/chat-crypto";
 
 export async function getOrCreateChatbotSettings() {
   const existing = await prisma.chatbotSettings.findUnique({
@@ -7,8 +8,16 @@ export async function getOrCreateChatbotSettings() {
   });
   if (existing) return existing;
 
+  const initialSecret =
+    process.env.EMAIL_INBOUND_WEBHOOK_SECRET?.trim() ||
+    `whsec_${crypto.randomBytes(24).toString("hex")}`;
+
   return prisma.chatbotSettings.create({
-    data: { id: "default" },
+    data: {
+      id: "default",
+      replyRoutingDomain: "reply.goldexmedianetwork.info",
+      inboundWebhookSecretEncrypted: encryptSecret(initialSecret),
+    },
   });
 }
 

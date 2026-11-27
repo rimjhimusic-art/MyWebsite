@@ -82,7 +82,7 @@ export function buildConversationReplyToAddress(
   replyToken: string,
   domain: string
 ): string {
-  const cleanDomain = (domain || "reply.goldexmedianetwork.com").replace(/^@+/, "").trim().toLowerCase();
+  const cleanDomain = (domain || "reply.goldexmedianetwork.info").replace(/^@+/, "").trim().toLowerCase();
   const sig = buildConversationReplySignature(conversationId, replyToken);
   return `reply+${replyToken}.${sig}@${cleanDomain}`;
 }
