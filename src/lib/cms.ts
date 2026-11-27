@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser, type AuthenticatedUser } from "@/lib/auth";
+import { ensureCmsBaselineIfEmpty } from "@/lib/cms-bootstrap";
 import { userHasAnyPermission, type Permission } from "@/lib/permissions";
 
 export const CMS_PUBLIC_REVALIDATE_PATHS = [
@@ -131,7 +132,37 @@ export async function requireCmsApiAuth(
   return { ok: true as const, user };
 }
 
+export function buildDynamicCopyrightText(
+  companyName?: string | null,
+  year?: number | null,
+  fallbackText?: string | null
+): string {
+  const cleanCompany = (companyName || "").trim();
+  if (cleanCompany && year) {
+    return `Copyright ${year} ${cleanCompany}. All rights reserved.`;
+  }
+  return (
+    fallbackText ||
+    "Copyright 2026 Goldex Media Network Private Limited. All rights reserved."
+  );
+}
+
+export function buildWhatsappHref(
+  phone?: string | null,
+  explicitUrl?: string | null,
+  usePhone = true
+): string {
+  if (usePhone && phone) {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length >= 7) {
+      return `https://wa.me/${digits}`;
+    }
+  }
+  return explicitUrl || "https://wa.me/918724804659";
+}
+
 export async function getCmsSiteData(options?: { preview?: boolean }) {
+  await ensureCmsBaselineIfEmpty();
   const allowPreview = options?.preview ? await canUserPreviewCms() : false;
 
   const [
@@ -164,24 +195,33 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
 
   const defaultSettings = {
     id: "default",
-    siteName: "OneTab Media Network",
+    siteName: "Goldex Media Network",
     tagline:
       "India's leading digital music distribution partner empowering independent artists and labels globally with enterprise-grade technology.",
-    headerLogoUrl: "/ref/logo.png",
-    headerLogoWidth: 118,
+    headerLogoUrl: "/ref/goldex-logo.svg",
+    headerLogoWidth: 210,
     headerLogoHeight: 40,
-    footerLogoUrl: "/ref/logo.png",
-    footerLogoWidth: 118,
+    footerLogoUrl: "/ref/goldex-logo.svg",
+    footerLogoWidth: 210,
     footerLogoHeight: 40,
-    faviconUrl: "/ref/logo.png",
-    contactEmail: "support@onetabmedia.in",
-    contactPhone: "+91 70470 13399",
-    contactAddress: "West Bengal, India",
-    instagramUrl: "https://www.instagram.com/onetab.media/",
-    facebookUrl: "https://www.facebook.com/onetabmedia/",
-    whatsappUrl: "https://wa.me/917047013399",
-    youtubeUrl: "",
-    copyrightText: "© 2026 OneTab Media Network Pvt. Ltd. All Rights Reserved.",
+    faviconUrl: "/ref/goldex-favicon.svg",
+    contactEmail: "support@goldexmedianetwork.com",
+    contactPhone: "+918724804659",
+    contactAddress: "Assam, Guwahati, India",
+    instagramUrl: "https://www.instagram.com/goldexmedianetwork/",
+    facebookUrl: "https://www.facebook.com/goldexmedianetwork/",
+    whatsappUrl: "https://wa.me/918724804659",
+    youtubeUrl: "https://www.youtube.com/@GoldexMediaNetwork",
+    instagramEnabled: true,
+    facebookEnabled: true,
+    whatsappEnabled: true,
+    youtubeEnabled: true,
+    socialOrderJson: JSON.stringify(["instagram", "facebook", "whatsapp", "youtube"]),
+    whatsappUsePhone: true,
+    copyrightCompanyName: "Goldex Media Network Private Limited",
+    copyrightYear: 2026,
+    copyrightText:
+      "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
     draftStatus: "PUBLISHED",
     draftJson: null as string | null,
     lastPublishedAt: null as Date | null,
@@ -189,19 +229,53 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
     updatedAt: new Date(),
   };
 
-  const settings = settingsRow
+  const rawSettings = settingsRow
     ? applyDraftOverlay(settingsRow, allowPreview) || defaultSettings
     : defaultSettings;
 
-  const navigation = mapDraftList(navRows, allowPreview).filter((n) => n.enabled);
-  const sections = mapDraftList(sectionRows, allowPreview).filter((s) => s.enabled);
-  const artists = mapDraftList(artistRows, allowPreview).filter((a) => a.published);
-  const stores = mapDraftList(storeRows, allowPreview).filter((s) => s.enabled);
-  const services = mapDraftList(serviceRows, allowPreview).filter((s) => s.published);
-  const team = mapDraftList(teamRows, allowPreview).filter((t) => t.published);
-  const brandCreators = mapDraftList(brandCreatorRows, allowPreview).filter((b) => b.published);
-  const plans = mapDraftList(planRows, allowPreview).filter((p) => p.published);
-  const controls = mapDraftList(controlRows, allowPreview).filter((c) => c.published);
+  const settings = {
+    ...rawSettings,
+    whatsappUrl: buildWhatsappHref(
+      rawSettings.contactPhone,
+      rawSettings.whatsappUrl,
+      rawSettings.whatsappUsePhone ?? true
+    ),
+    copyrightText: buildDynamicCopyrightText(
+      rawSettings.copyrightCompanyName,
+      rawSettings.copyrightYear,
+      rawSettings.copyrightText
+    ),
+  };
+
+  // CRITICAL FIX: When allowPreview (or Admin CMS Studio) is active, NEVER strip unpublished/draft
+  // items from artists, team, services, plans, controls, or stores; otherwise existing records vanish!
+  const navigation = allowPreview
+    ? mapDraftList(navRows, true)
+    : mapDraftList(navRows, false).filter((n) => n.enabled);
+  const sections = allowPreview
+    ? mapDraftList(sectionRows, true)
+    : mapDraftList(sectionRows, false).filter((s) => s.enabled);
+  const artists = allowPreview
+    ? mapDraftList(artistRows, true)
+    : mapDraftList(artistRows, false).filter((a) => a.published);
+  const stores = allowPreview
+    ? mapDraftList(storeRows, true)
+    : mapDraftList(storeRows, false).filter((s) => s.enabled);
+  const services = allowPreview
+    ? mapDraftList(serviceRows, true)
+    : mapDraftList(serviceRows, false).filter((s) => s.published);
+  const team = allowPreview
+    ? mapDraftList(teamRows, true)
+    : mapDraftList(teamRows, false).filter((t) => t.published);
+  const brandCreators = allowPreview
+    ? mapDraftList(brandCreatorRows, true)
+    : mapDraftList(brandCreatorRows, false).filter((b) => b.published);
+  const plans = allowPreview
+    ? mapDraftList(planRows, true)
+    : mapDraftList(planRows, false).filter((p) => p.published);
+  const controls = allowPreview
+    ? mapDraftList(controlRows, true)
+    : mapDraftList(controlRows, false).filter((c) => c.published);
   const seoList = mapDraftList(seoRows, allowPreview);
 
   const sectionMap: Record<string, Record<string, typeof sections[number]>> = {};
