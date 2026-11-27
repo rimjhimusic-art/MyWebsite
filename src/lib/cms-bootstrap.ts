@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { GOLDEX_12_SERVICES } from "@/lib/goldex-services";
 
 const globalBoot = globalThis as unknown as {
   __goldexCmsBootstrapPromise?: Promise<void>;
@@ -76,7 +77,7 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
             copyrightCompanyName: "Goldex Media Network Private Limited",
             copyrightYear: 2026,
             copyrightText:
-              "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
+              "© 2026 Goldex Media Network Private Limited All Right Reserved",
             lastPublishedAt: new Date(),
           },
         });
@@ -180,13 +181,18 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
       }
 
       if (servicesCount === 0) {
-        const services = [
-          { title: "Digital Music Distribution", shortDesc: "Global delivery and metadata synchronization across 150+ streaming and social stores.", iconKey: "music", accentTheme: "blue", ctaLabel: "Distribute Audio", ctaHref: "/signup", sortOrder: 1, detailsJson: JSON.stringify(["Spotify, Apple Music, YouTube Music", "Amazon Music, Deezer", "TikTok & Instagram Reels", "Worldwide release & scheduling", "Metadata management"]) },
-          { title: "Video & YouTube Services", shortDesc: "Official Artist Channel merging, Content ID monetization, and VEVO video operations.", iconKey: "youtube", accentTheme: "red", ctaLabel: "Explore YouTube Tools", ctaHref: "/dashboard/youtube", sortOrder: 2, detailsJson: JSON.stringify(["Official Artist Channel management", "Content ID setup", "Copyright claim management", "VEVO channel onboarding"]) },
-          { title: "Rights Management & Content Protection", shortDesc: "ISRC/UPC governance, audio fingerprinting, duplicate conflict defense, and takedowns.", iconKey: "shield", accentTheme: "green", ctaLabel: "Protect Rights", ctaHref: "/control", sortOrder: 3, detailsJson: JSON.stringify(["Audio fingerprinting", "Duplicate protection", "Takedown operations", "ISRC & UPC administration"]) },
-          { title: "Royalty, Splits & Payout Management", shortDesc: "Automated track-level revenue splits, monthly payouts, and downloadable CSV/PDF statements.", iconKey: "dollar", accentTheme: "yellow", ctaLabel: "View Plans", ctaHref: "/plan", sortOrder: 4, detailsJson: JSON.stringify(["Up to 95% revenue share", "Automated collaborator splits", "INR / USD payout support", "Monthly statements"]) },
-        ];
-        await prisma.cmsService.createMany({ data: services });
+        await prisma.cmsService.createMany({
+          data: GOLDEX_12_SERVICES.map((s) => ({
+            title: s.title,
+            shortDesc: s.shortDesc,
+            iconKey: s.iconKey,
+            accentTheme: s.accentTheme,
+            ctaLabel: s.ctaLabel,
+            ctaHref: s.ctaHref,
+            sortOrder: s.sortOrder,
+            detailsJson: JSON.stringify(s.details),
+          })),
+        });
       }
 
       if (creatorsCount === 0) {

@@ -62,9 +62,92 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .artist-marquee-track,
-  .marquee-track {
-    animation: none;
+  .marquee-track,
+  .goldex-bubble,
+  .goldex-logo-particle {
+    animation: none !important;
   }
+  .goldex-bubbles-layer {
+    display: none !important;
+  }
+}
+
+/* --- GLOBAL LIVE BUBBLE ANIMATION --- */
+@keyframes goldexBubbleRise {
+  0% {
+    transform: translate3d(0, 108vh, 0) scale(0.85);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--bubble-opacity, 0.2);
+  }
+  50% {
+    transform: translate3d(var(--bubble-drift, 14px), 48vh, 0) scale(1);
+    opacity: var(--bubble-opacity, 0.2);
+  }
+  90% {
+    opacity: var(--bubble-opacity, 0.18);
+  }
+  100% {
+    transform: translate3d(calc(var(--bubble-drift, 14px) * -0.5), -14vh, 0) scale(1.06);
+    opacity: 0;
+  }
+}
+
+.goldex-bubble {
+  position: absolute;
+  bottom: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation-name: goldexBubbleRise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.goldex-bubble--gold {
+  background: radial-gradient(circle at 32% 30%, rgba(253, 230, 138, 0.72), rgba(245, 158, 11, 0.18) 65%, transparent 100%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.14);
+}
+
+.goldex-bubble--silver {
+  background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.65), rgba(148, 163, 184, 0.16) 65%, transparent 100%);
+  border: 1px solid rgba(203, 213, 225, 0.32);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.08);
+}
+
+.goldex-bubble--blue {
+  background: radial-gradient(circle at 32% 30%, rgba(191, 219, 254, 0.65), rgba(59, 130, 246, 0.18) 65%, transparent 100%);
+  border: 1px solid rgba(96, 165, 250, 0.32);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.12);
+}
+
+@keyframes goldexLogoParticleRise {
+  0% {
+    transform: translate3d(0, 18px, 0) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.75;
+  }
+  80% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate3d(4px, -24px, 0) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.goldex-logo-particle {
+  position: absolute;
+  bottom: 2px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle at 35% 35%, rgba(253, 230, 138, 0.9), rgba(245, 158, 11, 0.45));
+  will-change: transform, opacity;
+  animation: goldexLogoParticleRise 3.2s linear infinite;
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;

@@ -116,7 +116,7 @@ export default function AdminContactSettingsPage() {
       ? `https://wa.me/${form.contactPhone.replace(/\D/g, "")}`
       : form.whatsappUrl;
 
-  const computedCopyright = `Copyright ${form.copyrightYear} ${form.copyrightCompanyName}. All rights reserved.`;
+  const computedCopyright = `© ${form.copyrightYear} ${form.copyrightCompanyName} All Right Reserved`;
 
   const moveSocial = (idx: number, dir: -1 | 1) => {
     const next = [...form.socialOrder];

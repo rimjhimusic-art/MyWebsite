@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
+import { GOLDEX_12_SERVICES } from "../src/lib/goldex-services";
 
 // Populate DATABASE_URL from .env when executed directly outside Next.js
 if (!process.env.DATABASE_URL) {
@@ -88,11 +89,21 @@ async function run() {
         whatsappUsePhone: true,
         copyrightCompanyName: "Goldex Media Network Private Limited",
         copyrightYear: ws.copyrightYear || 2026,
-        copyrightText: `Copyright ${ws.copyrightYear || 2026} Goldex Media Network Private Limited. All rights reserved.`,
+        copyrightText: `© ${ws.copyrightYear || 2026} Goldex Media Network Private Limited All Right Reserved`,
         draftJson: rebrandText(ws.draftJson) ?? null,
       },
     });
     console.log("Updated WebsiteSettings singleton.");
+  } else if (ws && /^Copyright\s+/i.test(ws.copyrightText)) {
+    const year = ws.copyrightYear || 2026;
+    const company = (ws.copyrightCompanyName || "Goldex Media Network Private Limited").trim();
+    await prisma.websiteSettings.update({
+      where: { id: "default" },
+      data: {
+        copyrightText: `© ${year} ${company} All Right Reserved`,
+      },
+    });
+    console.log("Updated WebsiteSettings copyright format with © symbol.");
   }
 
   // 2. PageSection records
@@ -163,16 +174,63 @@ async function run() {
   }
 
   const services = await prisma.cmsService.findMany();
-  for (const srv of services) {
+  const byLowerTitle = new Map(services.map((s) => [s.title.trim().toLowerCase(), s]));
+
+  // Clean up the legacy 4-row bootstrap placeholders if canonical items are missing
+  if (
+    services.length <= 4 &&
+    (byLowerTitle.has("rights management & content protection") ||
+      byLowerTitle.has("royalty, splits & payout management"))
+  ) {
+    await prisma.cmsService.deleteMany({
+      where: {
+        title: {
+          in: [
+            "Rights Management & Content Protection",
+            "Royalty, Splits & Payout Management",
+          ],
+        },
+      },
+    });
+  }
+
+  const activeServices = await prisma.cmsService.findMany();
+  for (const srv of activeServices) {
+    const canon = GOLDEX_12_SERVICES.find(
+      (g) => g.title.toLowerCase() === srv.title.trim().toLowerCase()
+    );
     await prisma.cmsService.update({
       where: { id: srv.id },
       data: {
         title: rebrandText(srv.title),
         shortDesc: rebrandText(srv.shortDesc),
         detailsJson: rebrandText(srv.detailsJson),
+        ctaLabel: srv.ctaLabel || canon?.ctaLabel || null,
+        ctaHref: srv.ctaHref || canon?.ctaHref || null,
         draftJson: srv.draftJson !== null ? rebrandText(srv.draftJson) : null,
       },
     });
+  }
+
+  // Ensure all 12 services exist non-destructively
+  const refreshedServices = await prisma.cmsService.findMany();
+  const existingTitles = new Set(refreshedServices.map((s) => s.title.trim().toLowerCase()));
+  for (const def of GOLDEX_12_SERVICES) {
+    if (!existingTitles.has(def.title.toLowerCase())) {
+      await prisma.cmsService.create({
+        data: {
+          title: def.title,
+          shortDesc: def.shortDesc,
+          iconKey: def.iconKey,
+          accentTheme: def.accentTheme,
+          ctaLabel: def.ctaLabel,
+          ctaHref: def.ctaHref,
+          sortOrder: def.sortOrder,
+          detailsJson: JSON.stringify(def.details),
+          published: true,
+        },
+      });
+    }
   }
 
   const faqs = await prisma.faqItem.findMany();

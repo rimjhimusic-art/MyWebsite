@@ -44,7 +44,7 @@ export function AuthRegistrationForm({
   siteName = "Goldex Media Network",
   heroTitle = "Music Distribution Simplified.",
   heroSubtitle = "Upload your music, keep 100% of your earnings, and get heard across all major platforms globally.",
-  copyrightText = "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
+  copyrightText = "© 2026 Goldex Media Network Private Limited All Right Reserved",
   platformLogos,
 }: {
   accountType: "ARTIST" | "LABEL";

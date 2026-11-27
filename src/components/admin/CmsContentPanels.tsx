@@ -437,7 +437,7 @@ export function SettingsBrandingPanel({
               setForm({
                 ...form,
                 copyrightCompanyName: company,
-                copyrightText: `Copyright ${year} ${company.trim() || "Goldex Media Network Private Limited"}. All rights reserved.`,
+                copyrightText: `© ${year} ${company.trim() || "Goldex Media Network Private Limited"} All Right Reserved`,
               });
             }}
             className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"
@@ -456,7 +456,7 @@ export function SettingsBrandingPanel({
               setForm({
                 ...form,
                 copyrightYear: year,
-                copyrightText: `Copyright ${year} ${company.trim()}. All rights reserved.`,
+                copyrightText: `© ${year} ${company.trim()} All Right Reserved`,
               });
             }}
             className="w-full px-3.5 py-2.5 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-sm"

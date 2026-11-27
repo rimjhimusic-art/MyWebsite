@@ -149,11 +149,11 @@ export function buildDynamicCopyrightText(
 ): string {
   const cleanCompany = (companyName || "").trim();
   if (cleanCompany && year) {
-    return `Copyright ${year} ${cleanCompany}. All rights reserved.`;
+    return `© ${year} ${cleanCompany} All Right Reserved`;
   }
   return (
     fallbackText ||
-    "Copyright 2026 Goldex Media Network Private Limited. All rights reserved."
+    "© 2026 Goldex Media Network Private Limited All Right Reserved"
   );
 }
 
@@ -231,7 +231,7 @@ export async function getCmsSiteData(options?: { preview?: boolean }) {
     copyrightCompanyName: "Goldex Media Network Private Limited",
     copyrightYear: 2026,
     copyrightText:
-      "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
+      "© 2026 Goldex Media Network Private Limited All Right Reserved",
     draftStatus: "PUBLISHED",
     draftJson: null as string | null,
     lastPublishedAt: null as Date | null,

@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { GOLDEX_12_SERVICES } from "../src/lib/goldex-services";
 
 const prisma = new PrismaClient();
 
@@ -54,7 +55,7 @@ export async function seedCmsData() {
       whatsappUsePhone: true,
       copyrightCompanyName: "Goldex Media Network Private Limited",
       copyrightYear: 2026,
-      copyrightText: "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.",
+      copyrightText: "© 2026 Goldex Media Network Private Limited All Right Reserved",
       lastPublishedAt: new Date(),
     },
   });
@@ -156,176 +157,19 @@ export async function seedCmsData() {
   // 5. CmsService (Exact 12 Services & alternating blue -> red -> green -> yellow icon themes)
   const existingServicesCount = await prisma.cmsService.count();
   if (existingServicesCount === 0) {
-    const services = [
-      {
-        title: "Digital Music Distribution",
-        shortDesc: "Global delivery and metadata synchronization across 150+ streaming and social stores.",
-        iconKey: "music",
-        accentTheme: "blue",
-        ctaLabel: "Distribute Audio",
-        ctaHref: "/signup",
-        sortOrder: 1,
-        detailsJson: JSON.stringify([
-          "Spotify, Apple Music, YouTube Music",
-          "Amazon Music, Deezer",
-          "TikTok & Instagram Reels",
-          "Facebook Music Library",
-          "Worldwide release & scheduling",
-          "Metadata management",
-        ]),
-      },
-      {
-        title: "Video & YouTube Services",
-        shortDesc: "Official Artist Channel merging, Content ID monetization, and VEVO video operations.",
-        iconKey: "youtube",
-        accentTheme: "red",
-        ctaLabel: "Explore YouTube Tools",
-        ctaHref: "/dashboard/youtube",
-        sortOrder: 2,
-        detailsJson: JSON.stringify([
-          "Official Artist Channel management",
-          "Content ID setup",
-          "Copyright claim management",
-          "Monetization enable",
-          "Multi-channel revenue tracking",
-        ]),
-      },
-      {
-        title: "Rights Management",
-        shortDesc: "Automated fingerprinting, unauthorized upload claims, and territorial catalog protection.",
-        iconKey: "shield-halved",
-        accentTheme: "green",
-        ctaLabel: "Protect Your Rights",
-        ctaHref: "/control",
-        sortOrder: 3,
-        detailsJson: JSON.stringify([
-          "Copyright protection",
-          "Unauthorized upload detection",
-          "Automated revenue claims",
-          "Territory-based rights control",
-        ]),
-      },
-      {
-        title: "Royalty Collection & Finance",
-        shortDesc: "Transparent streaming, YouTube, mechanical royalties, and instant contributor splits.",
-        iconKey: "file-invoice-dollar",
-        accentTheme: "yellow",
-        ctaLabel: "View Financial Tools",
-        ctaHref: "/dashboard/royalties",
-        sortOrder: 4,
-        detailsJson: JSON.stringify([
-          "Streaming income tracking",
-          "YouTube ad revenue",
-          "Mechanical & Performance royalties",
-          "Split payments for artists/producers",
-          "Real-time analytics dashboard",
-        ]),
-      },
-      {
-        title: "Artist & Label Services",
-        shortDesc: "Dedicated playlist pitching, audience strategy, and artist career acceleration.",
-        iconKey: "star",
-        accentTheme: "blue",
-        sortOrder: 5,
-        detailsJson: JSON.stringify([
-          "Artist growth strategy",
-          "Playlist pitching",
-          "Digital marketing support",
-          "Brand positioning",
-          "Audience development",
-        ]),
-      },
-      {
-        title: "Publishing Administration",
-        shortDesc: "Global songwriting registration, PRO collection, and film/TV sync licensing.",
-        iconKey: "pen-nib",
-        accentTheme: "red",
-        sortOrder: 6,
-        detailsJson: JSON.stringify([
-          "Song registration",
-          "PRO collection (IPRS / ASCAP / BMI)",
-          "Global publishing royalty collection",
-          "Sync licensing (TV / Film / Ads)",
-        ]),
-      },
-      {
-        title: "Marketing & Promotion Tools",
-        shortDesc: "Smart links, pre-save campaigns, and real-time listener conversion analytics.",
-        iconKey: "bullhorn",
-        accentTheme: "green",
-        sortOrder: 7,
-        detailsJson: JSON.stringify([
-          "Smart links (pre-save / pre-add)",
-          "Campaign tracking",
-          "Fan data analytics",
-        ]),
-      },
-      {
-        title: "Analytics & Dashboard",
-        shortDesc: "Track platform streams, country demographics, and net revenue performance.",
-        iconKey: "chart-line",
-        accentTheme: "yellow",
-        sortOrder: 8,
-        detailsJson: JSON.stringify([
-          "Platform-wise analytics",
-          "Country-based audience data",
-          "Real-time stream tracking",
-          "Revenue insights",
-        ]),
-      },
-      {
-        title: "Physical Distribution",
-        shortDesc: "Retail vinyl and CD manufacturing & supply chain powered by Vydia.",
-        iconKey: "compact-disc",
-        accentTheme: "blue",
-        sortOrder: 9,
-        detailsJson: JSON.stringify([
-          "Vinyl release",
-          "CD distribution",
-          "Retail delivery",
-          "Powered by Vydia",
-        ]),
-      },
-      {
-        title: "Merch & Ecommerce",
-        shortDesc: "Launch artist merch drops and direct-to-fan digital commerce storefronts.",
-        iconKey: "shirt",
-        accentTheme: "red",
-        sortOrder: 10,
-        detailsJson: JSON.stringify([
-          "Artist merch store",
-          "Direct-to-fan sales",
-        ]),
-      },
-      {
-        title: "Label Management",
-        shortDesc: "Multi-artist catalogs, sub-label hierarchies, RBAC teams, and royalty splits.",
-        iconKey: "sitemap",
-        accentTheme: "green",
-        sortOrder: 11,
-        detailsJson: JSON.stringify([
-          "Multiple artist management",
-          "Sub-label setup",
-          "Team access roles",
-          "Revenue sharing automation",
-          "Catalog management",
-        ]),
-      },
-      {
-        title: "Content Protection",
-        shortDesc: "SHA-256 duplicate prevention, ISRC enforcement, and revenue recovery desk.",
-        iconKey: "lock",
-        accentTheme: "yellow",
-        sortOrder: 12,
-        detailsJson: JSON.stringify([
-          "Duplicate detection",
-          "Unauthorized upload claims",
-          "Revenue recovery",
-        ]),
-      },
-    ];
-    for (const s of services) {
-      await prisma.cmsService.create({ data: s });
+    for (const s of GOLDEX_12_SERVICES) {
+      await prisma.cmsService.create({
+        data: {
+          title: s.title,
+          shortDesc: s.shortDesc,
+          iconKey: s.iconKey,
+          accentTheme: s.accentTheme,
+          ctaLabel: s.ctaLabel,
+          ctaHref: s.ctaHref,
+          sortOrder: s.sortOrder,
+          detailsJson: JSON.stringify(s.details),
+        },
+      });
     }
   }
 

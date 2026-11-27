@@ -4,6 +4,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ChatWidget } from "@/components/ChatWidget";
 import { CookieBanner } from "@/components/CookieBanner";
+import { GlobalBubbleBackground } from "@/components/GlobalBubbleBackground";
 import { getCmsSiteData } from "@/lib/cms";
 
 const outfit = Outfit({
@@ -73,7 +74,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={outfit.variable}>
-      <body className="antialiased bg-[#0f0f0f] text-white min-h-screen">
+      <body className="antialiased bg-[#0f0f0f] text-white min-h-screen relative">
+        <GlobalBubbleBackground />
         <ToastProvider>
           {children}
           <CookieBanner />

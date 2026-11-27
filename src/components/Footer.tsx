@@ -141,9 +141,9 @@ export function Footer({
 
   const copyrightText =
     settings?.copyrightCompanyName && settings?.copyrightYear
-      ? `Copyright ${settings.copyrightYear} ${settings.copyrightCompanyName}. All rights reserved.`
+      ? `© ${settings.copyrightYear} ${settings.copyrightCompanyName} All Right Reserved`
       : settings?.copyrightText ||
-        "Copyright 2026 Goldex Media Network Private Limited. All rights reserved.";
+        "© 2026 Goldex Media Network Private Limited All Right Reserved";
 
   const links =
     footerNav && footerNav.length > 0 ? footerNav : DEFAULT_FOOTER_LINKS;

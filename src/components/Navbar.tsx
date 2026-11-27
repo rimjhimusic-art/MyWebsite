@@ -107,7 +107,20 @@ export function Navbar({
         }`}
       >
         <div className="w-full flex items-center justify-between">
-          <Link href="/" className="shrink-0 mr-auto flex items-center">
+          <Link
+            href="/"
+            className="shrink-0 mr-auto flex items-center relative overflow-visible py-1"
+          >
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 overflow-hidden"
+            >
+              <span className="goldex-logo-particle w-1.5 h-1.5 left-[8%]" style={{ animationDelay: "0s", animationDuration: "3s" }} />
+              <span className="goldex-logo-particle w-2 h-2 left-[24%]" style={{ animationDelay: "-1.1s", animationDuration: "3.6s" }} />
+              <span className="goldex-logo-particle w-1 h-1 left-[42%]" style={{ animationDelay: "-2.1s", animationDuration: "2.8s" }} />
+              <span className="goldex-logo-particle w-1.5 h-1.5 left-[64%]" style={{ animationDelay: "-0.7s", animationDuration: "3.4s" }} />
+              <span className="goldex-logo-particle w-2 h-2 left-[84%]" style={{ animationDelay: "-1.8s", animationDuration: "3.9s" }} />
+            </span>
             <img
               src={logoUrl}
               alt={siteName}
@@ -115,7 +128,7 @@ export function Navbar({
                 height: `${Math.min(Math.max(logoHeight, 24), 68)}px`,
                 maxWidth: `${Math.min(Math.max(logoWidth, 60), 280)}px`,
               }}
-              className={`w-auto object-contain transition-all ${
+              className={`relative z-[1] w-auto object-contain transition-all ${
                 isLightScrolled ? "brightness-0 opacity-85" : ""
               }`}
             />

@@ -993,7 +993,7 @@ model WebsiteSettings {
   whatsappUsePhone     Boolean   @default(true)
   copyrightCompanyName String    @default("Goldex Media Network Private Limited")
   copyrightYear        Int       @default(2026)
-  copyrightText        String    @default("Copyright 2026 Goldex Media Network Private Limited. All rights reserved.")
+  copyrightText        String    @default("© 2026 Goldex Media Network Private Limited All Right Reserved")
   draftStatus          String    @default("PUBLISHED")
   draftJson            String?
   lastPublishedAt      DateTime?
