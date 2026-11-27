@@ -2,15 +2,18 @@ import React from "react";
 import Link from "next/link";
 import { BookOpen, LifeBuoy, Mail, FileCheck2, ArrowRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { getCmsSiteData } from "@/lib/cms";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
+export const dynamic = "force-dynamic";
+
 export default async function HelpSupportPage() {
-  const user = await getCurrentUser();
+  const [user, cms] = await Promise.all([getCurrentUser(), getCmsSiteData()]);
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
-      <Navbar user={user} />
+      <Navbar user={user} settings={cms.settings} navItems={cms.headerNav} />
 
       <section className="pt-32 pb-20 px-4 sm:px-6 max-w-5xl mx-auto">
         <div className="text-center mb-12">
@@ -67,8 +70,21 @@ export default async function HelpSupportPage() {
             <div>
               <h3 className="text-lg font-bold">Direct Support Desk</h3>
               <p className="text-sm text-[#b0b0b8]">
-                Email support@onetabmedia.in or use our contact form for
-                account recovery, DMCA notices, or onboarding questions.
+                Email{" "}
+                <a
+                  href={`mailto:${cms.settings.contactEmail}`}
+                  className="text-[#3b82f6] underline"
+                >
+                  {cms.settings.contactEmail}
+                </a>{" "}
+                or call{" "}
+                <a
+                  href={`tel:${cms.settings.contactPhone.replace(/[^+\d]/g, "")}`}
+                  className="text-[#3b82f6] underline"
+                >
+                  {cms.settings.contactPhone}
+                </a>{" "}
+                for account recovery, DMCA notices, or onboarding questions.
               </p>
             </div>
           </div>
@@ -81,7 +97,7 @@ export default async function HelpSupportPage() {
         </div>
       </section>
 
-      <Footer />
+      <Footer settings={cms.settings} footerNav={cms.footerNav} />
     </div>
   );
 }

@@ -1,25 +1,28 @@
 import React from "react";
 import { getCurrentUser } from "@/lib/auth";
+import { getCmsSiteData } from "@/lib/cms";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
+export const dynamic = "force-dynamic";
+
 export default async function TermsPage() {
-  const user = await getCurrentUser();
+  const [user, cms] = await Promise.all([getCurrentUser(), getCmsSiteData()]);
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
-      <Navbar user={user} />
+      <Navbar user={user} settings={cms.settings} navItems={cms.headerNav} />
       <main className="pt-32 pb-20 px-4 sm:px-6 max-w-4xl mx-auto space-y-6 text-[#b0b0b8] leading-relaxed">
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white">
           Terms and Conditions
         </h1>
         <p className="text-xs text-[#71717a]">
-          OneTab Media Network Private Limited &bull; Effective 2026
+          {cms.settings.copyrightCompanyName} &bull; Effective {cms.settings.copyrightYear}
         </p>
 
         <section className="space-y-2">
           <h2 className="text-xl font-bold text-white">
-            1. OneTab Media Network Terms
+            1. {cms.settings.siteName} Terms
           </h2>
           <p>
             By accessing or using our music distribution and label management
@@ -43,7 +46,7 @@ export default async function TermsPage() {
           </h2>
           <p>
             You retain 100% ownership of your masters and compositions. You
-            grant OneTab Media Network a non-exclusive license strictly required
+            grant {cms.settings.siteName} a non-exclusive license strictly required
             to deliver, monetize, and administer your releases across selected
             Digital Service Providers (DSPs) per your instructions.
           </p>
@@ -64,11 +67,15 @@ export default async function TermsPage() {
           </h2>
           <p>
             Rights holders may submit copyright or takedown claims via our
-            Rights Management desk or by contacting support@onetabmedia.in.
+            Rights Management desk or by contacting{" "}
+            <a href={`mailto:${cms.settings.contactEmail}`} className="text-[#3b82f6] underline">
+              {cms.settings.contactEmail}
+            </a>
+            .
           </p>
         </section>
       </main>
-      <Footer />
+      <Footer settings={cms.settings} footerNav={cms.footerNav} />
     </div>
   );
 }

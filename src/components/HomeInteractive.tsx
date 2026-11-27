@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
-import { ChevronLeft, ChevronRight, Globe, Mail, Send, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Globe, Mail, MapPin, Phone, Send, X } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
 import {
   FacebookIcon,
@@ -383,11 +383,15 @@ export function AnimatedStatBubbles() {
 export function ContactFormSection({
   title = "Get In Touch",
   subtitle = "Send a message to inquire about our products and services! We are committed to bringing customer satisfaction by providing quality services.",
-  contactEmail = "support@onetabmedia.in",
+  contactEmail = "support@goldexmedianetwork.com",
+  contactPhone = "+918724804659",
+  contactAddress = "Assam, Guwahati, India",
 }: {
   title?: string;
   subtitle?: string;
   contactEmail?: string;
+  contactPhone?: string;
+  contactAddress?: string;
 }) {
   const { showToast } = useToast();
   const [form, setForm] = useState({
@@ -442,9 +446,30 @@ export function ContactFormSection({
           <p className="text-[1.1rem] leading-[1.6] text-[#cbd5e1] mb-[30px]">
             {subtitle}
           </p>
-          <div className="bg-white/10 p-5 rounded-[8px] text-center">
-            <Mail className="w-10 h-10 text-white mx-auto" />
-            <p className="mt-2.5 text-[0.9rem] text-white">{contactEmail}</p>
+          <div className="bg-white/10 p-5 rounded-[12px] space-y-3 text-left">
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(contactAddress || "Guwahati, Assam, India")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 text-[0.92rem] text-white hover:text-[#60a5fa] transition-colors"
+            >
+              <MapPin className="w-5 h-5 text-[#ef4444] shrink-0" />
+              <span>{contactAddress}</span>
+            </a>
+            <a
+              href={`tel:${contactPhone.replace(/[^+\d]/g, "")}`}
+              className="flex items-center gap-3 text-[0.92rem] text-white hover:text-[#60a5fa] transition-colors"
+            >
+              <Phone className="w-5 h-5 text-[#25D366] shrink-0" />
+              <span>{contactPhone}</span>
+            </a>
+            <a
+              href={`mailto:${contactEmail}`}
+              className="flex items-center gap-3 text-[0.92rem] text-white hover:text-[#60a5fa] transition-colors break-all"
+            >
+              <Mail className="w-5 h-5 text-[#3b82f6] shrink-0" />
+              <span>{contactEmail}</span>
+            </a>
           </div>
         </div>
 

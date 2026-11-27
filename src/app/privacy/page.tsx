@@ -1,20 +1,23 @@
 import React from "react";
 import { getCurrentUser } from "@/lib/auth";
+import { getCmsSiteData } from "@/lib/cms";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
+export const dynamic = "force-dynamic";
+
 export default async function PrivacyPage() {
-  const user = await getCurrentUser();
+  const [user, cms] = await Promise.all([getCurrentUser(), getCmsSiteData()]);
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
-      <Navbar user={user} />
+      <Navbar user={user} settings={cms.settings} navItems={cms.headerNav} />
       <main className="pt-32 pb-20 px-4 sm:px-6 max-w-4xl mx-auto space-y-6 text-[#b0b0b8] leading-relaxed">
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white">
           Privacy Policy
         </h1>
         <p className="text-xs text-[#71717a]">
-          Last Updated: 2026 &bull; OneTab Media Network Pvt. Ltd.
+          Last Updated: {cms.settings.copyrightYear} &bull; {cms.settings.copyrightCompanyName}
         </p>
 
         <section className="space-y-2">
@@ -62,16 +65,23 @@ export default async function PrivacyPage() {
           <p>
             Questions regarding privacy or data deletion may be sent to{" "}
             <a
-              href="mailto:support@onetabmedia.in"
+              href={`mailto:${cms.settings.contactEmail}`}
               className="text-[#3b82f6] underline"
             >
-              support@onetabmedia.in
+              {cms.settings.contactEmail}
+            </a>{" "}
+            or by calling{" "}
+            <a
+              href={`tel:${cms.settings.contactPhone.replace(/[^+\d]/g, "")}`}
+              className="text-[#3b82f6] underline"
+            >
+              {cms.settings.contactPhone}
             </a>
-            . Office: Nadia, West Bengal, India.
+            . Office: {cms.settings.contactAddress}.
           </p>
         </section>
       </main>
-      <Footer />
+      <Footer settings={cms.settings} footerNav={cms.footerNav} />
     </div>
   );
 }
