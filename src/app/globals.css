@@ -77,6 +77,9 @@ body {
   .goldex-red-attention-btn {
     animation: none !important;
   }
+  .goldex-neon-nav-rotator {
+    animation: none !important;
+  }
   .spotify-update-card {
     transition: none !important;
   }
@@ -100,9 +103,87 @@ body {
   animation: goldexRedAttentionPulse 2.3s ease-in-out infinite;
 }
 
+.font-futuristic {
+  font-family: var(--font-orbitron), var(--font-outfit), system-ui, sans-serif;
+}
+
 .goldex-hero-dissolve-mask {
-  mask-image: radial-gradient(ellipse 84% 78% at 50% 50%, black 46%, rgba(0, 0, 0, 0.72) 70%, transparent 98%);
-  -webkit-mask-image: radial-gradient(ellipse 84% 78% at 50% 50%, black 46%, rgba(0, 0, 0, 0.72) 70%, transparent 98%);
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.82) 13%, black 25%, black 75%, rgba(0, 0, 0, 0.82) 87%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.86) 13%, black 25%, black 72%, rgba(0, 0, 0, 0.72) 86%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.82) 13%, black 25%, black 75%, rgba(0, 0, 0, 0.82) 87%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.86) 13%, black 25%, black 72%, rgba(0, 0, 0, 0.72) 86%, transparent 100%);
+  mask-composite: intersect;
+}
+
+@keyframes goldexNeonPerimeterSpin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.goldex-neon-nav-wrap {
+  position: relative;
+  border-radius: 18px;
+  padding: 1.5px;
+  isolation: isolate;
+}
+
+.goldex-neon-nav-halo {
+  position: absolute;
+  inset: -3px;
+  border-radius: 21px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(10px);
+  opacity: 0.65;
+  padding: 3px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.goldex-neon-nav-border {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  padding: 1.5px;
+  background: rgba(255, 255, 255, 0.11);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.goldex-neon-nav-rotator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(1600px, 160vw);
+  height: max(1600px, 160vw);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 200deg,
+    rgba(34, 211, 238, 0.18) 225deg,
+    #22d3ee 265deg,
+    #3b82f6 302deg,
+    #ef4444 336deg,
+    rgba(248, 113, 113, 0.95) 350deg,
+    transparent 360deg
+  );
+  animation: goldexNeonPerimeterSpin 5.5s linear infinite;
+  will-change: transform;
 }
 
 @keyframes goldexRedUpdatesGlow {

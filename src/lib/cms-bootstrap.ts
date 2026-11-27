@@ -316,12 +316,12 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
           {
             pageSlug: "updates",
             sectionKey: "hero",
-            title: "NEW UPDATES",
-            subtitle: "Latest Releases, Curated Spotify Picks & Official Music Videos",
+            title: "UPCOMING",
+            subtitle: "Next Wave Independent Premiere",
             badgeText: "",
             bodyHtml:
               "Explore fresh drops, streaming releases, trending highlights, and official visuals across the network.",
-            bgColor: "rgba(255,255,255,0.04)",
+            bgColor: "#050505",
             textColor: "#ef4444",
             extraJson: JSON.stringify({
               glowColor: "#ef4444",
@@ -330,6 +330,7 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
               spacing: "normal",
               showFilterPills: true,
               additionalText: "",
+              supportingLabels: ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"],
             }),
             enabled: true,
             sortOrder: 1,

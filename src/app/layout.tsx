@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Orbitron, Outfit } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ChatWidget } from "@/components/ChatWidget";
@@ -11,6 +11,12 @@ const outfit = Outfit({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-outfit",
+});
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+  variable: "--font-orbitron",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -73,7 +79,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={outfit.variable}>
+    <html lang="en" className={`${outfit.variable} ${orbitron.variable}`}>
       <body className="antialiased bg-[#0f0f0f] text-white min-h-screen relative">
         <GlobalBubbleBackground />
         <ToastProvider>

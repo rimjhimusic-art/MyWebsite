@@ -103,13 +103,12 @@ export default function AdminUpdatesManagementPage() {
 
   // Hero CMS state
   const [heroForm, setHeroForm] = useState({
-    title: "NEW UPDATES",
+    title: "UPCOMING",
     subtitle: "",
     description: "",
     statusBadge: "Coming Soon",
     releaseDate: "",
-    ctaLabel: "Explore Upcoming",
-    ctaHref: "#upcoming-releases",
+    supportingLabelsText: "UPCOMING, LATEST RELEASE, SPOTIFY, TRENDING, MUSIC",
     additionalText: "",
     mediaUrl: "",
     bgColor: "#050505",
@@ -234,17 +233,19 @@ export default function AdminUpdatesManagementPage() {
     const h = sections["hero"];
     if (h) {
       const ext = parseExtra(h.extraJson);
+      const rawLabels = Array.isArray(ext.supportingLabels)
+        ? ext.supportingLabels.map((s) => String(s).trim()).filter(Boolean)
+        : ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"];
       setHeroForm({
-        title: h.title || "NEW UPDATES",
+        title: h.title && h.title !== "NEW UPDATES" ? h.title : "UPCOMING",
         subtitle: typeof ext.upcomingTitle === "string" ? ext.upcomingTitle : h.subtitle || "",
         description: h.bodyHtml || "",
         statusBadge: typeof ext.statusBadge === "string" ? ext.statusBadge : "Coming Soon",
         releaseDate: typeof ext.releaseDate === "string" ? ext.releaseDate : "",
-        ctaLabel: typeof ext.ctaLabel === "string" ? ext.ctaLabel : "Explore Upcoming",
-        ctaHref: typeof ext.ctaHref === "string" ? ext.ctaHref : "#upcoming-releases",
+        supportingLabelsText: rawLabels.join(", "),
         additionalText: typeof ext.additionalText === "string" ? ext.additionalText : "",
         mediaUrl: h.mediaUrl || "",
-        bgColor: h.bgColor || "#050505",
+        bgColor: h.bgColor && h.bgColor !== "rgba(255,255,255,0.04)" ? h.bgColor : "#050505",
         textColor: h.textColor || "#ef4444",
         glowColor: typeof ext.glowColor === "string" ? ext.glowColor : "#ef4444",
         subtitleColor: typeof ext.subtitleColor === "string" ? ext.subtitleColor : "#ffffff",
@@ -494,7 +495,7 @@ export default function AdminUpdatesManagementPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
-                  Hero Heading (Default: NEW UPDATES)
+                  Hero Main Heading (Default: UPCOMING)
                 </label>
                 <input
                   type="text"
@@ -544,20 +545,18 @@ export default function AdminUpdatesManagementPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-[#9ca3af] mb-1">
+                Supporting Micro-Labels (comma-separated)
+              </label>
               <input
                 type="text"
-                placeholder="CTA Button Label (e.g. Explore Upcoming)"
-                value={heroForm.ctaLabel}
-                onChange={(e) => setHeroForm({ ...heroForm, ctaLabel: e.target.value })}
-                className="px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
-              />
-              <input
-                type="text"
-                placeholder="CTA Destination URL (e.g. #upcoming-releases)"
-                value={heroForm.ctaHref}
-                onChange={(e) => setHeroForm({ ...heroForm, ctaHref: e.target.value })}
-                className="px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
+                placeholder="UPCOMING, LATEST RELEASE, SPOTIFY, TRENDING, MUSIC"
+                value={heroForm.supportingLabelsText}
+                onChange={(e) =>
+                  setHeroForm({ ...heroForm, supportingLabelsText: e.target.value })
+                }
+                className="w-full px-3.5 py-2 rounded-xl bg-[#0f0f0f] border border-[#2a2a2a] text-xs"
               />
             </div>
 
@@ -712,8 +711,10 @@ export default function AdminUpdatesManagementPage() {
                     upcomingTitle: heroForm.subtitle,
                     statusBadge: heroForm.statusBadge,
                     releaseDate: heroForm.releaseDate,
-                    ctaLabel: heroForm.ctaLabel,
-                    ctaHref: heroForm.ctaHref,
+                    supportingLabels: heroForm.supportingLabelsText
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                     glowColor: heroForm.glowColor,
                     subtitleColor: heroForm.subtitleColor,
                     animationEnabled: heroForm.animationEnabled,
@@ -729,12 +730,12 @@ export default function AdminUpdatesManagementPage() {
             </button>
           </div>
 
-          {/* Live 16:9 Dissolve Hero Preview */}
-          <div className="lg:col-span-5 rounded-2xl bg-[#050505] border border-white/10 p-5 flex flex-col items-center justify-between text-center relative overflow-hidden aspect-video min-h-[260px]">
+          {/* Live 16:9 Clear Dissolve Hero Preview */}
+          <div className="lg:col-span-5 rounded-2xl bg-[#050505] border border-white/10 p-5 flex flex-col items-center justify-end text-center relative overflow-hidden aspect-video min-h-[260px]">
             {(heroForm.mediaUrl ||
               data.upcomingReleases?.find((u) => u.useAsHeroBg)?.heroBgUrl ||
               data.upcomingReleases?.[0]?.thumbnailUrl) && (
-              <div className="goldex-hero-dissolve-mask absolute inset-0 w-full h-full pointer-events-none">
+              <div className="goldex-hero-dissolve-mask absolute inset-0 w-full h-full pointer-events-none flex items-center justify-center">
                 <img
                   src={
                     heroForm.mediaUrl ||
@@ -742,29 +743,26 @@ export default function AdminUpdatesManagementPage() {
                     data.upcomingReleases?.[0]?.thumbnailUrl
                   }
                   alt="Hero preview"
-                  className="w-full h-full object-contain blur-[2px] opacity-85"
+                  className="h-full w-auto max-w-full object-contain"
                 />
               </div>
             )}
-            <div className="relative z-10 text-xs font-black uppercase tracking-wider text-red-400">
-              <span style={{ color: heroForm.textColor || "#ef4444" }}>
-                {heroForm.title || "NEW UPDATES"}
-              </span>
-            </div>
-            <div className="relative z-10 rounded-xl bg-black/45 backdrop-blur-md border border-white/15 px-4 py-2.5 max-w-sm">
-              {heroForm.statusBadge && (
-                <span className="inline-block px-2 py-0.5 rounded-full bg-red-500/25 text-red-200 text-[10px] font-bold uppercase mb-1">
-                  {heroForm.statusBadge}
+            <div className="relative z-10 flex flex-col items-center gap-1">
+              <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-zinc-300/80">
+                {heroForm.supportingLabelsText || "UPCOMING / LATEST RELEASE / SPOTIFY"}
+              </div>
+              <div className="font-futuristic text-xl font-black uppercase tracking-[0.18em]">
+                <span style={{ color: heroForm.textColor || "#ef4444" }}>
+                  {heroForm.title || "UPCOMING"}
                 </span>
-              )}
-              <p className="text-xs text-white font-bold">
-                {heroForm.subtitle ||
-                  data.upcomingReleases?.find((u) => u.useAsHeroBg)?.title ||
-                  "Upcoming Premiere"}
-              </p>
-              <p className="text-[11px] text-zinc-300 line-clamp-2 mt-0.5">
-                {heroForm.description}
-              </p>
+              </div>
+              <div className="rounded-full bg-black/45 backdrop-blur-md border border-white/15 px-3 py-1 max-w-sm">
+                <p className="text-[11px] text-white font-semibold truncate">
+                  {heroForm.subtitle ||
+                    data.upcomingReleases?.find((u) => u.useAsHeroBg)?.title ||
+                    "Upcoming Premiere"}
+                </p>
+              </div>
             </div>
           </div>
         </div>

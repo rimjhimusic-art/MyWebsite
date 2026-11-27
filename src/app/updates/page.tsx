@@ -78,7 +78,10 @@ export default async function UpdatesPage({
       previewActive={cms.previewActive}
       heroConfig={{
         enabled: heroSec ? heroSec.enabled !== false : true,
-        title: heroSec?.title || "NEW UPDATES",
+        title:
+          heroSec?.title && heroSec.title !== "NEW UPDATES"
+            ? heroSec.title
+            : "UPCOMING",
         subtitle:
           (typeof heroExtra.upcomingTitle === "string" && heroExtra.upcomingTitle.trim()) ||
           heroUpcoming?.title ||
@@ -97,18 +100,17 @@ export default async function UpdatesPage({
           heroUpcoming?.releaseDate ||
           "",
         artistLine: heroUpcoming?.artistName || "",
-        ctaLabel:
-          (typeof heroExtra.ctaLabel === "string" && heroExtra.ctaLabel.trim()) ||
-          heroUpcoming?.ctaLabel ||
-          "Explore Upcoming",
-        ctaHref:
-          (typeof heroExtra.ctaHref === "string" && heroExtra.ctaHref.trim()) ||
-          heroUpcoming?.ctaHref ||
-          "#upcoming-releases",
         additionalText:
           typeof heroExtra.additionalText === "string" ? heroExtra.additionalText : "",
+        supportingLabels:
+          Array.isArray(heroExtra.supportingLabels) && heroExtra.supportingLabels.length > 0
+            ? heroExtra.supportingLabels.map((s) => String(s).trim()).filter(Boolean)
+            : ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"],
         bgImageUrl: effectiveBgUrl,
-        bgColor: heroSec?.bgColor || "#050505",
+        bgColor:
+          heroSec?.bgColor && heroSec.bgColor !== "rgba(255,255,255,0.04)"
+            ? heroSec.bgColor
+            : "#050505",
         headingColor: heroSec?.textColor || "#ef4444",
         glowColor:
           typeof heroExtra.glowColor === "string" ? heroExtra.glowColor : "#ef4444",

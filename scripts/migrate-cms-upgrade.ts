@@ -38,7 +38,36 @@ const DEFAULT_STORY_EXTRA = {
 async function main() {
   console.log("Running non-destructive CMS upgrade migration...");
 
-  // 8b. Update existing updates.releases eyebrow "Catalog Drop" -> "UPCOMING RELEASES" & ensure updates.upcoming section
+  // 8b. Update existing updates.releases eyebrow "Catalog Drop" -> "UPCOMING RELEASES" & upgrade Hero defaults
+  const existingUpdatesHeroSec = await prisma.pageSection.findUnique({
+    where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey: "hero" } },
+  });
+  if (existingUpdatesHeroSec) {
+    let heroExt: Record<string, unknown> = {};
+    try {
+      heroExt = JSON.parse(existingUpdatesHeroSec.extraJson || "{}");
+    } catch {
+      heroExt = {};
+    }
+    const nextSupporting =
+      Array.isArray(heroExt.supportingLabels) && heroExt.supportingLabels.length > 0
+        ? heroExt.supportingLabels
+        : ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"];
+    const nextHeroTitle =
+      existingUpdatesHeroSec.title === "NEW UPDATES" ? "UPCOMING" : existingUpdatesHeroSec.title;
+    await prisma.pageSection.update({
+      where: { id: existingUpdatesHeroSec.id },
+      data: {
+        title: nextHeroTitle,
+        bgColor: "#050505",
+        extraJson: JSON.stringify({
+          ...heroExt,
+          supportingLabels: nextSupporting,
+        }),
+      },
+    });
+  }
+
   const existingUpdatesRelSec = await prisma.pageSection.findUnique({
     where: { pageSlug_sectionKey: { pageSlug: "updates", sectionKey: "releases" } },
   });

@@ -246,43 +246,86 @@ async function main() {
         await page.locator('[aria-label="Toggle navigation menu"]').click();
       }
 
-      // /updates page + Integrated 16:9 Hero + Glass Subnav + Attention Button + Upcoming + Spotify 4-card Carousel + YouTube Modal
-      await page.goto(`${BASE_URL}/updates`, { waitUntil: "networkidle" });
+      // /updates page + Redesigned Clear 4-Edge Dissolve Hero (UPCOMING) + Neon Perimeter Subnav + Upcoming + Spotify + YouTube Modal
+      await page.goto(`${BASE_URL}/updates`, { waitUntil: "domcontentloaded" });
       const heroSec = page.locator('[data-testid="updates-hero-section"]');
       await heroSec.waitFor({ state: "visible" });
       const heroText = await heroSec.innerText();
       assert(!heroText.toLowerCase().includes("goldex media network radar"), "Old Radar pill still present in New Updates hero!");
+      assert(!heroText.toLowerCase().includes("explore upcoming"), "EXPLORE UPCOMING button text must be completely removed from Hero!");
+      const heroButtonsCount = await heroSec.locator("a, button").count();
+      assert(heroButtonsCount === 0, `Expected 0 buttons inside Hero after removing EXPLORE UPCOMING, found ${heroButtonsCount}`);
+
       const fullPageText = await page.locator("main").innerText();
       assert(!/\bcatalog drop\b/i.test(fullPageText), `"Catalog Drop" must be completely removed from /updates! Found in: ${fullPageText.slice(0, 300)}`);
 
       const heroHeading = page.locator('[data-testid="updates-hero-heading"]');
       const heroTitleText = await heroHeading.innerText();
-      assert(heroTitleText.toUpperCase().includes("NEW UPDATES"), `Expected NEW UPDATES heading, got: ${heroTitleText}`);
-      const heroColor = await heroHeading.evaluate((el) => getComputedStyle(el).color);
-      assert(heroColor === "rgb(239, 68, 68)", `Expected red hero color rgb(239, 68, 68), got ${heroColor}`);
+      assert(heroTitleText.toUpperCase().includes("UPCOMING"), `Expected UPCOMING Hero heading, got: ${heroTitleText}`);
+      const headingStyles = await heroHeading.evaluate((el) => {
+        const st = getComputedStyle(el);
+        return {
+          color: st.color,
+          fontSize: parseFloat(st.fontSize),
+          fontFamily: st.fontFamily,
+          textShadow: st.textShadow,
+        };
+      });
+      assert(headingStyles.fontSize >= 32, `Expected commanding UPCOMING heading >= 32px, got ${headingStyles.fontSize}`);
+      assert(headingStyles.textShadow !== "none", "Expected subtle neon glow textShadow on UPCOMING heading");
       await page.locator('[data-testid="updates-hero-glow"]').waitFor({ state: "attached" });
+
+      const supportingLabels = page.locator('[data-testid="updates-hero-supporting-labels"]');
+      await supportingLabels.waitFor({ state: "visible" });
+      const supportingText = (await supportingLabels.innerText()).toUpperCase();
+      for (const lbl of ["UPCOMING", "LATEST RELEASE", "SPOTIFY", "TRENDING", "MUSIC"]) {
+        assert(supportingText.includes(lbl), `Missing supporting label "${lbl}" around UPCOMING heading`);
+      }
+      const supportingFontSize = await supportingLabels.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      assert(supportingFontSize <= 13, `Supporting labels should remain small/subtle (<=13px), got ${supportingFontSize}`);
 
       const heroBox = await heroSec.boundingBox();
       const headingBox = await heroHeading.boundingBox();
       assert(
         heroBox && headingBox && headingBox.y >= heroBox.y - 2 && headingBox.y + headingBox.height <= heroBox.y + heroBox.height + 2,
-        `Expected NEW UPDATES heading inside Hero container on ${vp.name}`
+        `Expected UPCOMING heading inside Hero container on ${vp.name}`
       );
 
       const heroBgImg = page.locator('[data-testid="updates-hero-bg-image"]');
       await heroBgImg.waitFor({ state: "visible" });
-      const heroImgStats = await heroBgImg.evaluate((img: HTMLImageElement) => ({
-        complete: img.complete,
-        naturalWidth: img.naturalWidth,
-        objectFit: getComputedStyle(img).objectFit,
-      }));
+      await page.waitForFunction(() => {
+        const img = document.querySelector('[data-testid="updates-hero-bg-image"]');
+        return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+      });
+      const heroImgStats = await heroBgImg.evaluate((img: HTMLImageElement) => {
+        const st = getComputedStyle(img);
+        const wrap = img.parentElement ? getComputedStyle(img.parentElement) : null;
+        return {
+          complete: img.complete,
+          naturalWidth: img.naturalWidth,
+          objectFit: st.objectFit,
+          filter: st.filter,
+          maskImage: wrap?.maskImage || wrap?.webkitMaskImage || "none",
+        };
+      });
       assert(heroImgStats.complete && heroImgStats.naturalWidth > 0, `Hero background image failed to load on ${vp.name}`);
       assert(heroImgStats.objectFit === "contain", `Expected object-fit: contain on hero background artwork to prevent cropping, got ${heroImgStats.objectFit}`);
+      assert(heroImgStats.filter === "none", `Expected crystal-clear Hero photograph with NO blur, got filter=${heroImgStats.filter}`);
+      assert(heroImgStats.maskImage !== "none", "Expected 4-side dissolve maskImage on Hero artwork wrapper");
+
+      const neonNavWrap = page.locator('[data-testid="updates-subnav-neon-border"]');
+      await neonNavWrap.waitFor({ state: "visible" });
+      const neonAnimName = await neonNavWrap.locator(".goldex-neon-nav-rotator").first().evaluate((el) => getComputedStyle(el).animationName);
+      assert(neonAnimName.includes("goldexNeonPerimeterSpin"), `Expected continuous neon perimeter animation, got ${neonAnimName}`);
 
       const subnav = page.locator('[data-testid="updates-subnav-box"]');
       await subnav.waitFor({ state: "visible" });
+      const subnavText = (await subnav.innerText()).toUpperCase();
+      for (const navLbl of ["ALL UPDATES", "LATEST RELEASES", "SPOTIFY MUSIC", "TRENDING MUSIC", "MUSIC VIDEOS"]) {
+        assert(subnavText.includes(navLbl), `Missing preserved navigation option "${navLbl}"`);
+      }
       const subnavBox = await subnav.boundingBox();
-      assert(heroBox && subnavBox && subnavBox.y >= heroBox.y + heroBox.height - 28, `Expected glass subnav below Hero on ${vp.name}`);
+      assert(heroBox && subnavBox && subnavBox.y >= heroBox.y + heroBox.height - 28, `Expected neon subnav below Hero on ${vp.name}`);
 
       await page.locator('[data-testid="section-latest-releases"]').waitFor({ state: "visible" });
       const attnBtn = page.locator('[data-testid="upcoming-attention-btn"]');
