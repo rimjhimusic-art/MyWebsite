@@ -289,6 +289,141 @@ async function main() {
     console.log("Seeded starter UpdateRelease entries (no existing Updates found).");
   }
 
+  // 6. Migrate ALL existing About Top Slider Images into AboutSliderImage cleanly
+  const existingAboutSlides = await prisma.aboutSliderImage.count();
+  if (existingAboutSlides === 0) {
+    let sourceUrls = DEFAULT_ABOUT_GALLERY;
+    if (aboutHero?.extraJson) {
+      try {
+        const parsed = JSON.parse(aboutHero.extraJson) as { galleryImages?: unknown[] };
+        if (Array.isArray(parsed.galleryImages) && parsed.galleryImages.length > 0) {
+          sourceUrls = parsed.galleryImages.map(String).filter(Boolean);
+        }
+      } catch {
+        // use defaults
+      }
+    }
+    await prisma.aboutSliderImage.createMany({
+      data: sourceUrls.map((url, idx) => ({
+        imageUrl: url,
+        title: `Goldex Showcase ${idx + 1}`,
+        description: null,
+        enabled: true,
+        sortOrder: idx + 1,
+        draftStatus: "PUBLISHED",
+      })),
+    });
+    console.log(`Migrated ${sourceUrls.length} About top slider image(s) into AboutSliderImage.`);
+  }
+
+  // Ensure slider display settings exist in about.hero extraJson
+  if (aboutHero) {
+    let parsedHero: Record<string, unknown> = {};
+    try {
+      parsedHero = JSON.parse(aboutHero.extraJson || "{}");
+    } catch {
+      parsedHero = {};
+    }
+    const nextHeroExtra = {
+      sliderEnabled: true,
+      sliderAutoplay: true,
+      sliderSpeedSeconds: 45,
+      sliderPauseOnHover: true,
+      sliderShowCaptions: true,
+      ...parsedHero,
+    };
+    await prisma.pageSection.update({
+      where: { id: aboutHero.id },
+      data: { extraJson: JSON.stringify(nextHeroExtra) },
+    });
+  }
+
+  // 7. Non-destructively enrich BrandCreator bio/description where empty & migrate existing videos into BrandVideo
+  const creators = await prisma.brandCreator.findMany({ orderBy: { sortOrder: "asc" } });
+  for (const cr of creators) {
+    if (!cr.bio && !cr.description) {
+      await prisma.brandCreator.update({
+        where: { id: cr.id },
+        data: {
+          bio: `${cr.name} (${cr.handle || "Creator"}) collaborates with brands through Goldex Media Network's creator campaigns.`,
+        },
+      });
+    }
+  }
+
+  const existingBrandVideos = await prisma.brandVideo.count();
+  if (existingBrandVideos === 0) {
+    const creatorsWithVideos = creators.filter((c) => Boolean(c.videoUrl));
+    if (creatorsWithVideos.length > 0) {
+      await prisma.brandVideo.createMany({
+        data: creatorsWithVideos.map((c, idx) => ({
+          title: `${c.name} — Creator Campaign Reel`,
+          description:
+            c.description ||
+            c.bio ||
+            `Official brand campaign video showcase featuring ${c.name} (${c.handle || c.category || "Creator"}).`,
+          videoUrl: c.videoUrl!,
+          thumbnailUrl: c.imageUrl,
+          creatorName: c.name,
+          featured: idx < 2,
+          published: c.published,
+          sortOrder: idx + 1,
+          draftStatus: "PUBLISHED",
+        })),
+      });
+      console.log(`Migrated ${creatorsWithVideos.length} existing Brand Solutions videos into BrandVideo.`);
+    }
+  }
+
+  // 8. Ensure brand.hero & brand.brand_form PageSections exist with complete editable CMS keys
+  await prisma.pageSection.upsert({
+    where: { pageSlug_sectionKey: { pageSlug: "brand", sectionKey: "hero" } },
+    update: {},
+    create: {
+      pageSlug: "brand",
+      sectionKey: "hero",
+      title: "Boost your brand by our Creators!",
+      subtitle: "India's top artists, musicians, and digital storytellers.",
+      badgeText: "Brand Campaign Videos",
+      bodyHtml: "Watch our creators in action across real brand collaborations.",
+      enabled: true,
+      sortOrder: 1,
+      draftStatus: "PUBLISHED",
+    },
+  });
+
+  const existingBrandForm = await prisma.pageSection.findUnique({
+    where: { pageSlug_sectionKey: { pageSlug: "brand", sectionKey: "brand_form" } },
+  });
+  if (!existingBrandForm) {
+    await prisma.pageSection.create({
+      data: {
+        pageSlug: "brand",
+        sectionKey: "brand_form",
+        title: "Let's Talk!",
+        subtitle:
+          "Leave your details below and a member of our team will get back to you within 24 hours.",
+        ctaLabel: "Submit",
+        bgColor: "#fff0e5",
+        textColor: "#d93025",
+        extraJson: JSON.stringify({
+          rightTitle: "Brand Managers",
+          rightSubtitle: "Our expert team is here to help.",
+          rightImages: [
+            "/ref/brand/bm1.jpeg",
+            "/ref/brand/bm2.jpeg",
+            "/ref/brand/bm3.jpeg",
+            "/ref/brand/bm4.jpeg",
+          ],
+          formSuccessMessage: "Thank you! A Brand Manager will reach out within 24 hours.",
+        }),
+        enabled: true,
+        sortOrder: 2,
+        draftStatus: "PUBLISHED",
+      },
+    });
+  }
+
   console.log("CMS upgrade migration complete.");
 }
 

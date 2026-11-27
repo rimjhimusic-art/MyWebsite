@@ -205,6 +205,33 @@ export async function ensureCmsBaselineIfEmpty(): Promise<void> {
           { name: "SD Mandal", handle: "@sdmandal005", category: "Digital Creator", imageUrl: "/ref/influencers/1770471172_img.jpg", videoUrl: "/ref/influencers/1770471172_vid.mp4", sortOrder: 4 },
         ];
         await prisma.brandCreator.createMany({ data: creators });
+        const bvCount = await prisma.brandVideo.count();
+        if (bvCount === 0) {
+          await prisma.brandVideo.createMany({
+            data: creators.map((c, idx) => ({
+              title: `${c.name} — Creator Campaign Reel`,
+              description: `${c.name} (${c.handle}) brand collaboration video showcase.`,
+              videoUrl: c.videoUrl,
+              thumbnailUrl: c.imageUrl,
+              creatorName: c.name,
+              featured: idx < 2,
+              published: true,
+              sortOrder: idx + 1,
+            })),
+          });
+        }
+      }
+
+      const aboutSlidesCount = await prisma.aboutSliderImage.count();
+      if (aboutSlidesCount === 0) {
+        await prisma.aboutSliderImage.createMany({
+          data: Array.from({ length: 8 }, (_, i) => ({
+            imageUrl: `/ref/flag/about-${i + 1}.png`,
+            title: `Goldex Showcase ${i + 1}`,
+            enabled: true,
+            sortOrder: i + 1,
+          })),
+        });
       }
 
       if (plansCount === 0) {

@@ -389,13 +389,15 @@ export async function findMediaReferences(fileUrl: string): Promise<string[]> {
     if (settings.footerLogoUrl === fileUrl) refs.push("WebsiteSettings:footerLogo");
     if (settings.faviconUrl === fileUrl) refs.push("WebsiteSettings:favicon");
   }
-  const [sections, artists, stores, services, team, creators, seo] = await Promise.all([
+  const [sections, artists, stores, services, team, creators, brandVideos, aboutSlides, seo] = await Promise.all([
     prisma.pageSection.findMany({ where: { OR: [{ mediaUrl: fileUrl }, { draftJson: { contains: fileUrl } }, { extraJson: { contains: fileUrl } }] }, select: { pageSlug: true, sectionKey: true } }),
     prisma.featuredArtist.findMany({ where: { OR: [{ imageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
     prisma.digitalStore.findMany({ where: { OR: [{ logoUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
     prisma.cmsService.findMany({ where: { OR: [{ imageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { title: true } }),
     prisma.teamMember.findMany({ where: { OR: [{ imageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
     prisma.brandCreator.findMany({ where: { OR: [{ imageUrl: fileUrl }, { videoUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { name: true } }),
+    prisma.brandVideo.findMany({ where: { OR: [{ thumbnailUrl: fileUrl }, { videoUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { title: true } }),
+    prisma.aboutSliderImage.findMany({ where: { OR: [{ imageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { title: true } }),
     prisma.seoSetting.findMany({ where: { OR: [{ ogImageUrl: fileUrl }, { draftJson: { contains: fileUrl } }] }, select: { pageSlug: true } }),
   ]);
   for (const s of sections) refs.push(`PageSection:${s.pageSlug}.${s.sectionKey}`);
@@ -404,6 +406,8 @@ export async function findMediaReferences(fileUrl: string): Promise<string[]> {
   for (const sv of services) refs.push(`Service:${sv.title}`);
   for (const tm of team) refs.push(`TeamMember:${tm.name}`);
   for (const cr of creators) refs.push(`BrandCreator:${cr.name}`);
+  for (const bv of brandVideos) refs.push(`BrandVideo:${bv.title}`);
+  for (const sl of aboutSlides) refs.push(`AboutSlider:${sl.title || "Slide"}`);
   for (const se of seo) refs.push(`SEO:${se.pageSlug}`);
   return refs;
 }
